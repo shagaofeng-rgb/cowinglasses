@@ -1,8 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RoutePage } from "@/components/commerce/route-page";
-import { isLocale } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string; segments?: string[] }> }): Promise<Metadata> { const { locale, segments = [] } = await params; const label = segments.join(" ").replace(/\b\w/g, (character) => character.toUpperCase()) || "Shop"; return { title: `${label} | ${siteConfig.name}`, alternates: { canonical: `/${locale}/${segments.join("/")}`, languages: { en: `/en/${segments.join("/")}`, ar: `/ar/${segments.join("/")}`, es: `/es/${segments.join("/")}`, pt: `/pt/${segments.join("/")}`, ja: `/ja/${segments.join("/")}`, ko: `/ko/${segments.join("/")}` } } }; }
-export default async function RoutedPage({ params }: { params: Promise<{ locale: string; segments?: string[] }> }) { const { locale, segments = [] } = await params; if (!isLocale(locale)) notFound(); return <RoutePage locale={locale} segments={segments}/>; }
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; segments?: string[] }> }): Promise<Metadata> {
+  const { locale, segments = [] } = await params;
+  if (locale !== "en") return {};
+  const label = segments.join(" ").replace(/\\b\\w/g, (character) => character.toUpperCase()) || "Shop";
+  const pathname = `/en/${segments.join("/")}`;
+  return { title: `${label} | ${siteConfig.name}`, alternates: { canonical: pathname, languages: { en: pathname } } };
+}
+export default async function RoutedPage({ params }: { params: Promise<{ locale: string; segments?: string[] }> }) { const { locale, segments = [] } = await params; if (locale !== "en") notFound(); return <RoutePage locale="en" segments={segments}/>; }
