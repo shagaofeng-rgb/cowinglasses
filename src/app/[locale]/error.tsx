@@ -1,0 +1,2 @@
+"use client";
+export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) { return <div className="shell grid min-h-[50dvh] place-items-center py-16 text-center"><div><h2 className="text-3xl font-black">Something interrupted this view.</h2><p className="mt-3 text-[var(--muted)]">Please try again. Your cart is stored locally.</p><button className="button-primary mt-6" onClick={reset}>Try again</button></div></div>; }

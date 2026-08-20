@@ -1,0 +1,5 @@
+import type { MetadataRoute } from "next";
+import { products } from "@/data/fixtures/products";
+import { locales } from "@/types/localization";
+import { siteConfig } from "@/config/site";
+export default function sitemap(): MetadataRoute.Sitemap { const paths = ["", "/shop", "/compare", "/how-it-works", "/app", "/lens-guide", "/support", "/support/faq", "/support/contact", "/support/shipping-delivery", "/support/returns-refunds", "/support/warranty", "/policies/privacy", "/policies/terms", "/cart", "/checkout", "/account", "/collections/create", "/collections/explore", "/collections/everyday", "/collections/music-movement", "/collections/photochromic-sun", "/collections/prescription-ready"]; return locales.flatMap((locale) => [...paths.map((path) => ({ url: `${siteConfig.url}/${locale}${path}`, lastModified: new Date("2026-08-20") })), ...products.map((product) => ({ url: `${siteConfig.url}/${locale}/products/${product.slug}`, lastModified: new Date("2026-08-20") }))]); }
