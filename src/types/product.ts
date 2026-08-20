@@ -28,11 +28,11 @@ export interface CameraSpecs {
 export interface Product {
   id: string;
   slug: string;
-  demo: true;
+  /** Legacy cart compatibility only. The published catalogue never renders this value. */
+  usdPrice: number;
   name: LocalizedText;
   tagline: LocalizedText;
   description: LocalizedText;
-  usdPrice: number;
   collections: CollectionSlug[];
   features: Feature[];
   frameStyle: FrameStyle;
