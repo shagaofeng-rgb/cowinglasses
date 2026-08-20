@@ -12,6 +12,7 @@ type Seed = {
 const makeProduct = (seed: Seed): Product => ({
   id: seed.id,
   slug: seed.slug,
+  usdPrice: 0,
   name: en(seed.name),
   tagline: en(seed.tagline),
   description: en(seed.description),
