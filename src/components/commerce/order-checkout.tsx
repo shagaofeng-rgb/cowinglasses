@@ -80,7 +80,7 @@ export function OrderCheckout({ locale }: { locale: Locale }) {
               <Image src={product.heroImage} alt={product.name.en} width={160} height={160} className="h-full w-full object-contain" />
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#6b7e0d]">Sport audio glasses</p>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#6b7e0d]">Selected product</p>
               <h2 className="mt-1 font-black">{product.name.en}</h2>
               <p className="mt-1 text-sm text-[var(--muted)]">{selectedColor?.name.en ?? "Selected colour"} · 1 unit</p>
             </div>
