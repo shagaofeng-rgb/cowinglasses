@@ -63,9 +63,9 @@ products.unshift({
   id: "g200-sport-audio-glasses",
   slug: "g200-sport-audio-glasses",
   demo: false,
-  usdPrice: 52,
-  compareAtUsdPrice: 85,
-  heroImage: "https://raw.githubusercontent.com/shagaofeng-rgb/cowinglasses/codex/launch-english-products/public/images/products/g200-sport.webp",
+  usdPrice: 39.99,
+  compareAtUsdPrice: 113,
+  heroImage: "/images/products/g200-sport-audio-glasses.webp",
   name: { en: "G200 Sport Audio Glasses" },
   tagline: { en: "Open-ear Bluetooth audio in a lightweight wraparound sport frame." },
   description: { en: "G200 combines open-ear Bluetooth audio, a wraparound PC lens and magnetic charging for outdoor training, riding and everyday movement." },
@@ -77,7 +77,7 @@ products.unshift({
     id: "g200-blue",
     name: { en: "Blue mirror lens" },
     hex: "#21ace5",
-    images: ["https://raw.githubusercontent.com/shagaofeng-rgb/cowinglasses/codex/launch-english-products/public/images/products/g200-sport.webp"],
+    images: ["/images/products/g200-sport-audio-glasses.webp"],
     available: true,
   }],
   specifications: [
@@ -107,6 +107,54 @@ products.unshift({
   ],
   seo: {
     title: { en: "G200 Sport Audio Glasses | CoWin" },
-    description: { en: "G200 open-ear Bluetooth sport audio glasses. Launch price USD 52, originally USD 85. Request an order from CoWin sales." },
+    description: { en: "G200 open-ear Bluetooth sport audio glasses. Launch price USD 39.99, originally USD 113. Request an order from CoWin sales." },
   },
 });
+
+
+// Bulk launch records are limited to model folders with both approved source imagery and a supplied USD price.
+const publishedProduct = (
+  id: string,
+  name: string,
+  usdPrice: number,
+  compareAtUsdPrice: number,
+): Product => ({
+  id,
+  slug: id,
+  demo: false,
+  usdPrice,
+  compareAtUsdPrice,
+  heroImage: `/images/products/${id}.webp`,
+  name: { en: name },
+  tagline: { en: "Product configuration confirmed by sales before payment." },
+  description: { en: "Browse the supplied product imagery, then request an order. Sales confirms the final configuration, availability, shipping and payment instructions for your destination." },
+  collections: ["everyday"],
+  features: [],
+  frameStyle: "wayfarer",
+  lensType: "clear",
+  colors: [{ id: `${id}-standard`, name: { en: "Selected product finish" }, hex: "#303438", images: [`/images/products/${id}.webp`], available: true }],
+  specifications: [{ label: { en: "Product information" }, value: { en: "Configuration and availability confirmed by sales before payment." } }],
+  inTheBox: [{ en: "Final contents are confirmed by sales with your order request." }],
+  compatibility: { en: "Contact sales to confirm the selected model configuration, phone compatibility where applicable, shipping destination and final order details." },
+  faq: [{ question: { en: "How do I order this model?" }, answer: { en: "Select Request order / Contact sales. Sales will confirm the product configuration, availability, shipping and payment instructions before any charge." } }],
+  seo: { title: { en: `${name} | CoWin` }, description: { en: `${name}. Launch price in USD. Request an order from CoWin sales.` } },
+});
+
+products.unshift(
+  publishedProduct("g06-l", "G06-L Smart Glasses", 39.99, 119),
+  publishedProduct("g06-t", "G06-T Smart Glasses", 39.99, 119),
+  publishedProduct("g300", "G300 Smart Glasses", 39.99, 115),
+  publishedProduct("gl1", "GL1 Smart Glasses", 39.99, 98),
+  publishedProduct("gl6", "GL6 Smart Glasses", 39.99, 115),
+  publishedProduct("gl7", "GL7 Smart Glasses", 39.99, 133),
+  publishedProduct("gl8", "GL8 Smart Glasses", 39.99, 133),
+  publishedProduct("gl12-8", "GL12-8 Smart Glasses", 39.99, 123),
+  publishedProduct("gl12-9", "GL12-9 Smart Glasses", 39.99, 133),
+  publishedProduct("gl15-1", "GL15-1 Smart Glasses", 39.99, 103),
+  publishedProduct("gl15-2", "GL15-2 Smart Glasses", 39.99, 128),
+  publishedProduct("gl16-3", "GL16-3 Smart Glasses", 79.99, 198),
+  publishedProduct("v03-pro", "V03 Pro Smart Glasses", 79.99, 245),
+  publishedProduct("v03-t5", "V03-T5 Smart Glasses", 79.99, 265),
+  publishedProduct("v03-t6", "V03-T6 Smart Glasses", 79.99, 265),
+  publishedProduct("v03-t8", "V03-T8 Smart Glasses", 79.99, 265),
+);
