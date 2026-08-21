@@ -8,7 +8,6 @@ import type { Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
 import { Price } from "@/components/commerce/price";
-import { AddToCart } from "./add-to-cart";
 import { ProductCard } from "./product-card";
 import { ProductFeatureBand } from "./product-feature-band";
 import { products } from "@/data/fixtures/products";
@@ -29,14 +28,14 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
     <>
       <section className="shell grid gap-8 py-8 lg:grid-cols-[1.2fr_.8fr] lg:py-14">
         <div>
-          <div className="overflow-hidden rounded-3xl bg-[#eeefeb]">
+          <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-white p-4 md:p-6">
             <Image
               src={sku.images[0] ?? product.heroImage}
               alt={`${name} in ${localize(sku.name, locale)}`}
               width={1400}
               height={1200}
               priority
-              className="aspect-square w-full object-contain"
+              className="aspect-[4/3] w-full object-contain"
               sizes="(max-width: 1024px) 100vw, 60vw"
             />
           </div>
@@ -46,10 +45,10 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
                 key={image}
                 type="button"
                 onClick={() => setSku(product.colors.find((color) => color.images.includes(image)) ?? product.colors[0])}
-                className={`overflow-hidden rounded-xl border bg-[#eeefeb] transition hover:border-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${(sku.images[0] ?? product.heroImage) === image ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                className={`overflow-hidden rounded-xl border bg-white p-1 transition hover:border-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${(sku.images[0] ?? product.heroImage) === image ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
                 aria-label={`View ${name} image ${index + 1}`}
               >
-                <Image src={image} alt="" width={280} height={220} className="aspect-[4/3] w-full object-contain" sizes="(max-width: 640px) 30vw, 15vw" />
+                <Image src={image} alt="" width={280} height={220} className="aspect-[4/3] w-full object-contain p-1" sizes="(max-width: 640px) 30vw, 15vw" />
               </button>
             ))}
           </div>
@@ -103,15 +102,13 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
             {!product.demo && <p className="mt-3 text-xs leading-5 text-[var(--muted)]">Your colour preference is included with the sales request. Final availability is confirmed before payment.</p>}
           </fieldset>
 
-          <div className="mt-7 flex flex-wrap gap-3">
-            {product.demo ? (
-              <AddToCart product={product} skuId={sku.id} locale={locale} />
-            ) : (
-              <Link className="button-primary" href={`/${locale}/support/contact?product=${product.slug}&color=${encodeURIComponent(sku.id)}`}>
-                Request order / Contact sales
-              </Link>
-            )}
-            <a className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--ink)] px-5 text-sm font-black transition hover:bg-[var(--ink)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]" href="#specifications">View specifications</a>
+          <div className="mt-7">
+            <Link
+              className="button-primary"
+              href={`/${locale}/checkout?product=${product.slug}&color=${encodeURIComponent(sku.id)}`}
+            >
+              Buy now
+            </Link>
           </div>
 
           <div className="mt-6 grid gap-3 border-t border-[var(--line)] pt-6 text-sm">
@@ -156,7 +153,7 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
             {product.translationNote && <InfoBlock title={t.product.translation} text={localize(product.translationNote, locale)} />}
             {product.prescriptionNote && <InfoBlock title={t.product.prescription} text={localize(product.prescriptionNote, locale)} link={{ label: t.product.lensLink, href: `/${locale}/lens-guide` }} />}
           </div>
-          <div className="overflow-hidden rounded-3xl bg-white">
+          <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-white p-4 md:p-6">
             <Image src={product.heroImage} alt={name} width={1200} height={900} className="aspect-[4/3] w-full object-contain" sizes="(max-width: 1024px) 100vw, 55vw" />
           </div>
         </div>

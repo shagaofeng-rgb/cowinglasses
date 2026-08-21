@@ -4,23 +4,28 @@ import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, CreditCard, FileText, ShieldCheck, Truck } from "lucide-react";
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { getProduct } from "@/data/fixtures/products";
 import type { Locale } from "@/lib/i18n";
 
-const g200 = getProduct("g200-sport-audio-glasses");
+const fallbackProduct = getProduct("g200-sport-audio-glasses");
 
 export function OrderCheckout({ locale }: { locale: Locale }) {
+  const searchParams = useSearchParams();
+  const product = getProduct(searchParams.get("product") ?? "") ?? fallbackProduct;
   const [shipping, setShipping] = useState<"quote" | "forwarder">("quote");
   const [payment, setPayment] = useState<"card" | "transfer">("card");
 
-  if (!g200) return null;
+  if (!product) return null;
+
+  const selectedColor = product.colors.find((color) => color.id === searchParams.get("color")) ?? product.colors[0];
 
   return (
     <main className="bg-[#f3f6f4]">
       <section className="shell grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_390px] lg:py-16">
         <div>
           <p className="eyebrow">Order checkout</p>
-          <h1 className="mt-3 text-4xl font-black tracking-[-.06em] md:text-5xl">Request your G200 order.</h1>
+          <h1 className="mt-3 text-4xl font-black tracking-[-.06em] md:text-5xl">Buy {product.name.en}.</h1>
           <p className="mt-4 max-w-2xl leading-7 text-[var(--muted)]">
             Share delivery and payment preferences with sales. Final stock, shipping and payment instructions are confirmed before any charge.
           </p>
@@ -72,18 +77,18 @@ export function OrderCheckout({ locale }: { locale: Locale }) {
         <aside className="h-fit rounded-3xl border border-white bg-white p-6 shadow-[0_18px_45px_rgba(22,35,29,.08)] lg:sticky lg:top-24">
           <div className="flex gap-4">
             <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[#eff2ee]">
-              <Image src={g200.heroImage} alt={g200.name.en} width={160} height={160} className="h-full w-full object-contain" />
+              <Image src={product.heroImage} alt={product.name.en} width={160} height={160} className="h-full w-full object-contain" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#6b7e0d]">Sport audio glasses</p>
-              <h2 className="mt-1 font-black">{g200.name.en}</h2>
-              <p className="mt-1 text-sm text-[var(--muted)]">Blue mirror lens · 1 unit</p>
+              <h2 className="mt-1 font-black">{product.name.en}</h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">{selectedColor?.name.en ?? "Selected colour"} · 1 unit</p>
             </div>
           </div>
 
           <div className="mt-7 flex items-baseline justify-between border-b border-[var(--line)] pb-5">
             <span className="font-bold">Launch price</span>
-            <p><span className="mr-2 text-sm text-[var(--muted)] line-through">USD {formatUsd(g200.compareAtUsdPrice ?? g200.usdPrice)}</span><strong>USD {formatUsd(g200.usdPrice)}</strong></p>
+            <p><span className="mr-2 text-sm text-[var(--muted)] line-through">USD {formatUsd(product.compareAtUsdPrice ?? product.usdPrice)}</span><strong>USD {formatUsd(product.usdPrice)}</strong></p>
           </div>
           <div className="flex justify-between border-b border-[var(--line)] py-5 text-sm">
             <span>Shipping</span>
@@ -91,10 +96,10 @@ export function OrderCheckout({ locale }: { locale: Locale }) {
           </div>
           <div className="flex justify-between py-5 text-lg font-black">
             <span>Product subtotal</span>
-            <span>USD {formatUsd(g200.usdPrice)}</span>
+            <span>USD {formatUsd(product.usdPrice)}</span>
           </div>
 
-          <Link href={`/${locale}/support/contact?product=g200-sport-audio-glasses&source=checkout`} className="button-primary w-full">
+          <Link href={`/${locale}/support/contact?product=${product.slug}&color=${encodeURIComponent(selectedColor?.id ?? "")}&source=checkout`} className="button-primary w-full">
             Request order / Contact sales
           </Link>
           <p className="mt-4 text-xs leading-5 text-[var(--muted)]">Submitting an inquiry does not create an order or charge a payment method.</p>
