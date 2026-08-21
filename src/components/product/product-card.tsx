@@ -12,8 +12,8 @@ export function ProductCard({ product, locale }: { product: Product; locale: Loc
 
   return (
     <article className="group border-t border-[var(--line)] pt-3">
-      <Link href={`/${locale}/products/${product.slug}`} className="block overflow-hidden bg-[#eeefeb]">
-        <Image src={product.heroImage} alt={name} width={1000} height={1200} className="aspect-[4/5] w-full object-cover transition duration-500 group-hover:scale-[1.025]" sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" />
+      <Link href={`/${locale}/products/${product.slug}`} className="block overflow-hidden rounded-2xl border border-[var(--line)] bg-white">
+        <Image src={product.heroImage} alt={name} width={1000} height={1200} className="aspect-[4/5] w-full object-contain p-3 transition duration-500 group-hover:scale-[1.025]" sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" />
       </Link>
       <div className="flex items-start justify-between gap-3 pt-4">
         <div>
@@ -26,7 +26,7 @@ export function ProductCard({ product, locale }: { product: Product; locale: Loc
       <div className="pt-4">
         {product.demo ? <Price usd={product.usdPrice} locale={locale} compact /> : <p className="text-lg font-black">USD {product.usdPrice.toFixed(2).replace(/\.00$/, "")} {product.compareAtUsdPrice && <span className="ml-2 text-sm font-bold text-[var(--muted)] line-through">USD {product.compareAtUsdPrice.toFixed(2).replace(/\.00$/, "")}</span>}</p>}
       </div>
-      {!product.demo && <Link href={`/${locale}/support/contact?product=${product.slug}`} className="button-primary mt-4 w-full">Request order</Link>}
+      {!product.demo && <Link href={`/${locale}/checkout?product=${product.slug}`} className="button-primary mt-4 w-full">Buy now</Link>}
     </article>
   );
 }
