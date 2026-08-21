@@ -1,4 +1,125 @@
 import type { Product } from "@/types/product";
+import { importedProductAssets } from "@/data/generated-product-assets";
+
+const specificationRows = (rows: Array<[string, string]>): Product["specifications"] =>
+  rows.map(([label, value]) => ({ label: { en: label }, value: { en: value } }));
+
+const transcribedSpecifications: Record<string, Product["specifications"]> = {
+  gl1: [
+    ["Bluetooth chip", "JL7006"],
+    ["Bluetooth version", "5.3"],
+    ["Bluetooth profiles", "HFP, A2DP, HID, AVRCP, AVCTP, AVDTP"],
+    ["Audio decoding", "SBC / AAC"],
+    ["Bluetooth distance", "More than 10 meters"],
+    ["Frequency range", "20–20 kHz"],
+    ["Speaker", "Single moving-coil speaker"],
+    ["Music playing time", "5–6 hours"],
+    ["Charging time", "1.5 hours"],
+    ["Battery capacity", "100 mAh / 400838"],
+    ["Weight", "43 g"],
+    ["Charging port", "Magnetic charging port"],
+    ["Frame size", "138 × 145 × 58 × 16 mm"],
+  ].map(([label, value]) => ({ label: { en: label }, value: { en: value } })),
+  "g06-l": specificationRows([
+    ["Model", "G06"], ["Bluetooth version", "5.3"], ["Effective distance", "12 m"], ["Weight", "Approximately 30 g"], ["Battery capacity", "100 mAh × 2"], ["Charging time", "About 70 minutes"], ["Standby time", "Approximately 168 hours"], ["Call / playback time", "Approximately 5–8 hours"],
+  ]),
+  "g06-t": specificationRows([
+    ["Model", "G06"], ["Bluetooth version", "5.3"], ["Effective distance", "12 m"], ["Weight", "Approximately 30 g"], ["Battery capacity", "100 mAh × 2"], ["Charging time", "About 70 minutes"], ["Standby time", "Approximately 168 hours"], ["Call / playback time", "Approximately 5–8 hours"],
+  ]),
+  "g200-sport-audio-glasses": specificationRows([
+    ["Bluetooth chip", "JL7006"], ["Bluetooth version", "5.3"], ["Bluetooth profiles", "HFP, A2DP, HID, AVRCP, AVCTP, AVDTP"], ["Audio decoding", "SBC / AAC"], ["Bluetooth distance", "More than 10 meters"], ["Frequency range", "20–20 kHz"], ["Music playing time", "5–6 hours"], ["Charging time", "1.5 hours"], ["Battery capacity", "100 mAh / 400838"], ["Weight", "43 g"], ["Charging port", "Magnetic charging port"], ["Frame size", "140 × 155 × 10 mm"],
+  ]),
+  gl6: specificationRows([
+    ["Product name", "J2-2"], ["Bluetooth version", "5.0"], ["Music playing time", "5–6 hours"], ["Charging time", "1.5 hours"], ["Standby time", "180 hours"], ["Battery capacity", "120 mAh"], ["Audio", "Dual speakers, stereo sound"], ["Bluetooth distance", "More than 10 meters"], ["Audio decoding", "SBC / AAC"], ["Input voltage", "DC 5V"],
+  ]),
+  gl7: specificationRows([
+    ["Phone function", "Answer / reject calls"], ["Audio", "Dual speakers, stereo sound"], ["Charging", "Magnetic charging"], ["Standby time", "180 hours"], ["Waterproof rating", "IP65"], ["Frame material", "PC1414 / TR90 / hardware"], ["Lens material", "PC / TC"], ["Bluetooth version", "5.0"], ["Camera function", "Bluetooth camera"], ["Call duration", "5 hours"], ["Listening time", "6 hours"], ["Battery capacity", "120 mAh"],
+  ]),
+  gl8: specificationRows([
+    ["Bluetooth chip", "JL7006 TWS solution"], ["Bluetooth version", "5.4"], ["Bluetooth profile", "AVDTP / AVRCP / A2DP"], ["Audio decoding", "SBC / AAC"], ["Bluetooth distance", "More than 10 meters"], ["Music playing time", "5–6 hours"], ["Charging time", "1.5 hours"], ["Battery capacity", "100 mAh × 2 / 400838"], ["Weight", "29 g"], ["Charging port", "Dual magnetic charging ports"], ["Frame size", "140 × 145 × 62 × 16 mm"],
+  ]),
+  "gl12-8": specificationRows([
+    ["Bluetooth chip", "JL7006 TWS"], ["Bluetooth version", "5.4"], ["Bluetooth name", "GL12"], ["Bluetooth profile", "AVDTP / AVRCP / A2DP"], ["Audio decoding", "SBC / AAC"], ["Bluetooth distance", "More than 10 meters"], ["Music playing time", "5–6 hours"], ["Charging time", "1.5 hours"], ["Battery capacity", "100 mAh × 2 / 400838"], ["Weight", "35 g"], ["Charging port", "Magnetic dual charging ports"], ["Frame size", "136 × 135 × 62 × 15 mm"],
+  ]),
+  "gl12-9": specificationRows([
+    ["Bluetooth chip", "JL7006 TWS"], ["Bluetooth version", "5.4"], ["Bluetooth name", "GL12"], ["Bluetooth profile", "AVDTP / AVRCP / A2DP"], ["Audio decoding", "SBC / AAC"], ["Bluetooth distance", "More than 10 meters"], ["Music playing time", "5–6 hours"], ["Charging time", "1.5 hours"], ["Battery capacity", "100 mAh × 2 / 400838"], ["Weight", "35 g"], ["Charging port", "Magnetic dual charging ports"], ["Frame size", "136 × 135 × 62 × 15 mm"],
+  ]),
+  "gl15-1": specificationRows([
+    ["Bluetooth chip", "AB5632F"], ["Bluetooth version", "5.4"], ["Bluetooth name", "GL15"], ["Bluetooth profile", "AVDTP / AVRCP / A2DP"], ["Audio decoding", "SBC / AAC"], ["Bluetooth distance", "More than 10 meters"], ["Music playing time", "4–5 hours"], ["Charging time", "1.5 hours"], ["Battery capacity", "100 mAh × 2 / 400838"], ["Weight", "27 g"], ["Charging port", "Magnetic charging port"], ["Frame size", "140 × 140 × 62 × 10 mm"],
+  ]),
+  "gl15-2": specificationRows([
+    ["Bluetooth chip", "AB5632F"], ["Bluetooth version", "5.4"], ["Bluetooth name", "GL15"], ["Bluetooth profile", "AVDTP / AVRCP / A2DP"], ["Audio decoding", "SBC / AAC"], ["Bluetooth distance", "More than 10 meters"], ["Music playing time", "4–5 hours"], ["Charging time", "1.5 hours"], ["Battery capacity", "100 mAh × 2 / 400838"], ["Weight", "27 g"], ["Charging port", "Magnetic charging port"], ["Frame size", "140 × 140 × 62 × 10 mm"],
+  ]),
+  "gl16-3": specificationRows([
+    ["Bluetooth chip", "AB5632F"], ["Bluetooth version", "5.4"], ["Bluetooth name", "GL16"], ["Bluetooth profile", "AVDTP / AVRCP / A2DP"], ["Audio decoding", "SBC / AAC"], ["Bluetooth distance", "More than 10 meters"], ["Music playing time", "4–5 hours"], ["Charging time", "1.5 hours"], ["Battery capacity", "80 mAh × 2 / 350730"], ["Weight", "22 g"], ["Charging port", "Magnetic charging port"], ["Frame size", "140 × 140 × 62 × 10 mm"],
+  ]),
+  "v03-pro": specificationRows([
+    ["Model", "V03 Pro"], ["Battery capacity", "220 mAh"], ["Playback time", "About 5 hours"], ["Standby time", "About 72 hours"], ["Lens material", "PC"], ["Temple material", "Ultra-tough PC"], ["Frame length", "150 mm"], ["Frame height", "51 mm"], ["Temple length", "143 mm"],
+  ]),
+  "v03-t5": specificationRows([
+    ["Product name", "AI intelligent shooting glasses"], ["Model", "V03"], ["Bluetooth version", "5.3"], ["Effective distance", "At least 12 meters"], ["Charging time", "About 60 minutes"], ["Battery capacity", "220 mAh"], ["Audio duration", "About 7 hours"], ["Shooting duration", "About 1 hour"], ["Frame width", "151 mm"], ["Lens height", "42 mm"], ["Temple length", "139 mm"],
+  ]),
+  "v03-t6": specificationRows([
+    ["Model", "V03"], ["Bluetooth version", "5.3"], ["Effective distance", "15 m"], ["Battery capacity", "220 mAh"], ["Playback duration", "Approximately 7 hours"], ["Standby duration", "Approximately 96 hours"], ["Charging time", "Approximately 60 minutes"], ["Frame width", "150.6 mm"], ["Frame height", "54.9 mm"],
+  ]),
+  "v03-t8": specificationRows([
+    ["Model", "V03-T8"], ["Battery capacity", "220 mAh"], ["Playback time", "About 7 hours"], ["Standby time", "About 96 hours"], ["Lens material", "PC"], ["Temple material", "Super tough PC"], ["Frame length", "150 mm"], ["Frame height", "48 mm"], ["Temple length", "139 mm"],
+  ]),
+};
+
+const technicalDiagrams: Record<string, string> = {
+  gl1: "/images/products/gl1/dimensions.webp",
+  "g06-l": "/images/products/g06-l/dimensions.webp",
+  "g06-t": "/images/products/g06-t/dimensions.webp",
+  "g200-sport-audio-glasses": "/images/products/g200-sport-audio-glasses/dimensions.webp",
+  gl6: "/images/products/gl6/dimensions.webp",
+  gl7: "/images/products/gl7/dimensions.webp",
+  gl8: "/images/products/gl8/dimensions.webp",
+  "gl12-8": "/images/products/gl12-8/dimensions.webp",
+  "gl12-9": "/images/products/gl12-9/dimensions.webp",
+  "gl15-1": "/images/products/gl15-1/dimensions.webp",
+  "gl15-2": "/images/products/gl15-2/dimensions.webp",
+  "gl16-3": "/images/products/gl16-3/dimensions.webp",
+  "v03-pro": "/images/products/v03-pro/dimensions.webp",
+  "v03-t5": "/images/products/v03-t5/dimensions.webp",
+  "v03-t6": "/images/products/v03-t6/dimensions.webp",
+  "v03-t8": "/images/products/v03-t8/dimensions.webp",
+};
+
+const extractedSpecificationArtwork: Record<string, string[]> = {
+  gl1: ["/images/products/gl1/detail-12.webp"],
+  "g06-l": ["/images/products/g06-l/detail-17.webp"],
+  "g06-t": ["/images/products/g06-t/detail-17.webp"],
+  "g200-sport-audio-glasses": ["/images/products/g200-sport-audio-glasses/detail-11.webp"],
+  gl6: ["/images/products/gl6/detail-13.webp"],
+  gl7: ["/images/products/gl7/detail-14.webp"],
+  gl8: ["/images/products/gl8/detail-13.webp"],
+  "gl12-8": ["/images/products/gl12-8/detail-04.webp"],
+  "gl12-9": ["/images/products/gl12-9/detail-05.webp"],
+  "gl15-1": ["/images/products/gl15-1/detail-11.webp"],
+  "gl15-2": ["/images/products/gl15-2/detail-05.webp"],
+  "gl16-3": ["/images/products/gl16-3/detail-09.webp"],
+  "v03-pro": ["/images/products/v03-pro/detail-19.webp"],
+  "v03-t5": ["/images/products/v03-t5/detail-16.webp"],
+  "v03-t6": ["/images/products/v03-t6/detail-12.webp"],
+  "v03-t8": ["/images/products/v03-t8/detail-13.webp"],
+};
+
+const heroImageOverrides: Record<string, string> = {
+  "g06-l": "/images/products/g06-l/black-05.webp",
+  "g06-t": "/images/products/g06-t/black-02.webp",
+};
+
+const colourAssetOverrides: Record<string, Product["colors"]> = {
+  "g06-l": [
+    { id: "g06-l-brown", name: { en: "Brown" }, hex: "#8c6248", images: ["/images/products/g06-l/black-05.webp", "/images/products/g06-l/black-02.webp", "/images/products/g06-l/black-03.webp", "/images/products/g06-l/black-04.webp", "/images/products/g06-l/black-06.webp", "/images/products/g06-l/black-01.webp"], available: true },
+    { id: "g06-l-black", name: { en: "Black" }, hex: "#202225", images: ["/images/products/g06-l/black-08.webp", "/images/products/g06-l/black-09.webp", "/images/products/g06-l/black-10.webp", "/images/products/g06-l/black-11.webp", "/images/products/g06-l/black-12.webp", "/images/products/g06-l/black-07.webp"], available: true },
+  ],
+  "g06-t": [
+    { id: "g06-t-brown", name: { en: "Brown" }, hex: "#8c6248", images: ["/images/products/g06-t/black-02.webp", "/images/products/g06-t/black-01.webp", "/images/products/g06-t/black-03.webp", "/images/products/g06-t/black-04.webp", "/images/products/g06-t/black-05.webp", "/images/products/g06-t/black-06.webp"], available: true },
+    { id: "g06-t-black", name: { en: "Black" }, hex: "#202225", images: ["/images/products/g06-t/black-08.webp", "/images/products/g06-t/black-07.webp", "/images/products/g06-t/black-09.webp", "/images/products/g06-t/black-10.webp", "/images/products/g06-t/black-11.webp", "/images/products/g06-t/black-12.webp"], available: true },
+  ],
+};
 
 const image = "/images/demo/product-pro-v2.png";
 const lifestyle = "/images/demo/product-lite-v2.png";
@@ -65,7 +186,7 @@ products.unshift({
   demo: false,
   usdPrice: 39.99,
   compareAtUsdPrice: 113,
-  heroImage: "/images/products/g200-sport-audio-glasses.webp",
+  heroImage: importedProductAssets["g200-sport-audio-glasses"].heroImage,
   name: { en: "G200 Sport Audio Glasses" },
   tagline: { en: "Open-ear Bluetooth audio in a lightweight wraparound sport frame." },
   description: { en: "G200 combines open-ear Bluetooth audio, a wraparound PC lens and magnetic charging for outdoor training, riding and everyday movement." },
@@ -73,17 +194,8 @@ products.unshift({
   features: ["open-ear-audio", "bluetooth-music", "calls", "sunglasses"],
   frameStyle: "sport",
   lensType: "sun",
-  colors: [{
-    id: "g200-blue-mirror",
-    name: { en: "Blue mirror lens" },
-    hex: "#21ace5",
-    images: ["/images/products/g200-sport-audio-glasses.webp"],
-    available: true,
-  }, {
-    id: "g200-black-preference", name: { en: "Black preference" }, hex: "#202225", images: ["/images/products/g200-sport-audio-glasses.webp"], available: true,
-  }, {
-    id: "g200-grey-preference", name: { en: "Grey preference" }, hex: "#8d9091", images: ["/images/products/g200-sport-audio-glasses.webp"], available: true,
-  }],
+  colors: importedProductAssets["g200-sport-audio-glasses"].colors.map((color) => ({ ...color, images: [...color.images], name: { en: color.name } })),
+  detailImages: [...importedProductAssets["g200-sport-audio-glasses"].detailImages],
   specifications: [
     { label: { en: "Bluetooth chip" }, value: { en: "JL7006" } },
     { label: { en: "Bluetooth version" }, value: { en: "5.3" } },
@@ -122,13 +234,15 @@ const publishedProduct = (
   name: string,
   usdPrice: number,
   compareAtUsdPrice: number,
-): Product => ({
+): Product => {
+  const imported = importedProductAssets[id as keyof typeof importedProductAssets];
+  return ({
   id,
   slug: id,
   demo: false,
   usdPrice,
   compareAtUsdPrice,
-  heroImage: `/images/products/${id}.webp`,
+  heroImage: heroImageOverrides[id] ?? imported?.heroImage ?? `/images/products/${id}.webp`,
   name: { en: name },
   tagline: { en: "Product configuration confirmed by sales before payment." },
   description: { en: "Browse the supplied product imagery, then request an order. Sales confirms the final configuration, availability, shipping and payment instructions for your destination." },
@@ -136,17 +250,20 @@ const publishedProduct = (
   features: [],
   frameStyle: "wayfarer",
   lensType: "clear",
-  colors: [
-    { id: `${id}-black-preference`, name: { en: "Black preference" }, hex: "#202225", images: [`/images/products/${id}.webp`], available: true },
-    { id: `${id}-grey-preference`, name: { en: "Grey preference" }, hex: "#8d9091", images: [`/images/products/${id}.webp`], available: true },
-    { id: `${id}-brown-preference`, name: { en: "Brown preference" }, hex: "#8c6248", images: [`/images/products/${id}.webp`], available: true },
-  ],
-  specifications: [{ label: { en: "Product information" }, value: { en: "Configuration and availability confirmed by sales before payment." } }],
+  colors: colourAssetOverrides[id] ?? (imported
+    ? imported.colors.map((color) => ({ ...color, images: [...color.images], name: { en: color.name } }))
+    : [{ id: `${id}-black`, name: { en: "Black" }, hex: "#202225", images: [`/images/products/${id}.webp`], available: true }]),
+  detailImages: imported
+    ? imported.detailImages.filter((image) => !extractedSpecificationArtwork[id]?.includes(image))
+    : [],
+  technicalDiagram: technicalDiagrams[id],
+  specifications: transcribedSpecifications[id] ?? [{ label: { en: "Product information" }, value: { en: "Configuration and availability confirmed by sales before payment." } }],
   inTheBox: [{ en: "Final contents are confirmed by sales with your order request." }],
   compatibility: { en: "Contact sales to confirm the selected model configuration, phone compatibility where applicable, shipping destination and final order details." },
   faq: [{ question: { en: "How do I order this model?" }, answer: { en: "Select Request order / Contact sales. Sales will confirm the product configuration, availability, shipping and payment instructions before any charge." } }],
   seo: { title: { en: `${name} | CoWin` }, description: { en: `${name}. Launch price in USD. Request an order from CoWin sales.` } },
-});
+  });
+};
 
 products.unshift(
   publishedProduct("g06-l", "G06-L Smart Glasses", 39.99, 119),

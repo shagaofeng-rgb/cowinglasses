@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShieldCheck, Truck, Undo2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ArrowUp, ArrowUpRight, ShieldCheck, Truck, Undo2 } from "lucide-react";
+import { useState } from "react";
 import type { Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
@@ -17,12 +17,10 @@ type Fact = { value: string; label: string };
 
 export function ProductDetail({ product, locale }: { product: Product; locale: Locale }) {
   const [sku, setSku] = useState(product.colors[0]);
+  const [selectedImage, setSelectedImage] = useState(product.colors[0]?.images[0] ?? product.heroImage);
   const t = messages[locale];
   const name = localize(product.name, locale);
-  const gallery = useMemo(
-    () => Array.from(new Set([product.heroImage, ...product.colors.flatMap((color) => color.images)])).slice(0, 4),
-    [product],
-  );
+  const gallery = sku.images.slice(0, 6);
   const facts = getFacts(product);
 
   return (
@@ -31,7 +29,8 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
         <div>
           <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-white p-4 md:p-6">
             <Image
-              src={sku.images[0] ?? product.heroImage}
+              key={selectedImage}
+              src={selectedImage}
               alt={`${name} in ${localize(sku.name, locale)}`}
               width={1400}
               height={1200}
@@ -46,8 +45,8 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
               <button
                 key={image}
                 type="button"
-                onClick={() => setSku(product.colors.find((color) => color.images.includes(image)) ?? product.colors[0])}
-                className={`overflow-hidden rounded-xl border bg-white p-1 transition hover:border-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${(sku.images[0] ?? product.heroImage) === image ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                onClick={() => setSelectedImage(image)}
+                className={`overflow-hidden rounded-xl border bg-white p-1 transition hover:border-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${selectedImage === image ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
                 aria-label={`View ${name} image ${index + 1}`}
               >
                 <Image src={image} alt="" width={280} height={220} className="aspect-[4/3] w-full object-contain p-1" sizes="(max-width: 640px) 30vw, 15vw" />
@@ -85,33 +84,38 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
             )}
           </div>
 
-          <fieldset className="mt-7">
-            <legend className="font-bold">{t.common.chooseColor}</legend>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {product.colors.map((color) => (
-                <button
-                  key={color.id}
-                  type="button"
-                  aria-pressed={color.id === sku.id}
-                  onClick={() => setSku(color)}
-                  className={`flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${color.id === sku.id ? "border-[var(--ink)] bg-[var(--surface)]" : "border-[var(--line)] hover:border-[var(--ink)]"}`}
-                >
-                  <span className="h-4 w-4 rounded-full border border-black/10" style={{ background: color.hex }} />
-                  {localize(color.name, locale)}
-                </button>
-              ))}
-            </div>
-            {!product.demo && <p className="mt-3 text-xs leading-5 text-[var(--muted)]">Your colour preference is included with the sales request. Final availability is confirmed before payment.</p>}
-          </fieldset>
+          {product.colors.length > 1 ? (
+            <fieldset className="mt-7">
+              <legend className="font-bold">{t.common.chooseColor}</legend>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {product.colors.map((color) => (
+                  <button
+                    key={color.id}
+                    type="button"
+                    aria-pressed={color.id === sku.id}
+                    onClick={() => {
+                      setSku(color);
+                      setSelectedImage(color.images[0] ?? product.heroImage);
+                    }}
+                    className={`flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${color.id === sku.id ? "border-[var(--ink)] bg-[var(--surface)]" : "border-[var(--line)] hover:border-[var(--ink)]"}`}
+                  >
+                    <span className="h-4 w-4 rounded-full border border-black/10" style={{ background: color.hex }} />
+                    {localize(color.name, locale)}
+                  </button>
+                ))}
+              </div>
+              {!product.demo && <p className="mt-3 text-xs leading-5 text-[var(--muted)]">Your colour preference is included with the sales request. Final availability is confirmed before payment.</p>}
+            </fieldset>
+          ) : null}
 
           <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              className="button-primary rounded-full uppercase tracking-[.08em]"
+              className="button-primary product-action-buy rounded-full uppercase tracking-[.12em]"
               href={`/${locale}/checkout?product=${product.slug}&color=${encodeURIComponent(sku.id)}`}
             >
-              BUY
+              <span>BUY</span><ArrowUpRight size={17} strokeWidth={2.4} />
             </Link>
-            <AddToCart product={product} skuId={sku.id} locale={locale} variant="secondary" className="rounded-full uppercase tracking-[.08em]" />
+            <AddToCart product={product} skuId={sku.id} locale={locale} variant="secondary" className="product-action-cart rounded-full uppercase tracking-[.12em]" />
           </div>
 
           <div className="mt-6 grid gap-3 border-t border-[var(--line)] pt-6 text-sm">
@@ -126,7 +130,7 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
       <ProductFeatureBand product={product} />
 
       <section id="specifications" className="shell py-14">
-        <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
+        <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
           <div>
             <p className="eyebrow">Technical details</p>
             <h2 className="mt-2 text-4xl font-black tracking-[-.06em]">Technical<br />specifications</h2>
@@ -135,6 +139,11 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
                 ? "Parameters are transcribed from the supplied G200 product material."
                 : "Product details shown below are limited to the supplied information. Sales confirms the final configuration before payment."}
             </p>
+            {product.technicalDiagram ? (
+              <div className="mt-7 grid min-h-72 place-items-center rounded-3xl bg-transparent p-2">
+                <Image src={product.technicalDiagram} alt={`${name} product dimensions`} width={1000} height={800} className="h-auto max-h-80 w-full object-contain mix-blend-multiply" sizes="(max-width: 1024px) 100vw, 40vw" />
+              </div>
+            ) : null}
           </div>
           <dl className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white">
             {product.specifications.map((spec, index) => (
@@ -147,20 +156,30 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
         </div>
       </section>
 
-      <section id="story" className="border-y border-[var(--line)] bg-[var(--surface)]">
-        <div className="shell grid gap-10 py-14 lg:grid-cols-[.9fr_1.1fr]">
-          <div>
-            <p className="eyebrow">Product story</p>
-            <h2 className="mt-2 text-4xl font-black tracking-[-.06em]">Built for the way you move.</h2>
-            <p className="mt-5 max-w-xl leading-7 text-[var(--muted)]">{localize(product.description, locale)}</p>
-            {product.translationNote && <InfoBlock title={t.product.translation} text={localize(product.translationNote, locale)} />}
-            {product.prescriptionNote && <InfoBlock title={t.product.prescription} text={localize(product.prescriptionNote, locale)} link={{ label: t.product.lensLink, href: `/${locale}/lens-guide` }} />}
+      {product.detailImages?.length ? (
+        <section id="design" className="border-b border-[var(--line)] bg-white py-14">
+          <div className="shell">
+            <div className="mb-8 max-w-2xl">
+              <p className="eyebrow">Product design</p>
+              <h2 className="mt-2 text-4xl font-black tracking-[-.06em]">Designed in detail.</h2>
+              <p className="mt-4 leading-7 text-[var(--muted)]">Supplied product-detail artwork for {name}.</p>
+            </div>
+            <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-[var(--line)] bg-white">
+              {product.detailImages.map((image, index) => (
+                <Image
+                  key={image}
+                  src={image}
+                  alt={`${name} product detail ${index + 1}`}
+                  width={1800}
+                  height={1800}
+                  className="block h-auto w-full"
+                  sizes="(max-width: 1024px) 100vw, 1024px"
+                />
+              ))}
+            </div>
           </div>
-          <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-white p-4 md:p-6">
-            <Image src={product.heroImage} alt={name} width={1200} height={900} className="aspect-[4/3] w-full object-contain" sizes="(max-width: 1024px) 100vw, 55vw" />
-          </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       <section className="shell py-14">
         <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
@@ -190,6 +209,15 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
           {products.filter((candidate) => !candidate.demo && candidate.id !== product.id).slice(0, 3).map((candidate) => <ProductCard product={candidate} locale={locale} key={candidate.id} />)}
         </div>
       </section>
+
+      <button
+        type="button"
+        className="fixed right-5 top-1/2 z-40 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-[var(--ink)] text-white shadow-[0_12px_30px_rgba(0,0,0,.2)] transition hover:-translate-y-[55%] hover:bg-[var(--lime)] hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ink)]"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to the top of this product page"
+      >
+        <ArrowUp size={18} strokeWidth={2.5} />
+      </button>
     </>
   );
 }

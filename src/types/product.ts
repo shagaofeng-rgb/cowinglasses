@@ -43,6 +43,10 @@ export interface Product {
   lensType: LensType;
   colors: ColorSku[];
   heroImage: string;
+  /** Supplied English product-detail artwork, preserved in its source sequence. */
+  detailImages?: string[];
+  /** Isolated product dimensions artwork shown beside the transcribed specification table. */
+  technicalDiagram?: string;
   camera?: CameraSpecs;
   translationNote?: LocalizedText;
   prescriptionNote?: LocalizedText;
