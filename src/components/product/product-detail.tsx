@@ -111,7 +111,7 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
                 Request order / Contact sales
               </Link>
             )}
-            <a className="button-secondary" href="#specifications">View specifications</a>
+            <a className="inline-flex min-h-11 items-center justify-center rounded-full border border-[var(--ink)] px-5 text-sm font-black transition hover:bg-[var(--ink)] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]" href="#specifications">View specifications</a>
           </div>
 
           <div className="mt-6 grid gap-3 border-t border-[var(--line)] pt-6 text-sm">
