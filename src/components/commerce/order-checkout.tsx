@@ -83,7 +83,7 @@ export function OrderCheckout({ locale }: { locale: Locale }) {
 
           <div className="mt-7 flex items-baseline justify-between border-b border-[var(--line)] pb-5">
             <span className="font-bold">Launch price</span>
-            <p><span className="mr-2 text-sm text-[var(--muted)] line-through">USD 85</span><strong>USD 52</strong></p>
+            <p><span className="mr-2 text-sm text-[var(--muted)] line-through">USD {formatUsd(g200.compareAtUsdPrice ?? g200.usdPrice)}</span><strong>USD {formatUsd(g200.usdPrice)}</strong></p>
           </div>
           <div className="flex justify-between border-b border-[var(--line)] py-5 text-sm">
             <span>Shipping</span>
@@ -91,7 +91,7 @@ export function OrderCheckout({ locale }: { locale: Locale }) {
           </div>
           <div className="flex justify-between py-5 text-lg font-black">
             <span>Product subtotal</span>
-            <span>USD 52</span>
+            <span>USD {formatUsd(g200.usdPrice)}</span>
           </div>
 
           <Link href={`/${locale}/support/contact?product=g200-sport-audio-glasses&source=checkout`} className="button-primary w-full">
@@ -108,6 +108,8 @@ export function OrderCheckout({ locale }: { locale: Locale }) {
     </main>
   );
 }
+
+function formatUsd(value: number) { return value.toFixed(2).replace(/\.00$/, ""); }
 
 function Field({ label, full = false }: { label: string; full?: boolean }) {
   return <label className={full ? "grid gap-2 sm:col-span-2" : "grid gap-2"}><span className="text-sm font-bold">{label}</span><input className="min-h-12 rounded-xl border border-[var(--line)] bg-white px-4 outline-none ring-[var(--lime)] focus:ring-2" /></label>;
