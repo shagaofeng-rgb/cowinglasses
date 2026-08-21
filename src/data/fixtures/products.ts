@@ -56,3 +56,57 @@ products.push(
     colors: [{ id: "studio-ink", name: { en: "Ink", ar: "حبر", es: "Tinta", pt: "Tinta", ja: "インク", ko: "잉크" }, hex: "#1f2529", images: [image], available: true }],
   },
 );
+
+
+// G200 is the first confirmed, published English product. Other entries remain demo catalogue data.
+products.unshift({
+  id: "g200-sport-audio-glasses",
+  slug: "g200-sport-audio-glasses",
+  demo: false,
+  usdPrice: 52,
+  compareAtUsdPrice: 85,
+  heroImage: "https://raw.githubusercontent.com/shagaofeng-rgb/cowinglasses/codex/launch-english-products/public/images/products/g200-sport.webp",
+  name: { en: "G200 Sport Audio Glasses" },
+  tagline: { en: "Open-ear Bluetooth audio in a lightweight wraparound sport frame." },
+  description: { en: "G200 combines open-ear Bluetooth audio, a wraparound PC lens and magnetic charging for outdoor training, riding and everyday movement." },
+  collections: ["explore", "music-movement", "everyday"],
+  features: ["open-ear-audio", "bluetooth-music", "calls", "sunglasses"],
+  frameStyle: "sport",
+  lensType: "sun",
+  colors: [{
+    id: "g200-blue",
+    name: { en: "Blue mirror lens" },
+    hex: "#21ace5",
+    images: ["https://raw.githubusercontent.com/shagaofeng-rgb/cowinglasses/codex/launch-english-products/public/images/products/g200-sport.webp"],
+    available: true,
+  }],
+  specifications: [
+    { label: { en: "Bluetooth chip" }, value: { en: "JL7006" } },
+    { label: { en: "Bluetooth version" }, value: { en: "5.3" } },
+    { label: { en: "Bluetooth profiles" }, value: { en: "HFP, A2DP, HID, AVRCP, AVCTP, AVDTP" } },
+    { label: { en: "Audio decoding" }, value: { en: "SBC / AAC" } },
+    { label: { en: "Bluetooth distance" }, value: { en: "More than 10 meters" } },
+    { label: { en: "Frequency range" }, value: { en: "20–20 kHz" } },
+    { label: { en: "Battery capacity" }, value: { en: "100 mAh / 400838" } },
+    { label: { en: "Music playing time" }, value: { en: "5–6 hours" } },
+    { label: { en: "Charging time" }, value: { en: "1.5 hours" } },
+    { label: { en: "Weight" }, value: { en: "43 g" } },
+    { label: { en: "Sound pressure level" }, value: { en: "125 ± 3 dB" } },
+    { label: { en: "Charging port" }, value: { en: "Magnetic charging port" } },
+    { label: { en: "Frame size" }, value: { en: "140 × 155 × 10 mm" } },
+  ],
+  inTheBox: [
+    { en: "G200 Sport Audio Glasses" },
+    { en: "Magnetic charging cable" },
+    { en: "Product documentation" },
+  ],
+  compatibility: { en: "Pair with compatible iOS or Android phones over Bluetooth 5.3. Contact sales to confirm current availability, shipping destination and order details." },
+  faq: [
+    { question: { en: "How long does the battery last?" }, answer: { en: "The rated music playing time is 5–6 hours. Actual results vary with volume, connection and use conditions." } },
+    { question: { en: "How do I order G200?" }, answer: { en: "Select Request order / Contact sales. The sales team will confirm availability, destination, shipping and final order details before payment." } },
+  ],
+  seo: {
+    title: { en: "G200 Sport Audio Glasses | CoWin" },
+    description: { en: "G200 open-ear Bluetooth sport audio glasses. Launch price USD 52, originally USD 85. Request an order from CoWin sales." },
+  },
+});

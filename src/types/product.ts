@@ -28,11 +28,15 @@ export interface CameraSpecs {
 export interface Product {
   id: string;
   slug: string;
-  demo: true;
+  /** True only for placeholder catalogue entries. */
+  demo: boolean;
   name: LocalizedText;
   tagline: LocalizedText;
   description: LocalizedText;
+  /** Authoritative displayed USD price. */
   usdPrice: number;
+  /** Optional original USD price, shown as a strike-through comparison price. */
+  compareAtUsdPrice?: number;
   collections: CollectionSlug[];
   features: Feature[];
   frameStyle: FrameStyle;
