@@ -74,11 +74,15 @@ products.unshift({
   frameStyle: "sport",
   lensType: "sun",
   colors: [{
-    id: "g200-blue",
+    id: "g200-blue-mirror",
     name: { en: "Blue mirror lens" },
     hex: "#21ace5",
     images: ["/images/products/g200-sport-audio-glasses.webp"],
     available: true,
+  }, {
+    id: "g200-black-preference", name: { en: "Black preference" }, hex: "#202225", images: ["/images/products/g200-sport-audio-glasses.webp"], available: true,
+  }, {
+    id: "g200-grey-preference", name: { en: "Grey preference" }, hex: "#8d9091", images: ["/images/products/g200-sport-audio-glasses.webp"], available: true,
   }],
   specifications: [
     { label: { en: "Bluetooth chip" }, value: { en: "JL7006" } },
@@ -132,7 +136,11 @@ const publishedProduct = (
   features: [],
   frameStyle: "wayfarer",
   lensType: "clear",
-  colors: [{ id: `${id}-standard`, name: { en: "Selected product finish" }, hex: "#303438", images: [`/images/products/${id}.webp`], available: true }],
+  colors: [
+    { id: `${id}-black-preference`, name: { en: "Black preference" }, hex: "#202225", images: [`/images/products/${id}.webp`], available: true },
+    { id: `${id}-grey-preference`, name: { en: "Grey preference" }, hex: "#8d9091", images: [`/images/products/${id}.webp`], available: true },
+    { id: `${id}-brown-preference`, name: { en: "Brown preference" }, hex: "#8c6248", images: [`/images/products/${id}.webp`], available: true },
+  ],
   specifications: [{ label: { en: "Product information" }, value: { en: "Configuration and availability confirmed by sales before payment." } }],
   inTheBox: [{ en: "Final contents are confirmed by sales with your order request." }],
   compatibility: { en: "Contact sales to confirm the selected model configuration, phone compatibility where applicable, shipping destination and final order details." },
