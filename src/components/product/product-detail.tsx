@@ -8,6 +8,7 @@ import type { Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
 import { Price } from "@/components/commerce/price";
+import { AddToCart } from "./add-to-cart";
 import { ProductCard } from "./product-card";
 import { ProductFeatureBand } from "./product-feature-band";
 import { products } from "@/data/fixtures/products";
@@ -35,7 +36,8 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
               width={1400}
               height={1200}
               priority
-              className="aspect-[4/3] w-full object-contain"
+              className="aspect-[4/3] w-full object-contain transition-[filter] duration-300"
+              style={{ filter: getColourPreviewFilter(product.id, sku.id) }}
               sizes="(max-width: 1024px) 100vw, 60vw"
             />
           </div>
@@ -102,13 +104,14 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
             {!product.demo && <p className="mt-3 text-xs leading-5 text-[var(--muted)]">Your colour preference is included with the sales request. Final availability is confirmed before payment.</p>}
           </fieldset>
 
-          <div className="mt-7">
+          <div className="mt-7 flex flex-wrap gap-3">
             <Link
-              className="button-primary"
+              className="button-primary rounded-full uppercase tracking-[.08em]"
               href={`/${locale}/checkout?product=${product.slug}&color=${encodeURIComponent(sku.id)}`}
             >
-              Buy now
+              BUY
             </Link>
+            <AddToCart product={product} skuId={sku.id} locale={locale} variant="secondary" className="rounded-full uppercase tracking-[.08em]" />
           </div>
 
           <div className="mt-6 grid gap-3 border-t border-[var(--line)] pt-6 text-sm">
@@ -205,6 +208,13 @@ function getFacts(product: Product): Fact[] {
     { value: `${product.colors.length} choices`, label: "Colour preferences" },
     { value: "Sales confirmed", label: "Configuration before payment" },
   ];
+}
+
+function getColourPreviewFilter(productId: string, colorId: string) {
+  if (productId !== "g200-sport-audio-glasses") return "none";
+  if (colorId === "g200-black-preference") return "grayscale(.88) saturate(.2) contrast(1.08)";
+  if (colorId === "g200-grey-preference") return "grayscale(.72) saturate(.28) brightness(.92) contrast(1.04)";
+  return "none";
 }
 
 function formatUsd(value: number) {
