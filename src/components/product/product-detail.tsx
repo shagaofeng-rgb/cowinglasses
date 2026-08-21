@@ -105,7 +105,7 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
           <div className="mt-7">
             <Link
               className="button-primary"
-              href={`/\${locale}/checkout?product=\${product.slug}&color=\${encodeURIComponent(sku.id)}`}
+              href={`/${locale}/checkout?product=${product.slug}&color=${encodeURIComponent(sku.id)}`}
             >
               Buy now
             </Link>
