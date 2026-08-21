@@ -83,7 +83,7 @@ export function OrderCheckout({ locale }: { locale: Locale }) {
 
           <div className="mt-7 flex items-baseline justify-between border-b border-[var(--line)] pb-5">
             <span className="font-bold">Launch price</span>
-            <p><span className="mr-2 text-sm text-[var(--muted)] line-through">USD {formatUsd(g200.compareAtUsdPrice)}</span><strong>USD {formatUsd(g200.usdPrice)}</strong></p>
+            <p><span className="mr-2 text-sm text-[var(--muted)] line-through">USD {formatUsd(g200.compareAtUsdPrice ?? g200.usdPrice)}</span><strong>USD {formatUsd(g200.usdPrice)}</strong></p>
           </div>
           <div className="flex justify-between border-b border-[var(--line)] py-5 text-sm">
             <span>Shipping</span>
