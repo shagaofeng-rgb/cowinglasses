@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { DemoForm } from "@/components/forms/demo-form";
-import { products } from "@/data/fixtures/products";
+import { products as fixtureProducts } from "@/data/fixtures/products";
 import type { Locale } from "@/lib/i18n";
 import { localize } from "@/lib/i18n";
 import { messages } from "@/messages";
@@ -10,7 +10,7 @@ import type { Product } from "@/types/product";
 
 const productIds = ["g200-sport-audio-glasses", "gl1", "gl6", "v03-t5"];
 
-export function HomePage({ locale }: { locale: Locale }) {
+export function HomePage({ locale, products = fixtureProducts }: { locale: Locale; products?: Product[] }) {
   const t = messages[locale];
   const liveProducts = products.filter((product) => !product.demo);
 

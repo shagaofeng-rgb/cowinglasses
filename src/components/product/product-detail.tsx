@@ -15,7 +15,7 @@ import { products } from "@/data/fixtures/products";
 
 type Fact = { value: string; label: string };
 
-export function ProductDetail({ product, locale }: { product: Product; locale: Locale }) {
+export function ProductDetail({ product, locale, relatedProducts = products }: { product: Product; locale: Locale; relatedProducts?: Product[] }) {
   const [sku, setSku] = useState(product.colors[0]);
   const [selectedImage, setSelectedImage] = useState(product.colors[0]?.images[0] ?? product.heroImage);
   const t = messages[locale];
@@ -206,7 +206,7 @@ export function ProductDetail({ product, locale }: { product: Product; locale: L
       <section className="shell border-t border-[var(--line)] py-12">
         <h2 className="text-3xl font-black tracking-[-.05em]">{t.product.related}</h2>
         <div className="mt-7 grid gap-5 md:grid-cols-3">
-          {products.filter((candidate) => !candidate.demo && candidate.id !== product.id).slice(0, 3).map((candidate) => <ProductCard product={candidate} locale={locale} key={candidate.id} />)}
+          {relatedProducts.filter((candidate) => !candidate.demo && candidate.id !== product.id).slice(0, 3).map((candidate) => <ProductCard product={candidate} locale={locale} key={candidate.id} />)}
         </div>
       </section>
 
