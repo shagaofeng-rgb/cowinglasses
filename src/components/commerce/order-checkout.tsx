@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, CreditCard, FileText, LoaderCircle, ShieldCheck, Truck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
 import { useCart } from "@/providers/cart-provider";
 import type { Product } from "@/types/product";
+import { trackStorefrontEvent } from "@/components/analytics/storefront-tracker";
 
 type CheckoutItem = { product: Product; sku: Product["colors"][number]; quantity: number };
 type SubmitState = { type: "idle" } | { type: "error"; message: string } | { type: "success"; orderNumber: string };
@@ -30,6 +31,7 @@ export function OrderCheckout({ locale, products }: { locale: Locale; products: 
     });
   }, [directProduct, directSku, lines, products]);
   const subtotal = items.reduce((total, item) => total + item.product.usdPrice * item.quantity, 0);
+  useEffect(() => { if (items.length) trackStorefrontEvent("begin_checkout", { itemCount: items.length, subtotal }); }, [items.length, subtotal]);
 
   async function submitOrder(formData: FormData) {
     if (!items.length) return;
@@ -50,6 +52,7 @@ export function OrderCheckout({ locale, products }: { locale: Locale; products: 
       });
       const result = await response.json() as { success: boolean; data?: { orderNumber: string }; error?: { message?: string } };
       if (!response.ok || !result.success || !result.data) throw new Error(result.error?.message ?? "Unable to create your order.");
+      trackStorefrontEvent("order_created", { orderNumber: result.data.orderNumber, itemCount: items.length, subtotal });
       if (!directProduct) clear();
       setSubmitState({ type: "success", orderNumber: result.data.orderNumber });
     } catch (error) {

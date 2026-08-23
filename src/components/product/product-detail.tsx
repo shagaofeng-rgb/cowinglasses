@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUp, ArrowUpRight, ShieldCheck, Truck, Undo2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
@@ -12,6 +12,7 @@ import { AddToCart } from "./add-to-cart";
 import { ProductCard } from "./product-card";
 import { ProductFeatureBand } from "./product-feature-band";
 import { products } from "@/data/fixtures/products";
+import { trackStorefrontEvent } from "@/components/analytics/storefront-tracker";
 
 type Fact = { value: string; label: string };
 
@@ -22,6 +23,7 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
   const name = localize(product.name, locale);
   const gallery = sku.images.slice(0, 6);
   const facts = getFacts(product);
+  useEffect(() => { trackStorefrontEvent("product_view", { productId: product.id, slug: product.slug }); }, [product.id, product.slug]);
 
   return (
     <>
