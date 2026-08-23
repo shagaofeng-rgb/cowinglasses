@@ -463,3 +463,19 @@ export const auditLogs = pgTable("audit_logs", {
   metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
   createdAt,
 }, (table) => [index("audit_logs_actor_created_idx").on(table.actorId, table.createdAt), index("audit_logs_resource_idx").on(table.resourceType, table.resourceId), index("audit_logs_action_created_idx").on(table.action, table.createdAt)]);
+
+export const storefrontEvents = pgTable("storefront_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  eventName: varchar("event_name", { length: 80 }).notNull(),
+  eventId: varchar("event_id", { length: 128 }).notNull(),
+  sessionId: varchar("session_id", { length: 128 }),
+  productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+  orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
+  path: text("path"),
+  referrer: text("referrer"),
+  source: varchar("source", { length: 160 }),
+  medium: varchar("medium", { length: 160 }),
+  campaign: varchar("campaign", { length: 160 }),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
+  createdAt,
+}, (table) => [uniqueIndex("storefront_events_event_unique").on(table.eventId), index("storefront_events_name_created_idx").on(table.eventName, table.createdAt), index("storefront_events_source_created_idx").on(table.source, table.createdAt), index("storefront_events_product_created_idx").on(table.productId, table.createdAt)]);
