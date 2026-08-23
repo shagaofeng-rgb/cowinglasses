@@ -1,30 +1,29 @@
 import Link from "next/link";
+import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { getDatabase } from "@/db/client";
+import { aftersalesRequests, inventoryLevels, orders, products, productSkus, refunds } from "@/db/schema";
+import { requirePermission } from "@/lib/admin/auth";
 
-const metrics = [
-  ["今日销售额", "—", "接入订单数据后显示"],
-  ["本周订单", "—", "尚未初始化 Neon 数据库"],
-  ["本月客单价", "—", "含已支付订单"],
-  ["退款金额", "—", "含已审核退款"],
-];
+const day = (offset = 0) => { const value = new Date(); value.setHours(0, 0, 0, 0); value.setDate(value.getDate() + offset); return value; };
+const money = (value: number) => value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 
-const nextSteps = [
-  ["连接 Neon PostgreSQL", "创建数据库并填写仅服务端使用的 DATABASE_URL。", "数据库设置"],
-  ["创建首个超级管理员", "完成管理员登录、角色和权限初始化。", "用户与权限"],
-  ["导入商品与库存", "将现有商品与 SKU 迁入后台的商品和库存模型。", "商品管理"],
-  ["配置支付与物流", "等待服务商提供回调、签名与生产凭据后启用。", "支付配置"],
-];
-
-export function AdminDashboard() {
-  return <div className="mx-auto max-w-[1560px] px-5 py-7 sm:px-8 lg:px-10">
-    <div className="flex flex-col gap-5 border-b border-black/10 pb-7 sm:flex-row sm:items-end sm:justify-between">
-      <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#538a42]">COWIN Glasses 后台</p><h1 className="mt-2 font-serif text-4xl font-bold tracking-[-0.04em]">数据概览</h1><p className="mt-2 max-w-2xl text-sm leading-6 text-black/55">运营数据将在 Neon 数据库、订单与支付适配器连接后实时显示。当前界面使用明确的初始化状态，不展示伪造业务数据。</p></div>
-      <div className="flex gap-2"><button className="rounded-xl border border-black/15 bg-white px-4 py-2.5 text-sm font-semibold">最近 30 天</button><button className="rounded-xl bg-[#17231c] px-4 py-2.5 text-sm font-bold text-white">导出报表</button></div>
-    </div>
-    <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(([label, value, note]) => <article key={label} className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_10px_30px_rgba(15,25,19,0.04)]"><p className="text-sm font-semibold text-black/58">{label}</p><p className="mt-4 text-4xl font-bold tracking-[-0.05em]">{value}</p><p className="mt-3 text-xs text-black/45">{note}</p></article>)}</div>
-    <div className="mt-6 grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
-      <section className="rounded-2xl border border-black/10 bg-white p-6"><div className="flex items-center justify-between"><div><h2 className="font-serif text-2xl font-bold">订单趋势</h2><p className="mt-1 text-sm text-black/50">等待订单数据接入</p></div><span className="rounded-full bg-[#edf6df] px-3 py-1 text-xs font-bold text-[#477b38]">待初始化</span></div><div className="mt-8 flex h-56 items-end gap-3 rounded-xl bg-[linear-gradient(180deg,rgba(184,230,41,0.12),transparent)] px-6 pb-7">{[24,36,28,52,41,66,38,47,30,58,44,70].map((height, index) => <div key={index} className="flex-1 rounded-t-lg bg-[#dfe9dc]" style={{ height: `${height}%` }} />)}</div></section>
-      <section className="rounded-2xl border border-black/10 bg-white p-6"><h2 className="font-serif text-2xl font-bold">待处理事项</h2><div className="mt-5 space-y-3">{[["库存预警", "连接库存后显示", "库存管理"],["待处理售后", "连接订单后显示", "售后工单"],["支付回调", "配置服务商后启用", "支付配置"]].map(([title, detail, target]) => <div key={title} className="rounded-xl border border-black/8 p-4"><p className="font-semibold">{title}</p><p className="mt-1 text-sm text-black/52">{detail}</p><Link href={`/admin/${target === "库存管理" ? "inventory" : target === "售后工单" ? "tickets" : "settings/payments"}`} className="mt-3 inline-block text-sm font-bold text-[#477b38]">前往配置 →</Link></div>)}</div></section>
-    </div>
-    <section className="mt-6 rounded-2xl border border-[#bdd79a] bg-[#f1f8e7] p-6"><p className="text-xs font-bold uppercase tracking-[0.15em] text-[#477b38]">初始化清单</p><h2 className="mt-2 font-serif text-3xl font-bold">让后台开始服务真实订单</h2><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">{nextSteps.map(([title, description, action]) => <div key={title} className="rounded-xl bg-white/80 p-4"><p className="font-bold">{title}</p><p className="mt-2 min-h-10 text-sm leading-5 text-black/58">{description}</p><span className="mt-3 inline-block text-sm font-bold text-[#477b38]">{action} →</span></div>)}</div></section>
-  </div>;
+export async function AdminDashboard() {
+  await requirePermission("dashboard.read");
+  const db = getDatabase(); const today = day(); const week = day(-6); const month = day(-29);
+  const [paid, todayOrders, weekOrders, monthOrders, refundRows, lowStock, aftersales] = await Promise.all([
+    db.select({ total: orders.totalAmount, createdAt: orders.createdAt }).from(orders).where(and(eq(orders.paymentStatus, "paid"), gte(orders.createdAt, month))),
+    db.select({ id: orders.id }).from(orders).where(gte(orders.createdAt, today)),
+    db.select({ id: orders.id }).from(orders).where(gte(orders.createdAt, week)),
+    db.select({ total: orders.totalAmount }).from(orders).where(gte(orders.createdAt, month)),
+    db.select({ amount: refunds.amount }).from(refunds).where(gte(refunds.createdAt, month)),
+    db.select({ sku: productSkus.sku, name: products.name, onHand: inventoryLevels.onHand, reserved: inventoryLevels.reserved, reorderPoint: inventoryLevels.reorderPoint }).from(inventoryLevels).innerJoin(productSkus, eq(inventoryLevels.skuId, productSkus.id)).innerJoin(products, eq(productSkus.productId, products.id)).where(lte(inventoryLevels.onHand, inventoryLevels.reorderPoint)).orderBy(desc(inventoryLevels.updatedAt)).limit(5),
+    db.select({ id: aftersalesRequests.id }).from(aftersalesRequests).where(eq(aftersalesRequests.status, "requested")),
+  ]);
+  const todaySales = paid.filter((row) => row.createdAt >= today).reduce((sum, row) => sum + Number(row.total), 0);
+  const monthSales = paid.reduce((sum, row) => sum + Number(row.total), 0);
+  const refundsTotal = refundRows.reduce((sum, row) => sum + Number(row.amount), 0);
+  const values = [["今日销售额", money(todaySales), "已付款订单"], ["本周订单", String(weekOrders.length), "所有订单请求"], ["本月客单价", money(monthOrders.length ? monthSales / monthOrders.length : 0), "按本月订单计算"], ["本月退款金额", money(refundsTotal), "退款记录"]];
+  const trend = Array.from({ length: 7 }, (_, index) => { const start = day(index - 6); const end = day(index - 5); return paid.filter((row) => row.createdAt >= start && row.createdAt < end).reduce((sum, row) => sum + Number(row.total), 0); }); const max = Math.max(...trend, 1);
+  return <div className="mx-auto max-w-[1560px] px-5 py-7 sm:px-8 lg:px-10"><div className="flex flex-col gap-5 border-b border-black/10 pb-7 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#538a42]">COWIN Glasses 后台</p><h1 className="mt-2 font-serif text-4xl font-bold tracking-[-.04em]">数据概览</h1><p className="mt-2 text-sm text-black/55">订单、库存和售后数据直接来自 Neon。</p></div><Link href="/admin/orders" className="rounded-xl bg-[#17231c] px-4 py-2.5 text-sm font-bold text-white">查看订单</Link></div><div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{values.map(([title, value, note]) => <article key={title} className="rounded-2xl border border-black/10 bg-white p-5"><p className="text-sm font-semibold text-black/58">{title}</p><p className="mt-4 text-4xl font-bold tracking-[-.05em]">{value}</p><p className="mt-3 text-xs text-black/45">{note}</p></article>)}</div><div className="mt-6 grid gap-5 xl:grid-cols-[1.35fr_.85fr]"><section className="rounded-2xl border border-black/10 bg-white p-6"><h2 className="font-serif text-2xl font-bold">近 7 日已付款销售额</h2><div className="mt-8 flex h-56 items-end gap-3 rounded-xl bg-[#f5f7f4] px-6 pb-7">{trend.map((value, index) => <div className="group flex flex-1 flex-col items-center justify-end gap-2" key={index}><span className="invisible text-[10px] font-bold group-hover:visible">{money(value)}</span><div className="w-full rounded-t-lg bg-[#a6c947]" style={{ height: `${Math.max(4, value / max * 100)}%` }}/><span className="text-[10px] text-black/45">{index === 6 ? "今天" : `${6 - index}天前`}</span></div>)}</div></section><section className="rounded-2xl border border-black/10 bg-white p-6"><h2 className="font-serif text-2xl font-bold">待处理事项</h2><div className="mt-5 grid gap-3"><Card title="库存预警" detail={`${lowStock.length} 个 SKU 低于预警阈值`} href="/admin/inventory"/><Card title="待处理售后" detail={`${aftersales.length} 个申请等待审核`} href="/admin/tickets"/><Card title="今日订单" detail={`${todayOrders.length} 笔订单请求`} href="/admin/orders"/></div></section></div><section className="mt-6 rounded-2xl border border-black/10 bg-white p-6"><div className="flex justify-between"><h2 className="font-serif text-2xl font-bold">库存预警</h2><Link href="/admin/inventory" className="text-sm font-bold text-[#477b38]">库存管理 →</Link></div>{lowStock.length ? <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">{lowStock.map((item) => <div className="rounded-xl bg-[#fff8e9] p-4" key={item.sku}><p className="font-bold">{item.name}</p><p className="mt-1 font-mono text-xs text-black/55">{item.sku}</p><p className="mt-3 text-sm">可用 {item.onHand - item.reserved} / 阈值 {item.reorderPoint}</p></div>)}</div> : <p className="mt-5 rounded-xl bg-[#f5f7f4] p-5 text-sm text-black/55">暂无低于预警阈值的已配置库存。</p>}</section></div>;
 }
+function Card({ title, detail, href }: { title: string; detail: string; href: string }) { return <div className="rounded-xl border border-black/8 p-4"><p className="font-semibold">{title}</p><p className="mt-1 text-sm text-black/52">{detail}</p><Link href={href} className="mt-3 inline-block text-sm font-bold text-[#477b38]">前往处理 →</Link></div>; }
