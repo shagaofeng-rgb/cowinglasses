@@ -1,9 +1,10 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import {
   customers,
+  coupons,
   inventoryLevels,
   inventoryMovements,
   orderItems,
@@ -32,6 +33,7 @@ const checkoutSchema = z.object({
   }),
   shippingMethod: z.enum(["quote", "forwarder"]),
   paymentPreference: z.enum(["card", "transfer"]),
+  couponCode: z.string().trim().max(80).regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。").optional().default(""),
   note: z.string().trim().max(2000).optional().default(""),
 });
 
@@ -120,6 +122,16 @@ export async function POST(request: NextRequest) {
           }).returning({ id: customers.id }))[0];
 
       const subtotalCents = items.reduce((total, item) => total + item.unitCents * item.quantity, 0);
+      let discountCents = 0;
+      const couponCode = payload.couponCode.toUpperCase();
+      if (couponCode) {
+        const now = new Date();
+        const coupon = (await tx.select().from(coupons).where(and(eq(coupons.code, couponCode), eq(coupons.isActive, true), or(sql`${coupons.startsAt} is null`, lte(coupons.startsAt, now)), or(sql`${coupons.endsAt} is null`, gte(coupons.endsAt, now)))).limit(1))[0];
+        if (!coupon || (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) || (coupon.minimumAmount !== null && subtotalCents < Math.round(Number(coupon.minimumAmount) * 100))) throw new CheckoutError(409, "COUPON_INVALID", "优惠码无效、已过期或未满足使用条件。");
+        discountCents = coupon.discountType === "percentage" ? Math.round(subtotalCents * Number(coupon.discountValue) / 100) : Math.round(Number(coupon.discountValue) * 100);
+        discountCents = Math.max(0, Math.min(discountCents, subtotalCents));
+        await tx.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1`, updatedAt: now }).where(eq(coupons.id, coupon.id));
+      }
       const shippingAddress = { ...payload.shippingAddress, shippingMethod: payload.shippingMethod };
       const orderNumber = makeOrderNumber();
       const created = await tx.insert(orders).values({
@@ -130,10 +142,11 @@ export async function POST(request: NextRequest) {
         fulfillmentStatus: "unfulfilled",
         currency: "USD",
         subtotalAmount: asAmount(subtotalCents),
-        totalAmount: asAmount(subtotalCents),
+        discountAmount: asAmount(discountCents),
+        totalAmount: asAmount(subtotalCents - discountCents),
         shippingAddress,
         billingAddress: shippingAddress,
-        note: [payload.note, `Payment preference: ${payload.paymentPreference}`].filter(Boolean).join("\n"),
+        note: [payload.note, `Payment preference: ${payload.paymentPreference}`, couponCode ? `Coupon: ${couponCode}` : ""].filter(Boolean).join("\n"),
       }).returning({ id: orders.id, orderNumber: orders.orderNumber });
 
       await tx.insert(orderItems).values(items.map((item) => ({
