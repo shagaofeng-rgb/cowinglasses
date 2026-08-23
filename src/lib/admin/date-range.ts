@@ -8,4 +8,9 @@ export function getDateRange(input: { range?: string; from?: string; to?: string
   const from = new Date(now); from.setHours(0, 0, 0, 0); if (preset === "week") from.setDate(from.getDate() - 6); if (preset === "month") from.setDate(from.getDate() - 29); return { preset: preset === "custom" ? "month" : preset, from, to: end };
 }
 
-export function dateRangeQuery(range: DateRange) { return { range: range.preset, from: range.from.toISOString().slice(0, 10), to: range.to.toISOString().slice(0, 10) }; }
+export function dateRangeQuery(range: DateRange) { return { range: range.preset, from: dateInputValue(range.from), to: dateInputValue(range.to) }; }
+
+export function dateInputValue(value: Date) {
+  const year = value.getFullYear(); const month = String(value.getMonth() + 1).padStart(2, "0"); const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
