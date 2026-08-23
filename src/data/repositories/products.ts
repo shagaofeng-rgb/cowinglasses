@@ -57,16 +57,16 @@ function toStoreProduct(record: DatabaseProduct, skus: Array<typeof productSkus.
     const selectedValue = values.find((value) => sku.optionValueIds.includes(value.id));
     const skuMedia = mediaForRecord.filter((item) => item.skuId === sku.id && item.mediaType === "image").map((item) => item.url);
     const fallbackColor = fallback?.colors[index] ?? fallback?.colors[0];
-    return { id: sku.id, name: { en: selectedValue?.value ?? fallbackColor?.name.en ?? "Standard" }, hex: selectedValue?.swatchValue ?? fallbackColor?.hex ?? "#202225", images: skuMedia.length ? skuMedia : fallbackColor?.images ?? [], available: true };
+    return { id: fallbackColor?.id ?? sku.id, skuId: sku.id, name: { en: selectedValue?.value ?? fallbackColor?.name.en ?? "Standard" }, hex: selectedValue?.swatchValue ?? fallbackColor?.hex ?? "#202225", images: skuMedia.length ? skuMedia : fallbackColor?.images ?? [], available: true };
   });
   const primaryImage = mediaForRecord.find((item) => item.mediaType === "image")?.url ?? colors[0]?.images[0] ?? fallback?.heroImage ?? "/images/demo/product-pro-v2.png";
   const detailImages = mediaForRecord.filter((item) => item.mediaType === "detail").map((item) => item.url);
 
   return {
-    id: record.id, slug: record.slug, demo: false, usdPrice: Number(firstSku?.price ?? fallback?.usdPrice ?? 0), compareAtUsdPrice: firstSku?.compareAtPrice ? Number(firstSku.compareAtPrice) : fallback?.compareAtUsdPrice, heroImage: primaryImage,
+    id: fallback?.id ?? record.slug, slug: record.slug, demo: false, usdPrice: Number(firstSku?.price ?? fallback?.usdPrice ?? 0), compareAtUsdPrice: firstSku?.compareAtPrice ? Number(firstSku.compareAtPrice) : fallback?.compareAtUsdPrice, heroImage: primaryImage,
     name: { en: record.name }, tagline: { en: record.shortDescription ?? fallback?.tagline.en ?? "Product configuration confirmed by sales before payment." }, description: { en: record.description ?? fallback?.description.en ?? "Product information is confirmed by sales before payment." },
     collections: fallback?.collections ?? ["everyday"], features: fallback?.features ?? [], frameStyle: fallback?.frameStyle ?? "wayfarer", lensType: fallback?.lensType ?? "clear",
-    colors: colors.length ? colors : (fallback?.colors ?? [{ id: firstSku?.id ?? record.id, name: { en: "Standard" }, hex: "#202225", images: [primaryImage], available: true }]),
+    colors: colors.length ? colors : (fallback?.colors ?? [{ id: record.slug, skuId: firstSku?.id, name: { en: "Standard" }, hex: "#202225", images: [primaryImage], available: true }]),
     detailImages: detailImages.length ? detailImages : fallback?.detailImages, technicalDiagram: mediaForRecord.find((item) => item.mediaType === "diagram")?.url ?? fallback?.technicalDiagram,
     camera: fallback?.camera, translationNote: fallback?.translationNote, prescriptionNote: fallback?.prescriptionNote,
     specifications: fallback?.specifications ?? [{ label: { en: "Product information" }, value: { en: "Configuration is confirmed by sales before payment." } }], inTheBox: fallback?.inTheBox ?? [{ en: "Final contents are confirmed by sales with your order request." }], compatibility: fallback?.compatibility ?? { en: "Contact sales to confirm configuration and compatibility." }, faq: fallback?.faq ?? [],

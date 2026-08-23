@@ -115,7 +115,7 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
             >
               <span>BUY</span><ArrowUpRight size={17} strokeWidth={2.4} />
             </Link>
-            <AddToCart product={product} skuId={sku.id} locale={locale} variant="secondary" className="product-action-cart rounded-full uppercase tracking-[.12em]" />
+            <AddToCart product={product} skuId={sku.skuId ?? sku.id} locale={locale} variant="secondary" className="product-action-cart rounded-full uppercase tracking-[.12em]" />
           </div>
 
           <div className="mt-6 grid gap-3 border-t border-[var(--line)] pt-6 text-sm">

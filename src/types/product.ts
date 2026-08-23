@@ -11,6 +11,8 @@ export type LensType = "clear" | "sun" | "photochromic" | "blue-light";
 
 export interface ColorSku {
   id: string;
+  /** Server-side SKU identifier. Public URLs and browser carts keep the stable colour id. */
+  skuId?: string;
   name: LocalizedText;
   hex: string;
   images: string[];
