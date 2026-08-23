@@ -9,7 +9,7 @@ import { writeAuditLog } from "@/lib/admin/audit";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import { adminUserRoles, adminUsers, permissions, rolePermissions, roles } from "@/db/schema";
 
-const credentialsSchema = z.object({ email: z.string().email().max(320), password: z.string().min(8).max(200) });
+const credentialsSchema = z.object({ email: z.string().trim().min(3).max(320), password: z.string().min(8).max(200) });
 
 async function getRolesForUser(adminUserId: string) {
   const records = await getDatabase().select({ code: roles.code }).from(adminUserRoles).innerJoin(roles, eq(adminUserRoles.roleId, roles.id)).where(eq(adminUserRoles.adminUserId, adminUserId));
@@ -23,7 +23,7 @@ export const adminAuthOptions: NextAuthOptions = {
   providers: [CredentialsProvider({
     id: "admin-credentials",
     name: "COWIN 管理员账号",
-    credentials: { email: { label: "邮箱", type: "email" }, password: { label: "密码", type: "password" } },
+    credentials: { email: { label: "管理员账号", type: "text" }, password: { label: "密码", type: "password" } },
     async authorize(rawCredentials) {
       const parsed = credentialsSchema.safeParse(rawCredentials);
       if (!parsed.success || !isDatabaseConfigured()) return null;
