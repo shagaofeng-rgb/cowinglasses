@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
@@ -42,12 +42,12 @@ async function bootstrap() {
 
   const client = postgres(process.env.DATABASE_URL, { max: 1, prepare: false });
   try {
-    const migration = await readFile(path.join(process.cwd(), "drizzle", "0000_hesitant_bucky.sql"), "utf8");
-    for (const statement of migration.split("--> statement-breakpoint").map((item) => item.trim()).filter(Boolean)) {
-      try {
-        await client.unsafe(statement);
-      } catch (error) {
-        if (!ignorableMigrationError(error)) throw error;
+    const migrationDirectory = path.join(process.cwd(), "drizzle");
+    const migrationFiles = (await readdir(migrationDirectory)).filter((file) => /^\d+_.+\.sql$/.test(file)).sort();
+    for (const file of migrationFiles) {
+      const migration = await readFile(path.join(migrationDirectory, file), "utf8");
+      for (const statement of migration.split("--> statement-breakpoint").map((item) => item.trim()).filter(Boolean)) {
+        try { await client.unsafe(statement); } catch (error) { if (!ignorableMigrationError(error)) throw error; }
       }
     }
 
