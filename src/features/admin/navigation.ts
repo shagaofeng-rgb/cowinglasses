@@ -42,7 +42,7 @@ export const adminNavigation: AdminNavigationGroup[] = [
       { href: "/admin/attributes", label: "规格与属性", description: "商品选项、属性与 SKU 规则", permission: "catalog.read" },
       { href: "/admin/inventory", label: "库存管理", description: "可售库存、预警阈值与盘点", permission: "catalog.read" },
       { href: "/admin/inventory-ledger", label: "库存流水", description: "每次库存变动的可追溯记录", permission: "catalog.read" },
-      { href: "/admin/suppliers", label: "供应商管理", description: "供应商、采购与供货资料", permission: "catalog.read", state: "setup" },
+      { href: "/admin/suppliers", label: "供应商管理", description: "供应商、采购与供货资料", permission: "catalog.read", state: "ready" },
       { href: "/admin/promotions", label: "优惠与促销", description: "优惠券、折扣、满减与活动", permission: "catalog.read" },
       { href: "/admin/reviews", label: "评价管理", description: "商品评价审核与回复", permission: "catalog.read", state: "setup" },
     ],
