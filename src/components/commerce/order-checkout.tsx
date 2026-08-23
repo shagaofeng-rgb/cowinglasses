@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
 import { useCart } from "@/providers/cart-provider";
 import type { Product } from "@/types/product";
-import { trackStorefrontEvent } from "@/components/analytics/storefront-tracker";
+import { getStorefrontSessionId, trackStorefrontEvent } from "@/components/analytics/storefront-tracker";
 
 type CheckoutItem = { product: Product; sku: Product["colors"][number]; quantity: number };
 type SubmitState = { type: "idle" } | { type: "error"; message: string } | { type: "success"; orderNumber: string };
@@ -48,6 +48,7 @@ export function OrderCheckout({ locale, products }: { locale: Locale; products: 
           shippingMethod: shipping,
           paymentPreference: payment,
           couponCode: String(formData.get("couponCode") ?? ""),
+          analyticsSessionId: getStorefrontSessionId(),
           note: String(formData.get("note") ?? ""),
         }),
       });

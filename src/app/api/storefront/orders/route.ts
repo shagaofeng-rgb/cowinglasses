@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
@@ -9,8 +9,11 @@ import {
   inventoryMovements,
   orderItems,
   orders,
+  orderAttributions,
   productSkus,
   products,
+  webSessions,
+  webVisitors,
 } from "@/db/schema";
 
 export const runtime = "nodejs";
@@ -34,6 +37,7 @@ const checkoutSchema = z.object({
   shippingMethod: z.enum(["quote", "forwarder"]),
   paymentPreference: z.enum(["card", "transfer"]),
   couponCode: z.string().trim().max(80).regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。").optional().default(""),
+  analyticsSessionId: z.string().uuid().optional(),
   note: z.string().trim().max(2000).optional().default(""),
 });
 
@@ -148,6 +152,26 @@ export async function POST(request: NextRequest) {
         billingAddress: shippingAddress,
         note: [payload.note, `Payment preference: ${payload.paymentPreference}`, couponCode ? `Coupon: ${couponCode}` : ""].filter(Boolean).join("\n"),
       }).returning({ id: orders.id, orderNumber: orders.orderNumber });
+
+      if (payload.analyticsSessionId) {
+        const visitSession = (await tx.select().from(webSessions).where(eq(webSessions.clientSessionId, payload.analyticsSessionId)).limit(1))[0];
+        if (visitSession) {
+          const firstSession = (await tx.select().from(webSessions).where(eq(webSessions.visitorId, visitSession.visitorId)).orderBy(asc(webSessions.startedAt)).limit(1))[0];
+          await tx.update(webVisitors).set({ customerId: customer.id, updatedAt: new Date() }).where(eq(webVisitors.id, visitSession.visitorId));
+          await tx.insert(orderAttributions).values({
+            orderId: created[0].id,
+            customerId: customer.id,
+            visitorId: visitSession.visitorId,
+            firstSource: firstSession?.source,
+            firstMedium: firstSession?.medium,
+            firstCampaign: firstSession?.campaign,
+            lastSource: visitSession.source,
+            lastMedium: visitSession.medium,
+            lastCampaign: visitSession.campaign,
+            countryCode: visitSession.countryCode,
+          }).onConflictDoNothing();
+        }
+      }
 
       await tx.insert(orderItems).values(items.map((item) => ({
         orderId: created[0].id,

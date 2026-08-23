@@ -1,6 +1,6 @@
 # CoWin Glasses storefront
 
-An internationalized Next.js App Router frontend for the first CoWin Glasses ecommerce phase. It uses local fixture data only. No real orders, customer data, payment collection, card storage or payment-success simulation exists in this repository.
+An internationalized Next.js App Router storefront and operations console for CoWin Glasses. The storefront, order requests, catalog, customer records, inventory and first-party analytics use Neon PostgreSQL through server-only routes. Card collection remains disabled until the payment provider supplies production credentials.
 
 ## Stack
 
@@ -43,6 +43,19 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 | `NEXT_PUBLIC_SITE_URL` | Canonical base URL used by metadata, sitemap and Product JSON-LD. |
 | `NEXT_PUBLIC_IOS_APP_URL` | Future official iOS listing URL. Empty keeps the demo link inactive. |
 | `NEXT_PUBLIC_ANDROID_APP_URL` | Future official Android listing URL. Empty keeps the demo link inactive. |
+| `DATABASE_URL` | Server-only Neon PostgreSQL connection string. Never use a `NEXT_PUBLIC_` prefix. |
+| `AUTH_SECRET` | Required server secret for administrator sessions and the fallback traffic-IP encryption key. |
+| `ANALYTICS_VISITOR_SECRET` | Optional separate HMAC key for anonymous first-party visitor IDs. |
+| `ANALYTICS_IP_ENCRYPTION_KEY` | Optional 64-character hexadecimal encryption key for raw IP retention. |
+| `CRON_SECRET` | Required only when a scheduler is configured to call `/api/cron/traffic-rollups`. |
+
+## First-party traffic analytics
+
+The storefront records page views, product views, add-to-cart, checkout and order-request events. The `/admin/analytics` area provides source attribution, country, device, visit count and path reporting. Anonymous visitors are identified with a first-party random cookie; they become linked to a customer only after a supported customer interaction such as an order request.
+
+- Raw IP is AES-256-GCM encrypted, retained for 30 days and available only to super administrators. Routine lists display a masked IP.
+- `traffic_daily_rollups` is reserved for scheduled aggregates. The live dashboard uses a 60-second server data cache and always retains raw event detail for the selected range.
+- To enable the optional aggregate job, have a trusted scheduler make an authenticated `GET /api/cron/traffic-rollups` request with `Authorization: Bearer $CRON_SECRET`.
 
 ## Data and asset replacement
 

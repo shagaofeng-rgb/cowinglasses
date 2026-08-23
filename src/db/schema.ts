@@ -1,5 +1,6 @@
 import {
   boolean,
+  date,
   index,
   integer,
   jsonb,
@@ -489,6 +490,8 @@ export const storefrontEvents = pgTable("storefront_events", {
   eventName: varchar("event_name", { length: 80 }).notNull(),
   eventId: varchar("event_id", { length: 128 }).notNull(),
   sessionId: varchar("session_id", { length: 128 }),
+  visitorId: uuid("visitor_id").references(() => webVisitors.id, { onDelete: "set null" }),
+  visitSessionId: uuid("visit_session_id").references(() => webSessions.id, { onDelete: "set null" }),
   productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
   orderId: uuid("order_id").references(() => orders.id, { onDelete: "set null" }),
   path: text("path"),
@@ -498,4 +501,73 @@ export const storefrontEvents = pgTable("storefront_events", {
   campaign: varchar("campaign", { length: 160 }),
   metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
   createdAt,
-}, (table) => [uniqueIndex("storefront_events_event_unique").on(table.eventId), index("storefront_events_name_created_idx").on(table.eventName, table.createdAt), index("storefront_events_source_created_idx").on(table.source, table.createdAt), index("storefront_events_product_created_idx").on(table.productId, table.createdAt)]);
+}, (table) => [uniqueIndex("storefront_events_event_unique").on(table.eventId), index("storefront_events_name_created_idx").on(table.eventName, table.createdAt), index("storefront_events_source_created_idx").on(table.source, table.createdAt), index("storefront_events_product_created_idx").on(table.productId, table.createdAt), index("storefront_events_visit_session_created_idx").on(table.visitSessionId, table.createdAt), index("storefront_events_visitor_created_idx").on(table.visitorId, table.createdAt)]);
+
+export const webVisitors = pgTable("web_visitors", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  visitorHash: varchar("visitor_hash", { length: 128 }).notNull(),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  visitCount: integer("visit_count").default(0).notNull(),
+  firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).defaultNow().notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("web_visitors_hash_unique").on(table.visitorHash), index("web_visitors_customer_idx").on(table.customerId), index("web_visitors_last_seen_idx").on(table.lastSeenAt)]);
+
+export const webSessions = pgTable("web_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  visitorId: uuid("visitor_id").notNull().references(() => webVisitors.id, { onDelete: "cascade" }),
+  clientSessionId: varchar("client_session_id", { length: 128 }).notNull(),
+  visitNumber: integer("visit_number").notNull(),
+  entryPath: text("entry_path"),
+  exitPath: text("exit_path"),
+  referrer: text("referrer"),
+  referrerHost: varchar("referrer_host", { length: 255 }),
+  source: varchar("source", { length: 160 }),
+  medium: varchar("medium", { length: 160 }),
+  campaign: varchar("campaign", { length: 160 }),
+  countryCode: varchar("country_code", { length: 8 }),
+  countryName: varchar("country_name", { length: 120 }),
+  ipHash: varchar("ip_hash", { length: 128 }),
+  ipMasked: varchar("ip_masked", { length: 96 }),
+  encryptedIp: text("encrypted_ip"),
+  ipExpiresAt: timestamp("ip_expires_at", { withTimezone: true }),
+  deviceType: varchar("device_type", { length: 32 }),
+  browser: varchar("browser", { length: 80 }),
+  operatingSystem: varchar("operating_system", { length: 80 }),
+  userAgent: text("user_agent"),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("web_sessions_client_session_unique").on(table.clientSessionId), index("web_sessions_visitor_started_idx").on(table.visitorId, table.startedAt), index("web_sessions_source_started_idx").on(table.source, table.startedAt), index("web_sessions_country_started_idx").on(table.countryCode, table.startedAt), index("web_sessions_last_seen_idx").on(table.lastSeenAt)]);
+
+export const orderAttributions = pgTable("order_attributions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orderId: uuid("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  visitorId: uuid("visitor_id").references(() => webVisitors.id, { onDelete: "set null" }),
+  firstSource: varchar("first_source", { length: 160 }),
+  firstMedium: varchar("first_medium", { length: 160 }),
+  firstCampaign: varchar("first_campaign", { length: 160 }),
+  lastSource: varchar("last_source", { length: 160 }),
+  lastMedium: varchar("last_medium", { length: 160 }),
+  lastCampaign: varchar("last_campaign", { length: 160 }),
+  countryCode: varchar("country_code", { length: 8 }),
+  createdAt,
+}, (table) => [uniqueIndex("order_attributions_order_unique").on(table.orderId), index("order_attributions_last_source_idx").on(table.lastSource), index("order_attributions_visitor_idx").on(table.visitorId)]);
+
+export const trafficDailyRollups = pgTable("traffic_daily_rollups", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  day: date("day").notNull(),
+  source: varchar("source", { length: 160 }).notNull(),
+  medium: varchar("medium", { length: 160 }).notNull(),
+  countryCode: varchar("country_code", { length: 8 }).notNull(),
+  sessions: integer("sessions").default(0).notNull(),
+  visitors: integer("visitors").default(0).notNull(),
+  pageViews: integer("page_views").default(0).notNull(),
+  addToCarts: integer("add_to_carts").default(0).notNull(),
+  checkouts: integer("checkouts").default(0).notNull(),
+  orders: integer("orders").default(0).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [uniqueIndex("traffic_daily_rollups_dimension_unique").on(table.day, table.source, table.medium, table.countryCode), index("traffic_daily_rollups_day_idx").on(table.day)]);

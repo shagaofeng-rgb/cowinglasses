@@ -79,6 +79,8 @@ export const adminNavigation: AdminNavigationGroup[] = [
     label: "数据与系统",
     items: [
       { href: "/admin/analytics/traffic", label: "访问分析", description: "访客、页面与访问趋势", permission: "analytics.read", state: "ready" },
+      { href: "/admin/analytics/visitors", label: "访客明细", description: "访问次数、地区、设备与路径", permission: "analytics.read", state: "ready" },
+      { href: "/admin/analytics/paths", label: "访问路径", description: "会话入口、页面序列与退出页", permission: "analytics.read", state: "ready" },
       { href: "/admin/analytics/attribution", label: "来源归因", description: "渠道与订单来源归因", permission: "analytics.read", state: "ready" },
       { href: "/admin/analytics/funnel", label: "转化漏斗", description: "浏览、加购、结账与支付漏斗", permission: "analytics.read", state: "ready" },
       { href: "/admin/reports/sales", label: "销售报表", description: "销售额、订单和退款报表", permission: "analytics.read" },
