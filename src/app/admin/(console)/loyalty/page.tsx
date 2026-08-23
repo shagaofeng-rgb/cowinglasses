@@ -1,0 +1,14 @@
+import { and, desc, eq, gte, lte } from "drizzle-orm";
+import Link from "next/link";
+import { DateRangeFilter } from "@/components/admin/date-range-filter";
+import { getDatabase } from "@/db/client";
+import { customerLoyaltyLedgers, customers } from "@/db/schema";
+import { requirePermission } from "@/lib/admin/auth";
+import { getDateRange } from "@/lib/admin/date-range";
+
+export default async function LoyaltyPage({ searchParams }: { searchParams: Promise<{ range?: string; from?: string; to?: string }> }) {
+  await requirePermission("customers.read");
+  const range = getDateRange(await searchParams);
+  const rows = await getDatabase().select({ id: customerLoyaltyLedgers.id, createdAt: customerLoyaltyLedgers.createdAt, points: customerLoyaltyLedgers.pointsDelta, balance: customerLoyaltyLedgers.balanceDelta, reason: customerLoyaltyLedgers.reason, customerId: customers.id, name: customers.firstName, email: customers.email }).from(customerLoyaltyLedgers).innerJoin(customers, eq(customerLoyaltyLedgers.customerId, customers.id)).where(and(gte(customerLoyaltyLedgers.createdAt, range.from), lte(customerLoyaltyLedgers.createdAt, range.to))).orderBy(desc(customerLoyaltyLedgers.createdAt)).limit(200);
+  return <main className="mx-auto max-w-6xl px-5 py-7 sm:px-8 lg:px-10"><h1 className="font-serif text-4xl font-bold">积分与余额</h1><p className="mt-2 text-sm text-black/55">所有调整均保留客户、时间、原因与金额流水；可从客户详情进行授权调整。</p><form className="mt-5 rounded-2xl border border-black/10 bg-white p-4"><DateRangeFilter range={range}/><button className="mt-3 rounded-xl bg-[#17231c] px-4 py-2.5 text-sm font-bold text-white">筛选流水</button></form><section className="mt-6 overflow-hidden rounded-2xl border border-black/10 bg-white"><div className="overflow-x-auto"><table className="w-full min-w-[820px] text-left text-sm"><thead className="bg-[#f5f7f4]"><tr><th className="p-4">客户</th><th className="p-4">积分变动</th><th className="p-4">余额变动</th><th className="p-4">原因</th><th className="p-4">时间</th></tr></thead><tbody>{rows.length ? rows.map((row) => <tr key={row.id} className="border-t border-black/8"><td className="p-4"><Link className="font-bold hover:text-[#477a39]" href={`/admin/customers/${row.customerId}`}>{row.name || row.email || "未命名客户"}</Link><p className="mt-1 text-xs text-black/50">{row.email}</p></td><td className={`p-4 font-bold ${row.points >= 0 ? "text-[#397431]" : "text-red-700"}`}>{row.points >= 0 ? "+" : ""}{row.points}</td><td className={`p-4 font-bold ${Number(row.balance) >= 0 ? "text-[#397431]" : "text-red-700"}`}>{Number(row.balance) >= 0 ? "+" : ""}USD {Number(row.balance).toFixed(2)}</td><td className="p-4">{row.reason}</td><td className="p-4 text-black/55">{row.createdAt.toLocaleString("zh-CN")}</td></tr>) : <tr><td colSpan={5} className="p-14 text-center text-black/55">当前日期范围内暂无积分或余额变动。</td></tr>}</tbody></table></div></section></main>;
+}

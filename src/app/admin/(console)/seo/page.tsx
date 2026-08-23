@@ -1,0 +1,17 @@
+import { asc, desc } from "drizzle-orm";
+import Link from "next/link";
+import { getDatabase } from "@/db/client";
+import { contentArticles, products } from "@/db/schema";
+import { requirePermission } from "@/lib/admin/auth";
+
+export default async function SeoPage() {
+  await requirePermission("customers.read");
+  const [productRows, articleRows] = await Promise.all([
+    getDatabase().select({ id: products.id, name: products.name, slug: products.slug, status: products.status, title: products.seoTitle, description: products.seoDescription, keywords: products.seoKeywords }).from(products).orderBy(asc(products.name)),
+    getDatabase().select({ id: contentArticles.id, type: contentArticles.type, title: contentArticles.title, slug: contentArticles.slug, status: contentArticles.status, indexStatus: contentArticles.indexStatus, seoTitle: contentArticles.seoTitle, seoDescription: contentArticles.seoDescription, seoKeywords: contentArticles.seoKeywords }).from(contentArticles).orderBy(desc(contentArticles.updatedAt)),
+  ]);
+  const entries = [...productRows.map((row) => ({ ...row, kind: "商品", href: `/admin/products/${row.id}`, indexStatus: row.status === "active" ? "待搜索引擎检查" : "未发布" })), ...articleRows.map((row) => ({ id: row.id, kind: row.type === "blog" ? "博客" : "新闻", name: row.title, slug: row.slug, status: row.status, title: row.seoTitle, description: row.seoDescription, keywords: row.seoKeywords, href: row.type === "blog" ? "/admin/blog" : "/admin/news", indexStatus: row.indexStatus }))];
+  const complete = entries.filter((row) => row.title && row.description).length;
+  return <main className="mx-auto max-w-6xl px-5 py-7 sm:px-8 lg:px-10"><h1 className="font-serif text-4xl font-bold">SEO 数据</h1><p className="mt-2 text-sm text-black/55">汇总前台商品、新闻和博客的真实 SEO 字段。Google 自然排名和收录数据需在 Google Search Console 授权后才会同步，当前不会伪造排名。</p><div className="mt-6 grid gap-4 sm:grid-cols-3"><Metric label="可管理页面" value={entries.length}/><Metric label="已填写标题与描述" value={complete}/><Metric label="待完善 SEO 字段" value={entries.length - complete}/></div><section className="mt-6 overflow-hidden rounded-2xl border border-black/10 bg-white"><div className="overflow-x-auto"><table className="w-full min-w-[1000px] text-left text-sm"><thead className="bg-[#f5f7f4]"><tr><th className="p-4">类型 / 页面</th><th className="p-4">SEO 标题</th><th className="p-4">SEO 描述</th><th className="p-4">关键词</th><th className="p-4">收录状态</th><th className="p-4">操作</th></tr></thead><tbody>{entries.map((row) => <tr key={`${row.kind}-${row.id}`} className="border-t border-black/8"><td className="p-4"><strong>{row.kind}</strong><p className="mt-1">{row.name}</p><p className="mt-1 font-mono text-xs text-black/45">/{row.slug}</p></td><td className="p-4">{row.title || <span className="text-amber-700">未填写</span>}</td><td className="max-w-xs p-4 text-black/60">{row.description || <span className="text-amber-700">未填写</span>}</td><td className="p-4 text-black/60">{row.keywords || "—"}</td><td className="p-4">{row.indexStatus}</td><td className="p-4"><Link className="rounded-lg border border-black/15 px-3 py-2 text-xs font-bold" href={row.href}>编辑</Link></td></tr>)}</tbody></table></div></section></main>;
+}
+function Metric({ label, value }: { label: string; value: number }) { return <article className="rounded-2xl border border-black/10 bg-white p-5"><p className="text-sm text-black/55">{label}</p><p className="mt-3 text-3xl font-bold">{value}</p></article>; }

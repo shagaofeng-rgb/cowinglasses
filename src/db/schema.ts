@@ -174,6 +174,19 @@ export const productMedia = pgTable("product_media", {
   createdAt,
 }, (table) => [index("product_media_product_idx").on(table.productId), index("product_media_sku_idx").on(table.skuId)]);
 
+export const productReviews = pgTable("product_reviews", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  customerId: uuid("customer_id").references(() => customers.id, { onDelete: "set null" }),
+  rating: integer("rating").notNull(),
+  title: varchar("title", { length: 255 }),
+  body: text("body"),
+  status: varchar("status", { length: 32 }).default("pending").notNull(),
+  adminReply: text("admin_reply"),
+  createdAt,
+  updatedAt,
+}, (table) => [index("product_reviews_product_status_created_idx").on(table.productId, table.status, table.createdAt), index("product_reviews_status_created_idx").on(table.status, table.createdAt)]);
+
 export const inventoryLevels = pgTable("inventory_levels", {
   id: uuid("id").defaultRandom().primaryKey(),
   skuId: uuid("sku_id").notNull().references(() => productSkus.id, { onDelete: "cascade" }),
