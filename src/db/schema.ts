@@ -451,6 +451,13 @@ export const syncJobs = pgTable("sync_jobs", {
   createdAt,
 }, (table) => [index("sync_jobs_status_created_idx").on(table.status, table.createdAt), index("sync_jobs_connection_idx").on(table.channelConnectionId)]);
 
+export const storeSettings = pgTable("store_settings", {
+  key: varchar("key", { length: 128 }).primaryKey(),
+  value: jsonb("value").$type<Record<string, unknown>>().default({}).notNull(),
+  updatedBy: uuid("updated_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const webhookEvents = pgTable("webhook_events", {
   id: uuid("id").defaultRandom().primaryKey(),
   provider: varchar("provider", { length: 64 }).notNull(),
