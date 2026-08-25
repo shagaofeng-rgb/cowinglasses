@@ -1,4 +1,4 @@
-export const supportedPaymentBrands = ["Visa", "Mastercard", "American Express", "Discover", "JCB"] as const;
+export const supportedPaymentBrands = ["Visa", "Mastercard", "Maestro", "JCB", "American Express", "Diners Club", "Discover"] as const;
 
 export type PaymentGatewayReadiness = {
   provider: "oceanpayment";
