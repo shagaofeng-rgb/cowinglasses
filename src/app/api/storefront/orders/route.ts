@@ -1,6 +1,7 @@
 import { and, asc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { quoteShipping } from "@/config/shipping";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import {
   customers,
@@ -34,6 +35,7 @@ const checkoutSchema = z.object({
     province: z.string().trim().max(120).optional().default(""),
     postalCode: z.string().trim().max(32).optional().default(""),
   }),
+  shippingDestinationId: z.enum(["malaysia_west", "malaysia_east", "singapore", "thailand", "vietnam", "taiwan", "australia", "philippines", "indonesia", "united_states", "brazil"]),
   shippingMethod: z.enum(["quote", "forwarder"]),
   paymentPreference: z.enum(["card", "transfer"]),
   couponCode: z.string().trim().max(80).regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。").optional().default(""),
@@ -77,6 +79,14 @@ export async function POST(request: NextRequest) {
     result[line.skuId] = { skuId: line.skuId, quantity: (result[line.skuId]?.quantity ?? 0) + line.quantity };
     return result;
   }, {}));
+
+  const shippingQuote = quoteShipping(
+    payload.shippingDestinationId,
+    mergedLines.reduce((total, line) => total + line.quantity, 0),
+  );
+  if (shippingQuote.status === "unavailable") {
+    return reply(400, { success: false, error: { code: "SHIPPING_UNAVAILABLE", message: shippingQuote.note }, requestId: id });
+  }
 
   try {
     const db = getDatabase();
@@ -136,7 +146,19 @@ export async function POST(request: NextRequest) {
         discountCents = Math.max(0, Math.min(discountCents, subtotalCents));
         await tx.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1`, updatedAt: now }).where(eq(coupons.id, coupon.id));
       }
-      const shippingAddress = { ...payload.shippingAddress, shippingMethod: payload.shippingMethod };
+      const shippingAddress = {
+        ...payload.shippingAddress,
+        shippingMethod: payload.shippingMethod,
+        shippingDestinationId: shippingQuote.destinationId,
+        shippingQuote: {
+          totalCny: shippingQuote.totalCny,
+          totalUsd: shippingQuote.totalUsd,
+          actualWeightKg: shippingQuote.actualWeightKg,
+          chargeableWeightKg: shippingQuote.chargeableWeightKg,
+          volumetricDivisor: shippingQuote.volumetricDivisor,
+        },
+      };
+      const shippingCents = Math.round(shippingQuote.totalUsd * 100);
       const orderNumber = makeOrderNumber();
       const created = await tx.insert(orders).values({
         orderNumber,
@@ -147,10 +169,16 @@ export async function POST(request: NextRequest) {
         currency: "USD",
         subtotalAmount: asAmount(subtotalCents),
         discountAmount: asAmount(discountCents),
-        totalAmount: asAmount(subtotalCents - discountCents),
+        shippingAmount: asAmount(shippingCents),
+        totalAmount: asAmount(subtotalCents - discountCents + shippingCents),
         shippingAddress,
         billingAddress: shippingAddress,
-        note: [payload.note, `Payment preference: ${payload.paymentPreference}`, couponCode ? `Coupon: ${couponCode}` : ""].filter(Boolean).join("\n"),
+        note: [
+          payload.note,
+          `Payment preference: ${payload.paymentPreference}`,
+          `Shipping estimate: ${shippingQuote.destinationLabel} · USD ${shippingQuote.totalUsd.toFixed(2)} · ¥${shippingQuote.totalCny.toFixed(2)}`,
+          couponCode ? `Coupon: ${couponCode}` : "",
+        ].filter(Boolean).join("\n"),
       }).returning({ id: orders.id, orderNumber: orders.orderNumber });
 
       if (payload.analyticsSessionId) {
