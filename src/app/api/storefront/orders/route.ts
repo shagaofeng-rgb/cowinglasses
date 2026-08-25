@@ -1,7 +1,7 @@
 import { and, asc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { quoteShipping } from "@/config/shipping";
+import { getShippingDestination, quoteShipping } from "@/config/shipping";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import {
   customers,
@@ -35,7 +35,7 @@ const checkoutSchema = z.object({
     province: z.string().trim().max(120).optional().default(""),
     postalCode: z.string().trim().max(32).optional().default(""),
   }),
-  shippingDestinationId: z.enum(["malaysia_west", "malaysia_east", "singapore", "thailand", "vietnam", "taiwan", "australia", "philippines", "indonesia", "united_states", "brazil"]),
+  shippingDestinationId: z.string().trim().refine((id) => Boolean(getShippingDestination(id)), "配送目的地暂不支持。"),
   shippingMethod: z.enum(["quote", "forwarder"]),
   paymentPreference: z.enum(["card", "transfer"]),
   couponCode: z.string().trim().max(80).regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。").optional().default(""),

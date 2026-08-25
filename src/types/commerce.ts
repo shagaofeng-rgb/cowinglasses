@@ -4,18 +4,7 @@ export interface ExchangeRate { currency: CurrencyCode; rate: number; updatedAt:
 export interface ShippingRule { region: string; countries: string[]; usdFee: number; estimatedDays: string; excluded?: boolean; }
 export interface CartLine { productId: string; skuId: string; quantity: number; }
 
-export type ShippingDestinationId =
-  | "malaysia_west"
-  | "malaysia_east"
-  | "singapore"
-  | "thailand"
-  | "vietnam"
-  | "taiwan"
-  | "australia"
-  | "philippines"
-  | "indonesia"
-  | "united_states"
-  | "brazil";
+export type ShippingDestinationId = string;
 
 export type ShippingQuoteStatus = "quoted" | "unavailable";
 

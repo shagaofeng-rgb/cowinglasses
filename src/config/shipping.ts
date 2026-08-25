@@ -16,10 +16,24 @@ type DestinationRate = {
   additionalWeightCny?: number;
   perKgCny?: number;
   carrierFeeCny?: number;
+  flatUsdFee?: number;
   volumetricDivisor?: number;
   status?: ShippingQuoteStatus;
   note: string;
 };
+
+const flatRateCountryNames = [
+  "Albania", "Andorra", "Armenia", "Austria", "Azerbaijan", "Belarus", "Belgium", "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Georgia", "Germany", "Greece", "Hungary", "Iceland", "Ireland", "Italy", "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova", "Monaco", "Montenegro", "Netherlands", "North Macedonia", "Norway", "Poland", "Portugal", "Romania", "San Marino", "Serbia", "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Ukraine", "United Kingdom", "Vatican City",
+  "Bahrain", "Egypt", "Iraq", "Israel", "Jordan", "Kuwait", "Lebanon", "Oman", "Palestine", "Qatar", "Saudi Arabia", "Türkiye", "United Arab Emirates", "Yemen",
+] as const;
+
+const flatRateDestinations: readonly DestinationRate[] = flatRateCountryNames.map((label) => ({
+  id: label.toLowerCase().replaceAll(" ", "_").replaceAll("&", "and").replaceAll("ü", "u"),
+  label,
+  billingIncrementKg: productShippingWeightKg,
+  flatUsdFee: 20,
+  note: "Flat USD 20.00 shipping charge per order.",
+}));
 
 /**
  * Local logistics fixture supplied by the carrier. Replace this adapter with a
@@ -37,6 +51,7 @@ export const shippingDestinations: readonly DestinationRate[] = [
   { id: "indonesia", label: "Indonesia", billingIncrementKg: 1, firstWeightCny: 141, additionalWeightCny: 102, carrierFeeCny: 36, volumetricDivisor: 6000, note: "Sensitive goods service with a per-shipment delivery fee; billed in 1 kg increments." },
   { id: "united_states", label: "United States", billingIncrementKg: 0.5, perKgCny: 150, carrierFeeCny: 28, volumetricDivisor: 6000, note: "Sensitive goods service, charged by actual weight at ¥150/kg plus a per-shipment operation fee." },
   { id: "brazil", label: "Brazil — unavailable", billingIncrementKg: 0.5, status: "unavailable", note: "We are unable to ship to Brazil at this time." },
+  ...flatRateDestinations,
 ] as const;
 
 export function getShippingDestination(id: string | null | undefined) {
@@ -67,6 +82,24 @@ export function quoteShipping(destinationId: ShippingDestinationId, itemCount: n
       totalUsd: 0,
       billingIncrementKg: destination.billingIncrementKg,
       volumetricDivisor: destination.volumetricDivisor,
+      note: destination.note,
+    };
+  }
+
+  if (destination.flatUsdFee !== undefined) {
+    return {
+      destinationId,
+      destinationLabel: destination.label,
+      status,
+      itemCount: safeItemCount,
+      actualWeightKg,
+      chargeableWeightKg: actualWeightKg,
+      transportCny: destination.flatUsdFee * shippingCnyPerUsd,
+      carrierFeeCny: 0,
+      handlingAdjustmentCny: 0,
+      totalCny: destination.flatUsdFee * shippingCnyPerUsd,
+      totalUsd: destination.flatUsdFee,
+      billingIncrementKg: destination.billingIncrementKg,
       note: destination.note,
     };
   }
