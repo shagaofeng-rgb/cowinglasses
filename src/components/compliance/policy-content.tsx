@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n";
 import { businessDetails } from "@/config/business";
 import { shippingRules } from "@/data/fixtures/shipping-rules";
 
-export type PolicyType = "shipping" | "returns" | "warranty" | "privacy" | "terms";
+export type PolicyType = "shipping" | "returns" | "warranty" | "privacy" | "terms" | "intellectual-property";
 
 function BusinessIdentity() {
   return <p><strong>Merchant:</strong> {businessDetails.legalName}<br/><strong>Registered address:</strong> {businessDetails.registeredAddress}<br/><strong>Contact:</strong> <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a></p>;
@@ -64,6 +64,19 @@ export function PolicyContent({ locale, type }: { locale: Locale; type: PolicyTy
     <p>For privacy questions or requests, contact <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a>.</p>
   </>;
 
+  if (type === "intellectual-property") return <>
+    {effective}
+    <h2>Intellectual property rights</h2>
+    <p>The CoWin name, website design, content, product images, trademarks and other intellectual property displayed on this website belong to, or are used with permission by, their respective owners. You may not copy, reproduce, modify, distribute or use them without prior written permission.</p>
+    <h2>Report a concern</h2>
+    <p>If you believe that material on this website infringes your intellectual property rights, email <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a>. Please identify the rights you believe are affected, the relevant website address or product, and enough information for us to review your request.</p>
+    <object data="https://www.9-bill.com/index/legal" aria-label="Intellectual property rights notice" className="mt-4 block h-20 w-full rounded-lg border border-[var(--line)] bg-white">
+      <p>Unable to display the intellectual property notice. <a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">Open the notice in a new tab</a>.</p>
+    </object>
+    <p className="mt-3 text-sm">If the embedded notice is unavailable, <a className="font-bold underline underline-offset-4" href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">open the intellectual property notice in a new tab</a>.</p>
+    <BusinessIdentity/>
+  </>;
+
   return <>
     {effective}
     <h2>Merchant information</h2>
@@ -74,11 +87,5 @@ export function PolicyContent({ locale, type }: { locale: Locale; type: PolicyTy
     <p>Shipping, returns and warranty information forms part of these Terms. Please review our <Link href={path("/support/shipping-delivery")}>Shipping &amp; Delivery</Link>, <Link href={path("/support/returns-refunds")}>Returns &amp; Refunds</Link> and <Link href={path("/support/warranty")}>Warranty &amp; Support</Link> pages before ordering.</p>
     <h2>GOVERNING LAW</h2>
     <p>These Terms of Service and any separate agreements whereby we provide you Services shall be governed by and construed in accordance with the laws of UK.</p>
-    <h2>INTELLECTUAL PROPERTY RIGHTS</h2>
-    <p>The CoWin name, website design, content, product images, trademarks and other intellectual property displayed on this website belong to, or are used with permission by, their respective owners. You may not copy, reproduce, modify, distribute or use them without prior written permission.</p>
-    <object data="https://www.9-bill.com/index/legal" aria-label="Intellectual property rights notice" className="mt-4 block h-20 w-full rounded-lg border border-[var(--line)] bg-white">
-      <p>Unable to display the intellectual property notice. <a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">Open the notice in a new tab</a>.</p>
-    </object>
-    <p className="mt-3 text-sm">If the embedded notice is unavailable, <a className="font-bold underline underline-offset-4" href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">open the intellectual property notice in a new tab</a>.</p>
   </>;
 }

@@ -59,6 +59,8 @@ export function RoutePage({
   if (path === "policies/privacy")
     return <Policy locale={locale} type="privacy" />;
   if (path === "policies/terms") return <Policy locale={locale} type="terms" />;
+  if (path === "policies/intellectual-property")
+    return <Policy locale={locale} type="intellectual-property" />;
   return <NotFound locale={locale} />;
 }
 
@@ -880,6 +882,7 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
       warranty: "Warranty & Support",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
+      "intellectual-property": "Intellectual Property Rights",
     },
     ar: {
       shipping: "الشحن والتسليم",
@@ -887,6 +890,7 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
       warranty: "الضمان والدعم",
       privacy: "سياسة الخصوصية",
       terms: "شروط الخدمة",
+      "intellectual-property": "حقوق الملكية الفكرية",
     },
     es: {
       shipping: "Envío y entrega",
@@ -894,6 +898,7 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
       warranty: "Garantía y soporte",
       privacy: "Política de privacidad",
       terms: "Términos de servicio",
+      "intellectual-property": "Derechos de propiedad intelectual",
     },
     pt: {
       shipping: "Envio e entrega",
@@ -901,6 +906,7 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
       warranty: "Garantia e suporte",
       privacy: "Política de privacidade",
       terms: "Termos de serviço",
+      "intellectual-property": "Direitos de propriedade intelectual",
     },
     ja: {
       shipping: "配送とお届け",
@@ -908,6 +914,7 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
       warranty: "保証とサポート",
       privacy: "プライバシーポリシー",
       terms: "利用規約",
+      "intellectual-property": "知的財産権",
     },
     ko: {
       shipping: "배송 및 배송 안내",
@@ -915,6 +922,7 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
       warranty: "보증 및 지원",
       privacy: "개인정보 처리방침",
       terms: "서비스 약관",
+      "intellectual-property": "지식재산권",
     },
   };
   const intros: Record<PolicyType, string> = {
@@ -924,6 +932,7 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
     warranty: "Limited-warranty coverage and claim information.",
     privacy: "How this website handles customer-support information.",
     terms: "Terms for use of this website and enabled checkout services.",
+    "intellectual-property": "Information about CoWin Glasses intellectual property and rights concerns.",
   };
   return (
     <>
