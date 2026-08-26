@@ -14,6 +14,7 @@ import { products as fixtureProducts } from "@/data/fixtures/products";
 import { ProductCard } from "@/components/product/product-card";
 import { CartPage } from "./cart-page";
 import { OrderCheckout } from "./order-checkout";
+import { PaymentVerification } from "./payment-verification";
 import { DemoForm } from "@/components/forms/demo-form";
 import { localize } from "@/lib/i18n";
 import { Price } from "./price";
@@ -42,6 +43,7 @@ export function RoutePage({
   if (path === "cart") return <CartPage locale={locale} products={products} />;
   if (path === "checkout")
     return <OrderCheckout locale={locale} products={products} />;
+  if (path === "payment-test") return <PaymentVerification locale={locale} />;
   if (path === "compare")
     return <Compare locale={locale} products={products} />;
   if (path === "search")
