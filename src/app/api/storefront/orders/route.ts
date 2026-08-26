@@ -1,8 +1,9 @@
 import { and, asc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getShippingDestination, quoteShipping } from "@/config/shipping";
+import { getShippingDestination, getShippingDestinationCountryCode, quoteShipping } from "@/config/shipping";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
+import { createOceanpaymentEmbeddedPayload, isOceanpaymentConfigured, oceanpaymentEnvironment } from "@/lib/commerce/oceanpayment";
 import {
   customers,
   coupons,
@@ -13,6 +14,7 @@ import {
   orderAttributions,
   productSkus,
   products,
+  payments,
   webSessions,
   webVisitors,
 } from "@/db/schema";
@@ -38,6 +40,7 @@ const checkoutSchema = z.object({
   shippingDestinationId: z.string().trim().refine((id) => Boolean(getShippingDestination(id)), "配送目的地暂不支持。"),
   shippingMethod: z.enum(["quote", "forwarder"]),
   paymentPreference: z.enum(["card", "transfer"]),
+  returnUrl: z.string().url().max(1200).optional().default(""),
   couponCode: z.string().trim().max(80).regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。").optional().default(""),
   analyticsSessionId: z.string().uuid().optional(),
   note: z.string().trim().max(2000).optional().default(""),
@@ -62,6 +65,22 @@ function makeOrderNumber() {
   return `CW-${date}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
+function validCheckoutReturnUrl(value: string) {
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    const allowed = host === "cowinglasses.com" || host === "www.cowinglasses.com" || host === "localhost" || host === "127.0.0.1" || host.endsWith(".vercel.app");
+    return allowed && /^\/(en|ar|es|pt|ja|ko)\/checkout$/.test(url.pathname) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function requestIp(request: NextRequest) {
+  const candidate = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip")?.trim() || "";
+  return /^[0-9a-f:.]{3,64}$/i.test(candidate) ? candidate : "";
+}
+
 export async function POST(request: NextRequest) {
   const id = requestId();
   if (!isDatabaseConfigured()) {
@@ -73,6 +92,14 @@ export async function POST(request: NextRequest) {
     payload = checkoutSchema.parse(await request.json());
   } catch {
     return reply(400, { success: false, error: { code: "INVALID_REQUEST", message: "请完整填写联系信息、配送地址和商品数量。" }, requestId: id });
+  }
+
+  if (payload.paymentPreference === "card" && !isOceanpaymentConfigured()) {
+    return reply(503, { success: false, error: { code: "PAYMENT_UNAVAILABLE", message: "信用卡支付暂不可用，请选择银行转账或稍后重试。" }, requestId: id });
+  }
+  const returnUrl = payload.paymentPreference === "card" ? validCheckoutReturnUrl(payload.returnUrl) : null;
+  if (payload.paymentPreference === "card" && !returnUrl) {
+    return reply(400, { success: false, error: { code: "INVALID_RETURN_URL", message: "支付返回地址无效，请刷新结账页后重试。" }, requestId: id });
   }
 
   const mergedLines = Object.values(payload.lines.reduce<Record<string, { skuId: string; quantity: number }>>((result, line) => {
@@ -226,10 +253,50 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      return created[0];
+      if (payload.paymentPreference === "card") {
+        await tx.insert(payments).values({
+          orderId: created[0].id,
+          provider: "oceanpayment",
+          transactionNumber: created[0].orderNumber,
+          status: "pending",
+          amount: asAmount(subtotalCents - discountCents + shippingCents),
+          currency: "USD",
+          rawPayload: { flow: "embedded", status: "created" },
+        });
+      }
+      return {
+        ...created[0],
+        amount: asAmount(subtotalCents - discountCents + shippingCents),
+        countryCode: getShippingDestinationCountryCode(shippingQuote.destinationId),
+        productName: items.map((item) => item.row.product.name).join(", ").slice(0, 500),
+        productSku: items.map((item) => item.row.sku.sku).filter(Boolean).join(",").slice(0, 500),
+        productPrice: items.map((item) => asAmount(item.unitCents)).join(",").slice(0, 500),
+        productNum: String(items.reduce((total, item) => total + item.quantity, 0)),
+      };
     });
+    const payment = payload.paymentPreference === "card" && returnUrl
+      ? createOceanpaymentEmbeddedPayload({
+          order_number: order.orderNumber,
+          order_currency: "USD",
+          order_amount: order.amount,
+          backUrl: returnUrl,
+          billing_lastName: payload.customer.lastName,
+          billing_firstName: payload.customer.firstName,
+          billing_email: payload.customer.email,
+          billing_country: order.countryCode,
+          billing_state: payload.shippingAddress.province || "N/A",
+          billing_city: payload.shippingAddress.city,
+          billing_address: payload.shippingAddress.address,
+          billing_zip: payload.shippingAddress.postalCode || "000000",
+          billing_ip: requestIp(request),
+          productName: order.productName || "CoWin Glasses",
+          productNum: order.productNum,
+          productSku: order.productSku || "COWIN",
+          productPrice: order.productPrice || order.amount,
+        })
+      : undefined;
 
-    return reply(201, { success: true, data: { orderNumber: order.orderNumber, orderId: order.id, paymentStatus: "pending", requiresSalesConfirmation: true }, requestId: id });
+    return reply(201, { success: true, data: { orderNumber: order.orderNumber, orderId: order.id, paymentStatus: "pending", requiresSalesConfirmation: payload.paymentPreference !== "card", payment, paymentEnvironment: payment ? oceanpaymentEnvironment() : undefined }, requestId: id });
   } catch (error) {
     if (error instanceof CheckoutError) {
       return reply(error.status, { success: false, error: { code: error.code, message: error.message }, requestId: id });

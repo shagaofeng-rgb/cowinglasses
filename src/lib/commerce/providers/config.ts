@@ -8,7 +8,7 @@ function status(provider: string, required: string[], webhookPath: string): Inte
 
 export function getPaymentIntegrationStatus(): IntegrationStatus {
   const provider = process.env.PAYMENT_PROVIDER?.trim().toLowerCase() || "unconfigured";
-  if (provider === "oceanpayment") return status(provider, ["OCEANPAYMENT_ACCOUNT", "OCEANPAYMENT_CARD_TERMINAL", "OCEANPAYMENT_CARD_SECURE_CODE", "PAYMENT_WEBHOOK_SECRET"], "/api/webhooks/oceanpayment");
+  if (provider === "oceanpayment") return status(provider, ["OCEANPAYMENT_ACCOUNT", "OCEANPAYMENT_CARD_TERMINAL", "OCEANPAYMENT_CARD_SECURE_CODE", "OCEANPAYMENT_CARD_PUBLIC_KEY", "OCEANPAYMENT_ENV"], "/api/webhooks/oceanpayment");
   if (provider === "qianhai") return status(provider, ["QIANHAI_MERCHANT_ID", "QIANHAI_GATEWAY_URL", "QIANHAI_SECRET_KEY", "QIANHAI_WEBHOOK_SECRET"], "/api/webhooks/qianhai");
   return { provider, configured: false, missing: ["PAYMENT_PROVIDER", "服务商专属凭据"], webhookPath: "/api/webhooks/{provider}" };
 }
@@ -28,7 +28,7 @@ export function getNotificationIntegrationStatus(): IntegrationStatus {
 
 export function webhookSecretFor(provider: string) {
   const name = provider.toLowerCase();
-  if (name === "oceanpayment") return process.env.PAYMENT_WEBHOOK_SECRET;
+  if (name === "oceanpayment") return undefined;
   if (name === "qianhai") return process.env.QIANHAI_WEBHOOK_SECRET;
   if (name === process.env.LOGISTICS_PROVIDER?.toLowerCase()) return process.env.LOGISTICS_WEBHOOK_SECRET;
   return undefined;

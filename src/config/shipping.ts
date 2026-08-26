@@ -58,6 +58,16 @@ export function getShippingDestination(id: string | null | undefined) {
   return shippingDestinations.find((destination) => destination.id === id);
 }
 
+const destinationCountryCodes: Record<string, string> = {
+  malaysia_west: "MY", malaysia_east: "MY", singapore: "SG", thailand: "TH", vietnam: "VN", taiwan: "TW", australia: "AU", philippines: "PH", indonesia: "ID", united_states: "US", brazil: "BR",
+  albania: "AL", andorra: "AD", armenia: "AM", austria: "AT", azerbaijan: "AZ", belarus: "BY", belgium: "BE", bosnia_and_herzegovina: "BA", bulgaria: "BG", croatia: "HR", cyprus: "CY", czechia: "CZ", denmark: "DK", estonia: "EE", finland: "FI", france: "FR", georgia: "GE", germany: "DE", greece: "GR", hungary: "HU", iceland: "IS", ireland: "IE", italy: "IT", kosovo: "XK", latvia: "LV", liechtenstein: "LI", lithuania: "LT", luxembourg: "LU", malta: "MT", moldova: "MD", monaco: "MC", montenegro: "ME", netherlands: "NL", north_macedonia: "MK", norway: "NO", poland: "PL", portugal: "PT", romania: "RO", san_marino: "SM", serbia: "RS", slovakia: "SK", slovenia: "SI", spain: "ES", sweden: "SE", switzerland: "CH", ukraine: "UA", united_kingdom: "GB", vatican_city: "VA",
+  bahrain: "BH", egypt: "EG", iraq: "IQ", israel: "IL", jordan: "JO", kuwait: "KW", lebanon: "LB", oman: "OM", palestine: "PS", qatar: "QA", saudi_arabia: "SA", turkiye: "TR", united_arab_emirates: "AE", yemen: "YE",
+};
+
+export function getShippingDestinationCountryCode(id: ShippingDestinationId) {
+  return destinationCountryCodes[id] ?? "US";
+}
+
 export function quoteShipping(destinationId: ShippingDestinationId, itemCount: number): ShippingQuote {
   const destination = getShippingDestination(destinationId);
   if (!destination) throw new Error("Unsupported shipping destination.");

@@ -99,6 +99,12 @@ Create the GitHub repository first and replace `YOUR_ORG` with its owner. Do not
 5. Set `NEXT_PUBLIC_SITE_URL` to the final HTTPS domain.
 6. Deploy, then verify `/en`, `/ar`, product pages, `/cart`, `/checkout`, `/sitemap.xml` and `/robots.txt`.
 
+### Oceanpayment embedded card checkout
+
+The storefront uses Oceanpayment's embedded credit-card SDK only after the server has created an order from server-side prices and shipping. `OCEANPAYMENT_CARD_SECURE_CODE` is used only on the server to create and validate SHA-256 signatures; it is never bundled into the browser. Configure the following values in Vercel Production: `OCEANPAYMENT_ACCOUNT`, `OCEANPAYMENT_CARD_TERMINAL`, `OCEANPAYMENT_CARD_SECURE_CODE`, `OCEANPAYMENT_CARD_PUBLIC_KEY`, `OCEANPAYMENT_ENV=production` and `OCEANPAYMENT_NOTICE_URL=https://cowinglasses.com/api/webhooks/oceanpayment`.
+
+Set the same `noticeUrl` in the Oceanpayment merchant console. The notification endpoint expects the documented signed XML and responds with `receive-ok`; only a verified server-to-server notification with `payment_status=1` updates an order to paid. Preview environments must use Oceanpayment sandbox credentials. Do not send a real card transaction merely to verify deployment.
+
 ## Backend integration checklist
 
 Implement these adapters or API contracts without changing page-level commerce UI:
