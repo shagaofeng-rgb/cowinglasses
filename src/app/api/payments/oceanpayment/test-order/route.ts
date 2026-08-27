@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from "crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
@@ -46,6 +46,20 @@ function paymentNumber() {
   return `CW-VERIFY-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
+function testOrderSource(token: string) {
+  return `payment_test_${createHash("sha256").update(token).digest("hex").slice(0, 24)}`;
+}
+
+export async function GET(request: NextRequest) {
+  if (process.env.OCEANPAYMENT_TEST_PAYMENTS_ENABLED !== "true" || !isDatabaseConfigured()) return reply(404, { success: false, error: { message: "Payment verification checkout is disabled." } });
+  const configuredToken = process.env.OCEANPAYMENT_TEST_ORDER_TOKEN?.trim();
+  const suppliedToken = request.nextUrl.searchParams.get("token") || "";
+  if (!configuredToken || !sameToken(configuredToken, suppliedToken)) return reply(403, { success: false, error: { message: "This payment verification link is not valid." } });
+  const db = getDatabase();
+  const order = (await db.select({ orderNumber: orders.orderNumber, orderStatus: orders.status, paymentStatus: orders.paymentStatus, totalAmount: orders.totalAmount, currency: orders.currency, createdAt: orders.createdAt, paidAt: orders.paidAt, providerStatus: payments.status, providerReference: payments.providerReference }).from(orders).leftJoin(payments, and(eq(payments.orderId, orders.id), eq(payments.provider, "oceanpayment"))).where(eq(orders.source, testOrderSource(configuredToken))).limit(1))[0];
+  return reply(200, { success: true, data: order ? { ...order, providerReference: Boolean(order.providerReference) } : null });
+}
+
 export async function POST(request: NextRequest) {
   if (process.env.OCEANPAYMENT_TEST_PAYMENTS_ENABLED !== "true") return reply(404, { success: false, error: { message: "Payment verification checkout is disabled." } });
   if (!isDatabaseConfigured() || !isOceanpaymentConfigured()) return reply(503, { success: false, error: { message: "Payment verification service is not configured." } });
@@ -56,7 +70,7 @@ export async function POST(request: NextRequest) {
   const backUrl = returnUrl(input.returnUrl);
   if (!backUrl) return reply(400, { success: false, error: { message: "Invalid payment return address." } });
 
-  const source = `payment_test_${createHash("sha256").update(configuredToken).digest("hex").slice(0, 24)}`;
+  const source = testOrderSource(configuredToken);
   const db = getDatabase();
   const result = await db.transaction(async (tx) => {
     const existing = (await tx.select().from(orders).where(eq(orders.source, source)).limit(1))[0];
