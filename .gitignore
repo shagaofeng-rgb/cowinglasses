@@ -9,3 +9,5 @@ output
 public/qa-comparison.html
 public/images/demo/qa-implementation-split-home.jpg
 public/images/demo/reference-first-layout.png
+.vercel
+.env*
