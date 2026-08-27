@@ -46,6 +46,15 @@ function paymentNumber() {
   return `CW-VERIFY-${new Date().toISOString().slice(0, 10).replaceAll("-", "")}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
 }
 
+/**
+ * This endpoint is deliberately kept outside the storefront catalogue.  The
+ * amount is a server-side, fixed verification value so a private URL can never
+ * be repurposed to charge an arbitrary amount.
+ */
+const verificationAmount = "0.01";
+const verificationSku = "COWIN-PAYMENT-VERIFY-001";
+const verificationDescription = "Private Oceanpayment USD 0.01 verification order. Free shipping. No product fulfillment.";
+
 function testOrderSource(token: string) {
   return `payment_test_${createHash("sha256").update(token).digest("hex").slice(0, 24)}`;
 }
@@ -80,8 +89,8 @@ export async function POST(request: NextRequest) {
     }
     const customer = (await tx.insert(customers).values({ email: input.email, firstName: input.firstName, lastName: input.lastName, source: "payment-verification" }).onConflictDoUpdate({ target: customers.email, set: { firstName: input.firstName, lastName: input.lastName, updatedAt: new Date() } }).returning())[0];
     const address = { country: input.country, address: input.address, city: input.city, province: input.state, postalCode: input.postalCode, paymentVerificationOnly: true };
-    const order = (await tx.insert(orders).values({ orderNumber: paymentNumber(), customerId: customer.id, status: "pending_payment", paymentStatus: "pending", fulfillmentStatus: "unfulfilled", currency: "USD", subtotalAmount: "2.00", discountAmount: "0.00", shippingAmount: "0.00", taxAmount: "0.00", totalAmount: "2.00", source, shippingAddress: address, billingAddress: address, note: "Private Oceanpayment USD 2.00 verification order. No product fulfillment." }).returning())[0];
-    await tx.insert(payments).values({ orderId: order.id, provider: "oceanpayment", transactionNumber: order.orderNumber, status: "pending", amount: "2.00", currency: "USD", rawPayload: { flow: "private-payment-verification", status: "created" } });
+    const order = (await tx.insert(orders).values({ orderNumber: paymentNumber(), customerId: customer.id, status: "pending_payment", paymentStatus: "pending", fulfillmentStatus: "unfulfilled", currency: "USD", subtotalAmount: verificationAmount, discountAmount: "0.00", shippingAmount: "0.00", taxAmount: "0.00", totalAmount: verificationAmount, source, shippingAddress: address, billingAddress: address, note: verificationDescription }).returning())[0];
+    await tx.insert(payments).values({ orderId: order.id, provider: "oceanpayment", transactionNumber: order.orderNumber, status: "pending", amount: verificationAmount, currency: "USD", rawPayload: { flow: "private-payment-verification", status: "created", amount: verificationAmount, freeShipping: true } });
     return { order, customer };
   });
   if (!result.customer) return reply(500, { success: false, error: { message: "Unable to prepare verification customer details." } });
@@ -90,11 +99,11 @@ export async function POST(request: NextRequest) {
   const billingEmail = result.customer.email || input.email;
   const address = result.order.billingAddress as Record<string, string>;
   const payment = createOceanpaymentEmbeddedPayload({
-    order_number: result.order.orderNumber, order_currency: "USD", order_amount: "2.00", backUrl,
+    order_number: result.order.orderNumber, order_currency: "USD", order_amount: verificationAmount, backUrl,
     billing_lastName: billingLastName, billing_firstName: billingFirstName, billing_email: billingEmail,
     billing_country: address.country, billing_state: address.province || "N/A", billing_city: address.city, billing_address: address.address, billing_zip: address.postalCode || "000000",
     billing_ip: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1",
-    productName: "CoWin Glasses payment verification", productNum: "1", productSku: "COWIN-PAYMENT-VERIFY", productPrice: "2.00",
+    productName: "CoWin Glasses payment verification", productNum: "1", productSku: verificationSku, productPrice: verificationAmount,
   });
   return reply(200, { success: true, data: { orderNumber: result.order.orderNumber, payment, paymentEnvironment: oceanpaymentEnvironment() } });
 }
