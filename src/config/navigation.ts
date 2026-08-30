@@ -6,4 +6,10 @@ export const mainNavigation = [
   { href: "/support", label: "support" },
 ] as const;
 
+export const secondaryNavigation = [
+  { href: "/support/contact", label: "contact" },
+  { href: "/news", label: "news" },
+  { href: "/blog", label: "blog" },
+] as const;
+
 export const collectionPaths = ["create", "explore", "everyday", "music-movement", "photochromic-sun", "prescription-ready"] as const;
