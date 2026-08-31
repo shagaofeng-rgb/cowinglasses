@@ -10,7 +10,7 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
   const { locale, slug } = await params;
   if (!isLocale(locale)) return {};
-  const article = await getPublishedArticle("blog", slug);
+  const article = await getPublishedArticle("blog", slug, locale);
   if (!article) return {};
   return { title: `${article.seoTitle || article.title} | ${siteConfig.name}`, description: article.seoDescription || article.excerpt || undefined, keywords: article.seoKeywords || undefined, alternates: { canonical: `/${locale}/blog/${article.slug}` } };
 }
@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function BlogArticlePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const { locale, slug } = await params;
   if (!isLocale(locale)) notFound();
-  const article = await getPublishedArticle("blog", slug);
+  const article = await getPublishedArticle("blog", slug, locale);
   if (!article) notFound();
   return <EditorialArticle locale={locale} type="blog" article={article} />;
 }

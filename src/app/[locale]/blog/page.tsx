@@ -17,5 +17,5 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function BlogPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  return <EditorialIndex locale={locale} type="blog" articles={await getPublishedArticles("blog")} />;
+  return <EditorialIndex locale={locale} type="blog" articles={await getPublishedArticles("blog", locale)} />;
 }

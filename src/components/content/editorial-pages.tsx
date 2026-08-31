@@ -1,7 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
-import { messages } from "@/messages";
+import { editorialArticleLabels, messages } from "@/messages";
 import type { PublicArticle, PublicArticleType } from "@/data/repositories/articles";
 
 const dateLocales: Record<Locale, string> = {
@@ -59,7 +60,7 @@ export function EditorialIndex({ locale, type, articles }: { locale: Locale; typ
 }
 
 export function EditorialArticle({ locale, type, article }: { locale: Locale; type: PublicArticleType; article: PublicArticle }) {
-  const t = messages[locale];
+  const t = { ...messages[locale], editorial: { ...messages[locale].editorial, ...editorialArticleLabels[locale] } };
   const backLabel = type === "news" ? t.editorial.backToNews : t.editorial.backToBlog;
   return (
     <main>
@@ -72,11 +73,24 @@ export function EditorialArticle({ locale, type, article }: { locale: Locale; ty
           <h1 className="mt-4 max-w-4xl text-5xl leading-[.96] md:text-7xl">{article.title}</h1>
           {article.excerpt && <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)]">{article.excerpt}</p>}
           <p className="mt-7 text-xs font-bold uppercase tracking-[.12em] text-[var(--muted)]">
-            {t.editorial.published} · <time dateTime={(article.publishedAt ?? article.updatedAt).toISOString()}>{articleDate(article, locale)}</time>
+            {t.editorial.published} · <time dateTime={(article.publishedAt ?? article.updatedAt).toISOString()}>{articleDate(article, locale)}</time> · {t.editorial.by} {article.authorName}
           </p>
         </header>
-        <div className="prose mt-10 max-w-3xl whitespace-pre-wrap text-base leading-8 text-[var(--muted)]">{article.body || article.excerpt}</div>
+        {article.imageUrl ? <figure className="mt-10"><div className="relative aspect-[16/8] overflow-hidden rounded-3xl bg-[#eef1eb]"><Image src={article.imageUrl} alt={article.imageAlt || article.title} fill sizes="(max-width: 768px) 100vw, 960px" className="object-cover" priority /></div>{article.imageAlt ? <figcaption className="mt-3 text-xs leading-5 text-[var(--muted)]">{article.imageAlt}</figcaption> : null}</figure> : null}
+        {article.keyTakeaways.length ? <aside className="mt-10 max-w-3xl rounded-3xl border border-[#cddc72] bg-[#f7fbe9] p-6 md:p-8"><h2 className="text-2xl">{t.editorial.keyTakeaways}</h2><ul className="mt-4 grid gap-3 text-[var(--muted)]">{article.keyTakeaways.map((item) => <li key={item} className="flex gap-3"><span aria-hidden="true" className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#829500]"/><span className="leading-7">{item}</span></li>)}</ul></aside> : null}
+        <div className="mt-10 max-w-3xl"><MarkdownBody value={article.body || article.excerpt || ""}/></div>
+        {type === "news" && article.sources.length ? <section className="mt-12 max-w-3xl border-t border-[var(--line)] pt-8" aria-labelledby="article-sources"><h2 id="article-sources" className="text-2xl">{t.editorial.originalSource}</h2><div className="mt-4 grid gap-3">{article.sources.map((source) => <a key={source.id} href={source.url} target="_blank" rel="noreferrer noopener" className="group rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-4 transition hover:border-[#a5b629]"><span className="font-black">{source.name}</span>{source.title ? <span className="mt-1 block text-sm leading-6 text-[var(--muted)]">{source.title}</span> : null}<span className="mt-2 inline-flex items-center gap-1 text-xs font-bold text-[#687700]">{t.editorial.viewSource}<ArrowUpRight size={14}/></span></a>)}</div></section> : null}
+        {type === "news" && article.editorialDisclaimer ? <aside className="mt-8 max-w-3xl rounded-2xl bg-[#f3f4f1] p-5 text-sm leading-6 text-[var(--muted)]"><strong className="text-[var(--ink)]">{t.editorial.disclaimer}</strong><span className="mt-1 block">{article.editorialDisclaimer}</span></aside> : null}
       </article>
     </main>
   );
+}
+
+function MarkdownBody({ value }: { value: string }) {
+  const blocks = value.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+  return <div className="grid gap-5 text-base leading-8 text-[var(--muted)]">{blocks.map((block, index) => {
+    if (block.startsWith("## ")) return <h2 key={index} className="mt-5 text-3xl leading-tight text-[var(--ink)]">{block.slice(3)}</h2>;
+    if (block.split("\n").every((line) => /^[-*]\s+/.test(line))) return <ul key={index} className="grid gap-2 ps-5">{block.split("\n").map((line) => <li key={line} className="list-disc">{line.replace(/^[-*]\s+/, "")}</li>)}</ul>;
+    return <p key={index}>{block.replace(/\n/g, " ")}</p>;
+  })}</div>;
 }

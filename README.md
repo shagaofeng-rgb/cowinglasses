@@ -47,7 +47,11 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 | `AUTH_SECRET` | Required server secret for administrator sessions and the fallback traffic-IP encryption key. |
 | `ANALYTICS_VISITOR_SECRET` | Optional separate HMAC key for anonymous first-party visitor IDs. |
 | `ANALYTICS_IP_ENCRYPTION_KEY` | Optional 64-character hexadecimal encryption key for raw IP retention. |
-| `CRON_SECRET` | Required only when a scheduler is configured to call `/api/cron/traffic-rollups`. |
+| `CRON_SECRET` | Required in production for authenticated traffic and News Cron routes. |
+| `NEWS_AUTOMATION_PUBLISH_MODE` | `auto` publishes verified content; `review` creates six-language drafts for approval. |
+| `NEWS_AUTOMATION_CONTENT_MODEL` | OpenAI or Vercel AI Gateway model identifier used by the News composer. |
+| `OPENAI_API_KEY` / `AI_GATEWAY_API_KEY` | Optional model credentials. Vercel deployments can instead use the automatically issued OIDC token. |
+| `INDEXNOW_KEY` | Optional server-only key for notifying Bing/IndexNow after a verified publication. |
 
 ## First-party traffic analytics
 
@@ -56,6 +60,30 @@ The storefront records page views, product views, add-to-cart, checkout and orde
 - Raw IP is AES-256-GCM encrypted, retained for 30 days and available only to super administrators. Routine lists display a masked IP.
 - `traffic_daily_rollups` is reserved for scheduled aggregates. The live dashboard uses a 60-second server data cache and always retains raw event detail for the selected range.
 - To enable the optional aggregate job, have a trusted scheduler make an authenticated `GET /api/cron/traffic-rollups` request with `Authorization: Bearer $CRON_SECRET`.
+
+## News automation, SEO and GEO
+
+The News pipeline deliberately separates discovery from publication:
+
+- `/api/cron/news-ingest` runs every 12 hours and only collects, normalizes, deduplicates and scores allowlisted RSS/Atom items.
+- `/api/cron/news-publish` checks every 12 hours but the database guard permits at most one publication per 48 hours.
+- `/api/cron/news-source-health` checks source availability daily and temporarily disables repeatedly failing feeds.
+- A PostgreSQL lock and unique URL/content fingerprints make retries idempotent across concurrent Vercel Functions.
+- English is the verified fact master. Arabic, Spanish, Portuguese, Japanese and Korean are generated only after the English draft passes the editorial gate.
+- No qualified candidate means no article. The pipeline never fabricates a fallback story or product specifications.
+
+Published News includes visible source attribution, an editorial disclaimer, `NewsArticle` and breadcrumb JSON-LD, canonical/hreflang metadata, `/news-sitemap.xml`, `/news/rss.xml`, and optional IndexNow notification. Google News Sitemap entries are limited to the latest two days; the ordinary sitemap retains all published locale URLs.
+
+Use `/admin/news-operations` to pause automation, switch between automatic and review modes, run ingestion or a dry run, inspect candidate scores, source health, delivery checks and run history. `/admin/news` remains the manual article editor; Blog content is never read or modified by News automation.
+
+Before the first production release run:
+
+```bash
+pnpm db:bootstrap
+pnpm news:self-test
+```
+
+The self-test creates uniquely marked draft/source rows, verifies their relationships, and removes them in a `finally` block. It never publishes the test article.
 
 ## Data and asset replacement
 
