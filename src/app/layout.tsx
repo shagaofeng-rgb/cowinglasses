@@ -2,27 +2,25 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
+import { ConsentAwareMetaPixel } from "@/components/analytics/meta-pixel";
 
-export const metadata: Metadata = { metadataBase: new URL(siteConfig.url), title: { default: siteConfig.name, template: `%s | ${siteConfig.name}` }, description: siteConfig.description };
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  title: { default: siteConfig.name, template: `%s | ${siteConfig.name}` },
+  description: siteConfig.description,
+};
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html>
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <head>
-        <Script id="meta-pixel" strategy="afterInteractive">
-          {`!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','1078350337870688');fbq('track','PageView');`}
+        <Script id="document-locale" strategy="beforeInteractive">
+          {`(function(){var l=location.pathname.split('/')[1];if(!/^(en|ar|es|pt|ja|ko)$/.test(l))l='en';document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';})();`}
         </Script>
       </head>
       <body>
-        <noscript>
-          {/* eslint-disable-next-line @next/next/no-img-element -- Meta requires a 1×1 fallback tracking pixel. */}
-          <img
-            alt=""
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=1078350337870688&ev=PageView&noscript=1"
-          />
-        </noscript>
+        <ConsentAwareMetaPixel />
         {children}
       </body>
     </html>

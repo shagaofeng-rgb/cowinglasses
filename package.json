@@ -11,13 +11,14 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/news/logic.test.ts",
+    "test": "tsx --test src/lib/news/logic.test.ts src/config/shipping.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:bootstrap": "tsx scripts/vercel-bootstrap.ts",
     "db:catalog:seed": "tsx scripts/catalog-seed.ts",
     "db:seed": "tsx src/db/seed.ts",
-    "news:self-test": "tsx scripts/news-automation-self-test.ts"
+    "news:self-test": "tsx scripts/news-automation-self-test.ts",
+    "commerce:test-cleanup": "tsx scripts/cleanup-test-commerce-data.ts"
   },
   "dependencies": {
     "@tailwindcss/postcss": "latest",

@@ -23,6 +23,7 @@ import {
   PolicyContent,
   type PolicyType,
 } from "@/components/compliance/policy-content";
+import { AccountPage } from "./account-page";
 
 type RoutePageProps = {
   locale: Locale;
@@ -51,13 +52,13 @@ export function RoutePage({
   if (path === "how-it-works") return <HowItWorks locale={locale} />;
   if (path === "app") return <AppPage locale={locale} />;
   if (path === "lens-guide") return <LensGuide />;
-  if (path === "account") return <Account />;
+  if (path === "account") return <AccountPage locale={locale} />;
   if (path === "support" || path === "support/faq")
     return <Support locale={locale} faq={path.endsWith("faq")} />;
   if (path === "support/contact") return <SupportContact />;
-  if (path === "support/shipping-delivery") return <ShippingDelivery />;
-  if (path === "support/returns-refunds") return <ReturnsRefunds />;
-  if (path === "support/warranty") return <WarrantySupport />;
+  if (path === "support/shipping-delivery") return <Policy locale={locale} type="shipping" />;
+  if (path === "support/returns-refunds") return <Policy locale={locale} type="returns" />;
+  if (path === "support/warranty") return <Policy locale={locale} type="warranty" />;
   if (path === "policies/privacy")
     return <Policy locale={locale} type="privacy" />;
   if (path === "policies/terms") return <Policy locale={locale} type="terms" />;
@@ -436,26 +437,18 @@ function LensGuide() {
     </>
   );
 }
+const faqCopy: Record<Locale, { intro: string; cards: [string, string, string]; faqs: [string, string][] }> = {
+  en: { intro: "Answers about delivery, support, returns and connected features.", cards: ["Find answers about connection, delivery, returns and lens inserts.", "Reach the support team by email for help with orders and product questions.", "Start a warranty request with order and issue details."], faqs: [["When will my order dispatch?", "Orders are normally processed and dispatched within 3 business days after payment is confirmed."], ["Do translation glasses connect to the internet?", "No. Translation needs the CoWin app, Bluetooth and your phone's internet connection."], ["Do you ship to Brazil?", "No. We are unable to ship to Brazil at this time."], ["How long is the warranty?", "Eligible CoWin Glasses products include a 6-month limited warranty from delivery."]] },
+  ar: { intro: "إجابات حول التوصيل والدعم والإرجاع والميزات المتصلة.", cards: ["إجابات حول الاتصال والتوصيل والإرجاع وملحق العدسات.", "تواصل مع الدعم عبر البريد للمساعدة في الطلبات والمنتجات.", "ابدأ طلب ضمان مع رقم الطلب وتفاصيل المشكلة."], faqs: [["متى يتم إرسال طلبي؟", "تتم معالجة الطلبات وإرسالها عادة خلال 3 أيام عمل بعد تأكيد الدفع."], ["هل تتصل نظارات الترجمة بالإنترنت؟", "لا. تحتاج الترجمة إلى تطبيق CoWin والبلوتوث واتصال هاتفك بالإنترنت."], ["هل تشحنون إلى البرازيل؟", "لا يمكننا الشحن إلى البرازيل حالياً."], ["ما مدة الضمان؟", "تشمل المنتجات المؤهلة ضماناً محدوداً لمدة 6 أشهر من تاريخ التسليم."]] },
+  es: { intro: "Respuestas sobre entrega, soporte, devoluciones y funciones conectadas.", cards: ["Respuestas sobre conexión, entrega, devoluciones e insertos de lentes.", "Escribe al equipo para recibir ayuda con pedidos y productos.", "Inicia una solicitud de garantía con el pedido y los detalles del problema."], faqs: [["¿Cuándo se enviará mi pedido?", "Los pedidos se procesan y envían normalmente en 3 días hábiles tras confirmar el pago."], ["¿Las gafas de traducción se conectan a internet?", "No. La traducción necesita la app CoWin, Bluetooth e internet en el teléfono."], ["¿Envían a Brasil?", "No podemos enviar a Brasil actualmente."], ["¿Cuánto dura la garantía?", "Los productos elegibles incluyen una garantía limitada de 6 meses desde la entrega."]] },
+  pt: { intro: "Respostas sobre entrega, suporte, devoluções e recursos conectados.", cards: ["Respostas sobre conexão, entrega, devoluções e encaixe de lentes.", "Fale com a equipe por e-mail para ajuda com pedidos e produtos.", "Inicie uma solicitação de garantia com o pedido e os detalhes do problema."], faqs: [["Quando meu pedido será enviado?", "Os pedidos são processados e enviados normalmente em até 3 dias úteis após a confirmação do pagamento."], ["Os óculos de tradução se conectam à internet?", "Não. A tradução precisa do app CoWin, Bluetooth e internet no telefone."], ["Vocês enviam para o Brasil?", "Não enviamos para o Brasil no momento."], ["Quanto tempo dura a garantia?", "Produtos elegíveis incluem garantia limitada de 6 meses a partir da entrega."]] },
+  ja: { intro: "配送、サポート、返品、接続機能についての回答です。", cards: ["接続、配送、返品、レンズインサートについて確認できます。", "注文や製品の質問はメールでサポートへご連絡ください。", "注文番号と問題の詳細を添えて保証申請を開始できます。"], faqs: [["注文はいつ発送されますか？", "支払い確認後、通常3営業日以内に処理・発送します。"], ["翻訳対応メガネは直接インターネットに接続しますか？", "いいえ。翻訳にはCoWinアプリ、Bluetooth、スマートフォンのインターネット接続が必要です。"], ["ブラジルへ配送できますか？", "現在ブラジルには配送できません。"], ["保証期間はどのくらいですか？", "対象製品にはお届けから6か月の限定保証が付きます。"]] },
+  ko: { intro: "배송, 지원, 반품, 연결 기능에 관한 답변입니다.", cards: ["연결, 배송, 반품, 렌즈 인서트에 관한 답을 확인하세요.", "주문 및 제품 문의는 이메일로 지원팀에 연락하세요.", "주문 번호와 문제 내용을 입력해 보증 요청을 시작하세요."], faqs: [["주문은 언제 발송되나요?", "결제 확인 후 일반적으로 영업일 기준 3일 이내 처리 및 발송됩니다."], ["번역 안경이 인터넷에 직접 연결되나요?", "아닙니다. 번역에는 CoWin 앱, Bluetooth, 휴대폰 인터넷 연결이 필요합니다."], ["브라질로 배송하나요?", "현재 브라질에는 배송할 수 없습니다."], ["보증 기간은 얼마인가요?", "대상 제품은 배송일로부터 6개월 제한 보증이 제공됩니다."]] },
+};
+
 function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
   const t = messages[locale];
-  const faqs = [
-    [
-      "When will my order dispatch?",
-      "Orders are normally processed and dispatched within 3 business days after payment is confirmed.",
-    ],
-    [
-      "Do translation glasses connect to the internet?",
-      "No. Translation needs the CoWin app, Bluetooth and your phone's internet connection.",
-    ],
-    [
-      "Do you ship to Brazil?",
-      "No. We are unable to ship to Brazil at this time.",
-    ],
-    [
-      "How long is the warranty?",
-      "Eligible CoWin Glasses products include a 6-month limited warranty from delivery.",
-    ],
-  ];
+  const localized = faqCopy[locale];
   return (
     <>
       <PageHead
@@ -463,14 +456,14 @@ function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
         title={faq ? t.support.faq : t.support.title}
         intro={
           faq
-            ? "Answers about delivery, support, returns and connected features."
+            ? localized.intro
             : t.support.intro
         }
       />
       <section className="shell pb-16">
         {faq ? (
           <div className="grid gap-3">
-            {faqs.map(([question, answer]) => (
+            {localized.faqs.map(([question, answer]) => (
               <details
                 className="rounded-2xl bg-[var(--surface)] p-5"
                 key={question}
@@ -488,19 +481,19 @@ function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
           <div className="grid gap-5 md:grid-cols-3">
             <SupportCard
               title={t.support.faq}
-              text="Find answers about connection, delivery, returns and lens inserts."
+              text={localized.cards[0]}
               href="/support/faq"
               locale={locale}
             />
             <SupportCard
               title={t.footer.contact}
-              text="Reach the support team by email for help with orders and product questions."
+              text={localized.cards[1]}
               href="/support/contact"
               locale={locale}
             />
             <SupportCard
               title={t.footer.warranty}
-              text="Start a warranty request with order and issue details."
+              text={localized.cards[2]}
               href="/support/warranty"
               locale={locale}
             />
@@ -575,7 +568,7 @@ function SupportContact() {
     </>
   );
 }
-function ShippingDelivery() {
+export function ShippingDelivery() {
   return (
     <>
       <PageHead
@@ -639,7 +632,7 @@ function ShippingDelivery() {
     </>
   );
 }
-function ReturnsRefunds() {
+export function ReturnsRefunds() {
   return (
     <>
       <PageHead
@@ -714,7 +707,7 @@ function ReturnsRefunds() {
     </>
   );
 }
-function WarrantySupport() {
+export function WarrantySupport() {
   return (
     <>
       <PageHead
@@ -853,29 +846,6 @@ function SearchPage({
     </>
   );
 }
-function Account() {
-  return (
-    <>
-      <PageHead
-        eyebrow="Account"
-        title="Your account will live here."
-        intro="Account registration, sign in, order history and profile management are intentionally reserved for a future authenticated backend phase."
-      />
-      <section className="shell pb-16">
-        <div className="max-w-2xl rounded-3xl bg-[var(--surface)] p-7">
-          <h2 className="text-2xl font-black">
-            Not enabled in this storefront stage
-          </h2>
-          <p className="mt-3 leading-7 text-[var(--muted)]">
-            We have not created a mock login, because it could imply that
-            personal data or orders are being stored. The future integration
-            will connect a secure identity and order system.
-          </p>
-        </div>
-      </section>
-    </>
-  );
-}
 function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
   const titles: Record<Locale, Record<PolicyType, string>> = {
     en: {
@@ -927,23 +897,14 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
       "intellectual-property": "지식재산권",
     },
   };
-  const intros: Record<PolicyType, string> = {
-    shipping:
-      "Dispatch, delivery, shipping charge and destination information.",
-    returns: "How to request a return, exchange or refund.",
-    warranty: "Limited-warranty coverage and claim information.",
-    privacy: "How this website handles customer-support information.",
-    terms: "Terms for use of this website and enabled checkout services.",
-    "intellectual-property": "Information about CoWin Glasses intellectual property and rights concerns.",
-  };
   return (
     <>
-      <PageHead title={titles[locale][type]} intro={intros[type]} />
+      <PageHead title={titles[locale][type]} intro={messages[locale].common.draft} />
       <section className="shell prose pb-16">
         <PolicyContent locale={locale} type={type} />
         {type === "warranty" && (
           <div className="mt-10 max-w-xl rounded-3xl bg-[var(--surface)] p-6">
-            <h2 className="mt-0">Start a warranty request</h2>
+            <h2 className="mt-0">{messages[locale].support.contact}</h2>
             <DemoForm locale={locale} kind="warranty" />
           </div>
         )}

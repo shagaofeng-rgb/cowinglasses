@@ -93,10 +93,16 @@ The self-test creates uniquely marked draft/source rows, verifies their relation
 | Hero/product imagery | `public/images/demo/` plus `heroImage` / SKU `images` fields | Approved assets under `public/images/products/` or a configured image CDN |
 | Product videos/manuals | `public/videos/`, `public/manuals/` | Real assets and video URLs, then SKU/product fields |
 | Daily FX | `src/data/fixtures/exchange-rates.ts` | Server-only `ExchangeRateProvider`; expose timestamp and source status honestly |
-| Shipping rules | `src/data/fixtures/shipping-rules.ts` | Country/carrier shipping API or back-office service |
-| FAQ/policy copy | `src/components/commerce/route-page.tsx` and messages | CMS/legal-approved content model |
+| Shipping rules | `src/config/shipping.ts` | Country/carrier shipping API or back-office service |
+| FAQ/policy copy | `src/components/compliance/policy-content.tsx`, `src/components/commerce/route-page.tsx` and messages | CMS/legal-approved content model |
 
-All present product values are explicitly demo data. Fields such as camera resolution, storage, battery and certification must remain `To be confirmed` until approved source documents are supplied.
+Published database/catalog records are shown as live products. Fixture-only records remain marked as demo. Fields such as camera resolution, storage, battery and certification must remain `To be confirmed` until approved source documents are supplied.
+
+## Customer accounts and order history
+
+Checkout requires a member password of at least 10 characters. A successful order creation also creates (or authenticates) a customer account and stores only a bcrypt password hash. The server issues a 30-day `HttpOnly`, `Secure`, `SameSite=Lax` session cookie; `/[locale]/account` can therefore show the same order history after signing in from another browser.
+
+For account-takeover protection, a legacy customer record that has orders but no account can create an account during a new checkout, but orders created before account activation are not exposed automatically. Support must verify and link historical orders separately. Five failed sign-in attempts lock the account for 15 minutes. Customer sessions and credentials live in `customer_accounts` and `customer_sessions`, created by `drizzle/0006_customer_accounts.sql`.
 
 ## Add a language
 
@@ -145,7 +151,7 @@ Implement these adapters or API contracts without changing page-level commerce U
 - `SupportRequestProvider`: contact intake, SLA routing and email/CRM notification
 - `WarrantyClaimProvider`: claim submission, media upload and case tracking
 - `NewsletterProvider`: consent-aware email subscription
-- `AuthProvider`: account, order history and secure session handling
+- Replace the built-in password/session account service with a managed identity provider only if email verification, password reset, MFA or social login is required; preserve the order-ownership boundary.
 - CMS policy/content API: legally approved privacy, terms, shipping, returns, warranty and FAQ content
 
-Before enabling checkout, implement server-side price verification, country-based shipping, payment webhooks, order records, transactional email, privacy retention rules, tax logic, abuse protection and audit logging.
+Server-side price verification, country-based shipping, order records, signed payment webhooks, secure member sessions and audit/event records are implemented. Before expanding checkout, add transactional email, password reset/email verification, formal privacy retention jobs, destination tax calculation, durable rate limiting and refund-provider automation.

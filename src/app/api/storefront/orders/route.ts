@@ -1,11 +1,22 @@
 import { and, asc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getShippingDestination, getShippingDestinationCountryCode, quoteShipping } from "@/config/shipping";
+import {
+  getShippingDestination,
+  getShippingDestinationCountryCode,
+  quoteShipping,
+} from "@/config/shipping";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
-import { createOceanpaymentEmbeddedPayload, isOceanpaymentConfigured, oceanpaymentEnvironment } from "@/lib/commerce/oceanpayment";
+import {
+  createOceanpaymentEmbeddedPayload,
+  isOceanpaymentConfigured,
+  oceanpaymentEnvironment,
+} from "@/lib/commerce/oceanpayment";
 import {
   customers,
+  customerAccounts,
+  customerSessions,
   coupons,
   inventoryLevels,
   inventoryMovements,
@@ -18,18 +29,31 @@ import {
   webSessions,
   webVisitors,
 } from "@/db/schema";
+import {
+  createCustomerSessionMaterial,
+  setCustomerSessionCookie,
+} from "@/lib/customer/auth";
 
 export const runtime = "nodejs";
 
 const checkoutSchema = z.object({
-  lines: z.array(z.object({ skuId: z.string().uuid(), quantity: z.number().int().min(1).max(100) })).min(1).max(20),
+  lines: z
+    .array(
+      z.object({
+        skuId: z.string().uuid(),
+        quantity: z.number().int().min(1).max(100),
+      }),
+    )
+    .min(1)
+    .max(20),
   customer: z.object({
-    email: z.string().trim().email().max(320),
+    email: z.string().trim().toLowerCase().email().max(320),
     firstName: z.string().trim().min(1).max(120),
     lastName: z.string().trim().min(1).max(120),
     phone: z.string().trim().min(3).max(64),
     acceptsMarketing: z.boolean().optional().default(false),
   }),
+  accountPassword: z.string().min(10).max(128),
   shippingAddress: z.object({
     country: z.string().trim().min(1).max(120),
     address: z.string().trim().min(1).max(400),
@@ -37,11 +61,23 @@ const checkoutSchema = z.object({
     province: z.string().trim().max(120).optional().default(""),
     postalCode: z.string().trim().max(32).optional().default(""),
   }),
-  shippingDestinationId: z.string().trim().refine((id) => Boolean(getShippingDestination(id)), "配送目的地暂不支持。"),
+  shippingDestinationId: z
+    .string()
+    .trim()
+    .refine(
+      (id) => Boolean(getShippingDestination(id)),
+      "配送目的地暂不支持。",
+    ),
   shippingMethod: z.enum(["quote", "forwarder"]),
   paymentPreference: z.enum(["card", "transfer"]),
   returnUrl: z.string().url().max(1200).optional().default(""),
-  couponCode: z.string().trim().max(80).regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。").optional().default(""),
+  couponCode: z
+    .string()
+    .trim()
+    .max(80)
+    .regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。")
+    .optional()
+    .default(""),
   analyticsSessionId: z.string().uuid().optional(),
   note: z.string().trim().max(2000).optional().default(""),
 });
@@ -53,7 +89,10 @@ function requestId() {
 }
 
 function reply(status: number, body: Record<string, unknown>) {
-  return NextResponse.json(body, { status, headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(body, {
+    status,
+    headers: { "Cache-Control": "no-store" },
+  });
 }
 
 function asAmount(cents: number) {
@@ -69,109 +108,341 @@ function validCheckoutReturnUrl(value: string) {
   try {
     const url = new URL(value);
     const host = url.hostname.toLowerCase();
-    const allowed = host === "cowinglasses.com" || host === "www.cowinglasses.com" || host === "localhost" || host === "127.0.0.1" || host.endsWith(".vercel.app");
-    return allowed && /^\/(en|ar|es|pt|ja|ko)\/checkout$/.test(url.pathname) ? url.toString() : null;
+    const deploymentHost = process.env.VERCEL_URL?.toLowerCase();
+    const local =
+      process.env.NODE_ENV !== "production" &&
+      (host === "localhost" || host === "127.0.0.1");
+    const allowed =
+      host === "cowinglasses.com" ||
+      host === "www.cowinglasses.com" ||
+      local ||
+      Boolean(deploymentHost && host === deploymentHost);
+    return allowed && /^\/(en|ar|es|pt|ja|ko)\/checkout$/.test(url.pathname)
+      ? url.toString()
+      : null;
   } catch {
     return null;
   }
 }
 
 function requestIp(request: NextRequest) {
-  const candidate = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip")?.trim() || "";
+  const candidate =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip")?.trim() ||
+    "";
   return /^[0-9a-f:.]{3,64}$/i.test(candidate) ? candidate : "";
 }
 
 export async function POST(request: NextRequest) {
   const id = requestId();
   if (!isDatabaseConfigured()) {
-    return reply(503, { success: false, error: { code: "DATABASE_UNAVAILABLE", message: "订单服务暂不可用，请稍后重试或联系销售。" }, requestId: id });
+    return reply(503, {
+      success: false,
+      error: {
+        code: "DATABASE_UNAVAILABLE",
+        message: "订单服务暂不可用，请稍后重试或联系销售。",
+      },
+      requestId: id,
+    });
   }
 
   let payload: CheckoutInput;
   try {
     payload = checkoutSchema.parse(await request.json());
   } catch {
-    return reply(400, { success: false, error: { code: "INVALID_REQUEST", message: "请完整填写联系信息、配送地址和商品数量。" }, requestId: id });
+    return reply(400, {
+      success: false,
+      error: {
+        code: "INVALID_REQUEST",
+        message: "请完整填写联系信息、配送地址和商品数量。",
+      },
+      requestId: id,
+    });
   }
 
   if (payload.paymentPreference === "card" && !isOceanpaymentConfigured()) {
-    return reply(503, { success: false, error: { code: "PAYMENT_UNAVAILABLE", message: "信用卡支付暂不可用，请选择银行转账或稍后重试。" }, requestId: id });
+    return reply(503, {
+      success: false,
+      error: {
+        code: "PAYMENT_UNAVAILABLE",
+        message: "信用卡支付暂不可用，请选择银行转账或稍后重试。",
+      },
+      requestId: id,
+    });
   }
-  const returnUrl = payload.paymentPreference === "card" ? validCheckoutReturnUrl(payload.returnUrl) : null;
+  const returnUrl =
+    payload.paymentPreference === "card"
+      ? validCheckoutReturnUrl(payload.returnUrl)
+      : null;
   if (payload.paymentPreference === "card" && !returnUrl) {
-    return reply(400, { success: false, error: { code: "INVALID_RETURN_URL", message: "支付返回地址无效，请刷新结账页后重试。" }, requestId: id });
+    return reply(400, {
+      success: false,
+      error: {
+        code: "INVALID_RETURN_URL",
+        message: "支付返回地址无效，请刷新结账页后重试。",
+      },
+      requestId: id,
+    });
   }
 
-  const mergedLines = Object.values(payload.lines.reduce<Record<string, { skuId: string; quantity: number }>>((result, line) => {
-    result[line.skuId] = { skuId: line.skuId, quantity: (result[line.skuId]?.quantity ?? 0) + line.quantity };
-    return result;
-  }, {}));
+  const mergedLines = Object.values(
+    payload.lines.reduce<Record<string, { skuId: string; quantity: number }>>(
+      (result, line) => {
+        result[line.skuId] = {
+          skuId: line.skuId,
+          quantity: (result[line.skuId]?.quantity ?? 0) + line.quantity,
+        };
+        return result;
+      },
+      {},
+    ),
+  );
 
   const shippingQuote = quoteShipping(
     payload.shippingDestinationId,
     mergedLines.reduce((total, line) => total + line.quantity, 0),
   );
   if (shippingQuote.status === "unavailable") {
-    return reply(400, { success: false, error: { code: "SHIPPING_UNAVAILABLE", message: shippingQuote.note }, requestId: id });
+    return reply(400, {
+      success: false,
+      error: { code: "SHIPPING_UNAVAILABLE", message: shippingQuote.note },
+      requestId: id,
+    });
   }
 
   try {
     const db = getDatabase();
+    const existingIdentity = (
+      await db
+        .select({ customer: customers, account: customerAccounts })
+        .from(customers)
+        .leftJoin(
+          customerAccounts,
+          eq(customerAccounts.customerId, customers.id),
+        )
+        .where(eq(customers.email, payload.customer.email))
+        .limit(1)
+    )[0];
+    if (existingIdentity?.account) {
+      const now = new Date();
+      if (
+        existingIdentity.account.status !== "active" ||
+        (existingIdentity.account.lockedUntil &&
+          existingIdentity.account.lockedUntil > now)
+      ) {
+        return reply(423, {
+          success: false,
+          error: {
+            code: "ACCOUNT_LOCKED",
+            message:
+              "This member account is temporarily locked. Try again later or contact support.",
+          },
+          requestId: id,
+        });
+      }
+      if (
+        !(await bcrypt.compare(
+          payload.accountPassword,
+          existingIdentity.account.passwordHash,
+        ))
+      ) {
+        const attempts = existingIdentity.account.failedLoginAttempts + 1;
+        await db
+          .update(customerAccounts)
+          .set({
+            failedLoginAttempts: attempts >= 5 ? 0 : attempts,
+            lockedUntil:
+              attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null,
+            updatedAt: now,
+          })
+          .where(eq(customerAccounts.id, existingIdentity.account.id));
+        return reply(401, {
+          success: false,
+          error: {
+            code: attempts >= 5 ? "ACCOUNT_LOCKED" : "ACCOUNT_PASSWORD_INVALID",
+            message:
+              attempts >= 5
+                ? "This member account is temporarily locked. Try again in 15 minutes."
+                : "The password for this email address is incorrect.",
+          },
+          requestId: id,
+        });
+      }
+    }
+    const newPasswordHash = existingIdentity?.account
+      ? null
+      : await bcrypt.hash(payload.accountPassword, 12);
+    const session = createCustomerSessionMaterial();
     const order = await db.transaction(async (tx) => {
       const skuRows = await tx
         .select({ sku: productSkus, product: products })
         .from(productSkus)
         .innerJoin(products, eq(productSkus.productId, products.id))
-        .where(and(inArray(productSkus.id, mergedLines.map((line) => line.skuId)), eq(productSkus.isActive, true), eq(products.status, "active")));
+        .where(
+          and(
+            inArray(
+              productSkus.id,
+              mergedLines.map((line) => line.skuId),
+            ),
+            eq(productSkus.isActive, true),
+            eq(products.status, "active"),
+          ),
+        );
 
       if (skuRows.length !== mergedLines.length) {
-        throw new CheckoutError(409, "PRODUCT_UNAVAILABLE", "购物车中有商品已下架或已更新，请返回购物车刷新后再提交。");
+        throw new CheckoutError(
+          409,
+          "PRODUCT_UNAVAILABLE",
+          "购物车中有商品已下架或已更新，请返回购物车刷新后再提交。",
+        );
       }
 
       const items = mergedLines.map((line) => {
         const row = skuRows.find((item) => item.sku.id === line.skuId);
-        if (!row) throw new CheckoutError(409, "PRODUCT_UNAVAILABLE", "商品信息已更新，请返回购物车刷新后再提交。");
+        if (!row)
+          throw new CheckoutError(
+            409,
+            "PRODUCT_UNAVAILABLE",
+            "商品信息已更新，请返回购物车刷新后再提交。",
+          );
         const unitCents = Math.round(Number(row.sku.price) * 100);
-        if (!Number.isSafeInteger(unitCents) || unitCents < 0) throw new CheckoutError(500, "PRICE_INVALID", "商品价格暂不可用，请联系销售。");
+        if (!Number.isSafeInteger(unitCents) || unitCents < 0)
+          throw new CheckoutError(
+            500,
+            "PRICE_INVALID",
+            "商品价格暂不可用，请联系销售。",
+          );
         return { ...line, row, unitCents };
       });
 
-      const inventoryRows = await tx.select().from(inventoryLevels).where(inArray(inventoryLevels.skuId, mergedLines.map((line) => line.skuId)));
+      const inventoryRows = await tx
+        .select()
+        .from(inventoryLevels)
+        .where(
+          inArray(
+            inventoryLevels.skuId,
+            mergedLines.map((line) => line.skuId),
+          ),
+        );
       for (const item of items) {
         const level = inventoryRows.find((entry) => entry.skuId === item.skuId);
         if (level && level.onHand - level.reserved < item.quantity) {
-          throw new CheckoutError(409, "INSUFFICIENT_STOCK", `${item.row.product.name} 库存不足，请减少数量或联系销售。`);
+          throw new CheckoutError(
+            409,
+            "INSUFFICIENT_STOCK",
+            `${item.row.product.name} 库存不足，请减少数量或联系销售。`,
+          );
         }
       }
 
-      const existingCustomer = await tx.select().from(customers).where(eq(customers.email, payload.customer.email)).limit(1);
+      const existingCustomer = existingIdentity
+        ? [existingIdentity.customer]
+        : await tx
+            .select()
+            .from(customers)
+            .where(eq(customers.email, payload.customer.email))
+            .limit(1);
       const customer = existingCustomer[0]
-        ? (await tx.update(customers).set({
-            firstName: payload.customer.firstName,
-            lastName: payload.customer.lastName,
-            phone: payload.customer.phone,
-            acceptsMarketing: payload.customer.acceptsMarketing,
-            updatedAt: new Date(),
-          }).where(eq(customers.id, existingCustomer[0].id)).returning({ id: customers.id }))[0]
-        : (await tx.insert(customers).values({
-            email: payload.customer.email,
-            firstName: payload.customer.firstName,
-            lastName: payload.customer.lastName,
-            phone: payload.customer.phone,
-            source: "storefront",
-            acceptsMarketing: payload.customer.acceptsMarketing,
-          }).returning({ id: customers.id }))[0];
+        ? (
+            await tx
+              .update(customers)
+              .set({
+                firstName: payload.customer.firstName,
+                lastName: payload.customer.lastName,
+                phone: payload.customer.phone,
+                acceptsMarketing: payload.customer.acceptsMarketing,
+                updatedAt: new Date(),
+              })
+              .where(eq(customers.id, existingCustomer[0].id))
+              .returning({ id: customers.id })
+          )[0]
+        : (
+            await tx
+              .insert(customers)
+              .values({
+                email: payload.customer.email,
+                firstName: payload.customer.firstName,
+                lastName: payload.customer.lastName,
+                phone: payload.customer.phone,
+                source: "storefront",
+                acceptsMarketing: payload.customer.acceptsMarketing,
+              })
+              .returning({ id: customers.id })
+          )[0];
 
-      const subtotalCents = items.reduce((total, item) => total + item.unitCents * item.quantity, 0);
+      if (!existingIdentity?.account) {
+        if (!newPasswordHash)
+          throw new CheckoutError(
+            500,
+            "ACCOUNT_CREATE_FAILED",
+            "The member account could not be created.",
+          );
+        await tx
+          .insert(customerAccounts)
+          .values({ customerId: customer.id, passwordHash: newPasswordHash });
+      } else {
+        await tx
+          .update(customerAccounts)
+          .set({
+            failedLoginAttempts: 0,
+            lockedUntil: null,
+            lastLoginAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(customerAccounts.id, existingIdentity.account.id));
+      }
+      await tx
+        .insert(customerSessions)
+        .values({
+          customerId: customer.id,
+          sessionTokenHash: session.tokenHash,
+          expiresAt: session.expiresAt,
+        });
+
+      const subtotalCents = items.reduce(
+        (total, item) => total + item.unitCents * item.quantity,
+        0,
+      );
       let discountCents = 0;
+      let couponId: string | null = null;
       const couponCode = payload.couponCode.toUpperCase();
       if (couponCode) {
         const now = new Date();
-        const coupon = (await tx.select().from(coupons).where(and(eq(coupons.code, couponCode), eq(coupons.isActive, true), or(sql`${coupons.startsAt} is null`, lte(coupons.startsAt, now)), or(sql`${coupons.endsAt} is null`, gte(coupons.endsAt, now)))).limit(1))[0];
-        if (!coupon || (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) || (coupon.minimumAmount !== null && subtotalCents < Math.round(Number(coupon.minimumAmount) * 100))) throw new CheckoutError(409, "COUPON_INVALID", "优惠码无效、已过期或未满足使用条件。");
-        discountCents = coupon.discountType === "percentage" ? Math.round(subtotalCents * Number(coupon.discountValue) / 100) : Math.round(Number(coupon.discountValue) * 100);
+        const coupon = (
+          await tx
+            .select()
+            .from(coupons)
+            .where(
+              and(
+                eq(coupons.code, couponCode),
+                eq(coupons.isActive, true),
+                or(
+                  sql`${coupons.startsAt} is null`,
+                  lte(coupons.startsAt, now),
+                ),
+                or(sql`${coupons.endsAt} is null`, gte(coupons.endsAt, now)),
+              ),
+            )
+            .limit(1)
+        )[0];
+        if (
+          !coupon ||
+          (coupon.usageLimit !== null &&
+            coupon.usedCount >= coupon.usageLimit) ||
+          (coupon.minimumAmount !== null &&
+            subtotalCents < Math.round(Number(coupon.minimumAmount) * 100))
+        )
+          throw new CheckoutError(
+            409,
+            "COUPON_INVALID",
+            "优惠码无效、已过期或未满足使用条件。",
+          );
+        discountCents =
+          coupon.discountType === "percentage"
+            ? Math.round((subtotalCents * Number(coupon.discountValue)) / 100)
+            : Math.round(Number(coupon.discountValue) * 100);
         discountCents = Math.max(0, Math.min(discountCents, subtotalCents));
-        await tx.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1`, updatedAt: now }).where(eq(coupons.id, coupon.id));
+        couponId = coupon.id;
       }
       const shippingAddress = {
         ...payload.shippingAddress,
@@ -187,62 +458,98 @@ export async function POST(request: NextRequest) {
       };
       const shippingCents = Math.round(shippingQuote.totalUsd * 100);
       const orderNumber = makeOrderNumber();
-      const created = await tx.insert(orders).values({
-        orderNumber,
-        customerId: customer.id,
-        status: "pending_payment",
-        paymentStatus: "pending",
-        fulfillmentStatus: "unfulfilled",
-        currency: "USD",
-        subtotalAmount: asAmount(subtotalCents),
-        discountAmount: asAmount(discountCents),
-        shippingAmount: asAmount(shippingCents),
-        totalAmount: asAmount(subtotalCents - discountCents + shippingCents),
-        shippingAddress,
-        billingAddress: shippingAddress,
-        note: [
-          payload.note,
-          `Payment preference: ${payload.paymentPreference}`,
-          `Shipping estimate: ${shippingQuote.destinationLabel} · USD ${shippingQuote.totalUsd.toFixed(2)} · ¥${shippingQuote.totalCny.toFixed(2)}`,
-          couponCode ? `Coupon: ${couponCode}` : "",
-        ].filter(Boolean).join("\n"),
-      }).returning({ id: orders.id, orderNumber: orders.orderNumber });
+      const created = await tx
+        .insert(orders)
+        .values({
+          orderNumber,
+          customerId: customer.id,
+          couponId,
+          status: "pending_payment",
+          paymentStatus: "pending",
+          fulfillmentStatus: "unfulfilled",
+          currency: "USD",
+          subtotalAmount: asAmount(subtotalCents),
+          discountAmount: asAmount(discountCents),
+          shippingAmount: asAmount(shippingCents),
+          totalAmount: asAmount(subtotalCents - discountCents + shippingCents),
+          shippingAddress,
+          billingAddress: shippingAddress,
+          note: [
+            payload.note,
+            `Payment preference: ${payload.paymentPreference}`,
+            `Shipping estimate: ${shippingQuote.destinationLabel} · USD ${shippingQuote.totalUsd.toFixed(2)} · ¥${shippingQuote.totalCny.toFixed(2)}`,
+            couponCode ? `Coupon: ${couponCode}` : "",
+          ]
+            .filter(Boolean)
+            .join("\n"),
+        })
+        .returning({ id: orders.id, orderNumber: orders.orderNumber });
 
       if (payload.analyticsSessionId) {
-        const visitSession = (await tx.select().from(webSessions).where(eq(webSessions.clientSessionId, payload.analyticsSessionId)).limit(1))[0];
+        const visitSession = (
+          await tx
+            .select()
+            .from(webSessions)
+            .where(eq(webSessions.clientSessionId, payload.analyticsSessionId))
+            .limit(1)
+        )[0];
         if (visitSession) {
-          const firstSession = (await tx.select().from(webSessions).where(eq(webSessions.visitorId, visitSession.visitorId)).orderBy(asc(webSessions.startedAt)).limit(1))[0];
-          await tx.update(webVisitors).set({ customerId: customer.id, updatedAt: new Date() }).where(eq(webVisitors.id, visitSession.visitorId));
-          await tx.insert(orderAttributions).values({
-            orderId: created[0].id,
-            customerId: customer.id,
-            visitorId: visitSession.visitorId,
-            firstSource: firstSession?.source,
-            firstMedium: firstSession?.medium,
-            firstCampaign: firstSession?.campaign,
-            lastSource: visitSession.source,
-            lastMedium: visitSession.medium,
-            lastCampaign: visitSession.campaign,
-            countryCode: visitSession.countryCode,
-          }).onConflictDoNothing();
+          const firstSession = (
+            await tx
+              .select()
+              .from(webSessions)
+              .where(eq(webSessions.visitorId, visitSession.visitorId))
+              .orderBy(asc(webSessions.startedAt))
+              .limit(1)
+          )[0];
+          await tx
+            .update(webVisitors)
+            .set({ customerId: customer.id, updatedAt: new Date() })
+            .where(eq(webVisitors.id, visitSession.visitorId));
+          await tx
+            .insert(orderAttributions)
+            .values({
+              orderId: created[0].id,
+              customerId: customer.id,
+              visitorId: visitSession.visitorId,
+              firstSource: firstSession?.source,
+              firstMedium: firstSession?.medium,
+              firstCampaign: firstSession?.campaign,
+              lastSource: visitSession.source,
+              lastMedium: visitSession.medium,
+              lastCampaign: visitSession.campaign,
+              countryCode: visitSession.countryCode,
+            })
+            .onConflictDoNothing();
         }
       }
 
-      await tx.insert(orderItems).values(items.map((item) => ({
-        orderId: created[0].id,
-        skuId: item.row.sku.id,
-        productName: item.row.product.name,
-        skuCode: item.row.sku.sku,
-        quantity: item.quantity,
-        unitPrice: asAmount(item.unitCents),
-        totalAmount: asAmount(item.unitCents * item.quantity),
-        snapshot: { productSlug: item.row.product.slug, optionValueIds: item.row.sku.optionValueIds },
-      })));
+      await tx.insert(orderItems).values(
+        items.map((item) => ({
+          orderId: created[0].id,
+          skuId: item.row.sku.id,
+          productName: item.row.product.name,
+          skuCode: item.row.sku.sku,
+          quantity: item.quantity,
+          unitPrice: asAmount(item.unitCents),
+          totalAmount: asAmount(item.unitCents * item.quantity),
+          snapshot: {
+            productSlug: item.row.product.slug,
+            optionValueIds: item.row.sku.optionValueIds,
+          },
+        })),
+      );
 
       for (const item of items) {
         const level = inventoryRows.find((entry) => entry.skuId === item.skuId);
         if (!level) continue;
-        await tx.update(inventoryLevels).set({ reserved: level.reserved + item.quantity, updatedAt: new Date() }).where(eq(inventoryLevels.id, level.id));
+        await tx
+          .update(inventoryLevels)
+          .set({
+            reserved: level.reserved + item.quantity,
+            updatedAt: new Date(),
+          })
+          .where(eq(inventoryLevels.id, level.id));
         await tx.insert(inventoryMovements).values({
           skuId: item.skuId,
           type: "reservation",
@@ -267,47 +574,91 @@ export async function POST(request: NextRequest) {
       return {
         ...created[0],
         amount: asAmount(subtotalCents - discountCents + shippingCents),
-        countryCode: getShippingDestinationCountryCode(shippingQuote.destinationId),
-        productName: items.map((item) => item.row.product.name).join(", ").slice(0, 500),
-        productSku: items.map((item) => item.row.sku.sku).filter(Boolean).join(",").slice(0, 500),
-        productPrice: items.map((item) => asAmount(item.unitCents)).join(",").slice(0, 500),
-        productNum: String(items.reduce((total, item) => total + item.quantity, 0)),
+        countryCode: getShippingDestinationCountryCode(
+          shippingQuote.destinationId,
+        ),
+        productName: items
+          .map((item) => item.row.product.name)
+          .join(", ")
+          .slice(0, 500),
+        productSku: items
+          .map((item) => item.row.sku.sku)
+          .filter(Boolean)
+          .join(",")
+          .slice(0, 500),
+        productPrice: items
+          .map((item) => asAmount(item.unitCents))
+          .join(",")
+          .slice(0, 500),
+        productNum: String(
+          items.reduce((total, item) => total + item.quantity, 0),
+        ),
       };
     });
-    const payment = payload.paymentPreference === "card" && returnUrl
-      ? createOceanpaymentEmbeddedPayload({
-          order_number: order.orderNumber,
-          order_currency: "USD",
-          order_amount: order.amount,
-          backUrl: returnUrl,
-          billing_lastName: payload.customer.lastName,
-          billing_firstName: payload.customer.firstName,
-          billing_email: payload.customer.email,
-          billing_country: order.countryCode,
-          billing_state: payload.shippingAddress.province || "N/A",
-          billing_city: payload.shippingAddress.city,
-          billing_address: payload.shippingAddress.address,
-          billing_zip: payload.shippingAddress.postalCode || "000000",
-          billing_ip: requestIp(request),
-          productName: order.productName || "CoWin Glasses",
-          productNum: order.productNum,
-          productSku: order.productSku || "COWIN",
-          productPrice: order.productPrice || order.amount,
-        })
-      : undefined;
+    const payment =
+      payload.paymentPreference === "card" && returnUrl
+        ? createOceanpaymentEmbeddedPayload({
+            order_number: order.orderNumber,
+            order_currency: "USD",
+            order_amount: order.amount,
+            backUrl: returnUrl,
+            billing_lastName: payload.customer.lastName,
+            billing_firstName: payload.customer.firstName,
+            billing_email: payload.customer.email,
+            billing_country: order.countryCode,
+            billing_state: payload.shippingAddress.province || "N/A",
+            billing_city: payload.shippingAddress.city,
+            billing_address: payload.shippingAddress.address,
+            billing_zip: payload.shippingAddress.postalCode || "000000",
+            billing_ip: requestIp(request),
+            productName: order.productName || "CoWin Glasses",
+            productNum: order.productNum,
+            productSku: order.productSku || "COWIN",
+            productPrice: order.productPrice || order.amount,
+          })
+        : undefined;
 
-    return reply(201, { success: true, data: { orderNumber: order.orderNumber, orderId: order.id, paymentStatus: "pending", requiresSalesConfirmation: payload.paymentPreference !== "card", payment, paymentEnvironment: payment ? oceanpaymentEnvironment() : undefined }, requestId: id });
+    const response = reply(201, {
+      success: true,
+      data: {
+        orderNumber: order.orderNumber,
+        orderId: order.id,
+        paymentStatus: "pending",
+        memberAccountCreated: !existingIdentity?.account,
+        requiresSalesConfirmation: payload.paymentPreference !== "card",
+        payment,
+        paymentEnvironment: payment ? oceanpaymentEnvironment() : undefined,
+      },
+      requestId: id,
+    });
+    setCustomerSessionCookie(response, session.token, session.expiresAt);
+    return response;
   } catch (error) {
     if (error instanceof CheckoutError) {
-      return reply(error.status, { success: false, error: { code: error.code, message: error.message }, requestId: id });
+      return reply(error.status, {
+        success: false,
+        error: { code: error.code, message: error.message },
+        requestId: id,
+      });
     }
     console.error("Storefront order creation failed", { requestId: id, error });
-    return reply(500, { success: false, error: { code: "ORDER_CREATE_FAILED", message: "订单暂未创建成功，请稍后重试或联系销售。" }, requestId: id });
+    return reply(500, {
+      success: false,
+      error: {
+        code: "ORDER_CREATE_FAILED",
+        message: "订单暂未创建成功，请稍后重试或联系销售。",
+      },
+      requestId: id,
+    });
   }
 }
 
 class CheckoutError extends Error {
-  constructor(readonly status: number, readonly code: string, message: string) {
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    message: string,
+  ) {
     super(message);
   }
 }

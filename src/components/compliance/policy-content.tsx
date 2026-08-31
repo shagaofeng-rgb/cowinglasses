@@ -1,91 +1,70 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
 import { businessDetails } from "@/config/business";
-import { shippingRules } from "@/data/fixtures/shipping-rules";
+import { getShippingDestinationCountryCode, quoteShipping, shippingDestinations } from "@/config/shipping";
 
 export type PolicyType = "shipping" | "returns" | "warranty" | "privacy" | "terms" | "intellectual-property";
+type Section = [string, string];
+type Copy = { effective: string; merchant: string; address: string; contact: string; destination: string; estimate: string; other: string; unavailable: string; review: string; sections: Record<PolicyType, Section[]> };
 
-function BusinessIdentity() {
-  return <p><strong>Merchant:</strong> {businessDetails.legalName}<br/><strong>Registered address:</strong> {businessDetails.registeredAddress}<br/><strong>Contact:</strong> <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a></p>;
-}
+const enSections: Record<PolicyType, Section[]> = {
+  shipping: [["Dispatch", "In-stock orders are normally processed for dispatch within 3 business days after acceptance. Delivery times are carrier estimates from dispatch."], ["Charges and destinations", "Shipping is matched to the exact country selected at checkout using the current local carrier fixture and 0.5 kg per pair. Available European and Middle Eastern countries without a dedicated rate cost USD 20. We do not ship to Brazil."], ["Duties and delays", "Import duties, taxes and customs charges are the customer's responsibility. Customs, weather, holidays and carrier conditions may delay delivery."]],
+  returns: [["30-day returns", "Request a return or exchange within 30 days of delivery with your order number, model and reason. Wait for authorisation before sending an item."], ["Condition", "Include the product, accessories and packaging in inspectable condition. Incomplete, altered or customer-damaged returns may be reduced or declined where permitted."], ["Refunds and postage", "Approved refunds return to the original payment method after inspection. Responsibility for non-quality international return postage is confirmed in the return authorisation."]],
+  warranty: [["6-month limited warranty", "Eligible products include a 6-month limited warranty from delivery for verified manufacturing defects under normal intended use."], ["Exclusions", "Accidental or liquid damage, unauthorised repair, misuse, loss, theft and normal wear are generally excluded."], ["Claims", "Send the order number, model, issue description and available photos or video. Do not send the product until support confirms instructions."]],
+  privacy: [["Information collected", "We collect information submitted for accounts, orders, support and warranty. Payment-card details are handled by the enabled payment provider and are not stored by CoWin Glasses."], ["How it is used", "We use information for accounts and order history, fulfilment, support, security and legal obligations. We do not sell personal information. Optional analytics loads only after consent."], ["App and product data", "App, camera and translation data practices must be reviewed against the final production technology before launch. Contact us with privacy questions or requests."]],
+  terms: [["Orders, prices and payment", "Product prices and final charges are in USD; local-currency figures are estimates. Orders are accepted only through enabled checkout and verified payment. Card information is processed by the payment provider."], ["Use and responsibility", "Do not misuse or interfere with the website or use products unlawfully. Payment terms, regional consumer rights and liability limitations remain subject to final legal review."], ["Governing law", "These Terms are governed by the laws of the UK, subject to final legal review and mandatory local consumer law."]],
+  "intellectual-property": [["Intellectual property rights", "The CoWin name, website design, content, product images, trademarks and other intellectual property belong to, or are used with permission by, their respective owners. Do not copy, modify or distribute them without permission."], ["Report a concern", "Email the rights you believe are affected, the relevant page or product and enough information for us to review the request."]],
+};
+
+const copy: Record<Locale, Copy> = {
+  en: { effective: "Effective date", merchant: "Merchant", address: "Registered address", contact: "Contact", destination: "Destination", estimate: "Estimated shipping for one pair", other: "Other available European and Middle Eastern countries", unavailable: "Unavailable", review: "Draft — pending legal review. This page is not legal advice.", sections: enSections },
+  ar: { effective: "تاريخ السريان", merchant: "التاجر", address: "العنوان المسجل", contact: "التواصل", destination: "الوجهة", estimate: "الشحن التقديري لنظارة واحدة", other: "دول أوروبية وشرق أوسطية أخرى متاحة", unavailable: "غير متاح", review: "مسودة — بانتظار المراجعة القانونية. هذه الصفحة ليست استشارة قانونية.", sections: {
+    shipping: [["الإرسال", "تتم معالجة المنتجات المتوفرة عادة خلال 3 أيام عمل بعد قبول الطلب. أوقات التوصيل تقديرية من تاريخ الإرسال."], ["الرسوم والوجهات", "تتم مطابقة الشحن مع الدولة المحددة وبوزن 0.5 كجم للنظارة. الدول الأوروبية والشرق أوسطية المتاحة دون سعر خاص تكلف 20 دولاراً. لا نشحن إلى البرازيل."], ["الرسوم والتأخير", "يتحمل العميل رسوم الاستيراد والضرائب والتخليص. قد تسبب الجمارك والطقس والعطلات والناقل تأخيراً."]],
+    returns: [["إرجاع خلال 30 يوماً", "اطلب الإرجاع أو الاستبدال خلال 30 يوماً من التسليم مع رقم الطلب والموديل والسبب، وانتظر الموافقة قبل الإرسال."], ["حالة المنتج", "أعد المنتج والملحقات والتغليف بحالة قابلة للفحص. قد يُرفض أو يُخفض رد قيمة المنتجات الناقصة أو المعدلة أو المتضررة من العميل."], ["الاسترداد والبريد", "يعود الاسترداد المعتمد إلى وسيلة الدفع الأصلية بعد الفحص. يتم تأكيد مسؤولية بريد الإرجاع الدولي غير المرتبط بالجودة في التصريح."]],
+    warranty: [["ضمان محدود 6 أشهر", "تشمل المنتجات المؤهلة ضماناً محدوداً لمدة 6 أشهر من التسليم لعيوب التصنيع المثبتة في الاستخدام الطبيعي."], ["الاستثناءات", "لا يشمل عادة الضرر العرضي أو السوائل أو الإصلاح غير المصرح أو سوء الاستخدام أو الفقد أو السرقة أو التآكل الطبيعي."], ["المطالبة", "أرسل رقم الطلب والموديل ووصف المشكلة والصور أو الفيديو. لا ترسل المنتج قبل تعليمات الدعم."]],
+    privacy: [["المعلومات المجمعة", "نجمع بيانات الحساب والطلب والدعم والضمان. يعالج مزود الدفع بيانات البطاقة ولا نخزنها."], ["الاستخدام", "نستخدم البيانات للحساب وسجل الطلب والتنفيذ والدعم والحماية والالتزامات القانونية. لا نبيع البيانات ولا تبدأ التحليلات الاختيارية إلا بعد الموافقة."], ["بيانات التطبيق", "تخضع بيانات التطبيق والكاميرا والترجمة لمراجعة التقنية النهائية قبل الإطلاق. تواصل معنا لطلبات الخصوصية."]],
+    terms: [["الطلبات والأسعار والدفع", "الأسعار والخصم النهائي بالدولار والعملات المحلية تقديرية. يقبل الطلب عبر دفع مفعّل وموثق ويتولى المزود بيانات البطاقة."], ["الاستخدام والمسؤولية", "يحظر إساءة استخدام الموقع أو تعطيله أو استخدام المنتجات بشكل غير قانوني. حقوق المستهلك وحدود المسؤولية قيد المراجعة القانونية."], ["القانون الحاكم", "تخضع الشروط لقوانين المملكة المتحدة مع مراعاة المراجعة وأي قانون حماية مستهلك إلزامي."]],
+    "intellectual-property": [["حقوق الملكية الفكرية", "اسم CoWin والتصميم والمحتوى والصور والعلامات مملوكة لأصحابها أو مستخدمة بإذن، ولا يجوز نسخها أو تعديلها أو توزيعها دون إذن."], ["الإبلاغ", "أرسل الحقوق المتأثرة والصفحة أو المنتج والمعلومات الكافية للمراجعة."]],
+  } },
+  es: { effective: "Fecha de vigencia", merchant: "Comerciante", address: "Domicilio social", contact: "Contacto", destination: "Destino", estimate: "Envío estimado para un par", other: "Otros países disponibles de Europa y Oriente Medio", unavailable: "No disponible", review: "Borrador — pendiente de revisión legal. Esta página no constituye asesoramiento jurídico.", sections: {
+    shipping: [["Despacho", "Los productos en stock se procesan normalmente en 3 días hábiles tras aceptar el pedido. Los plazos son estimaciones desde el despacho."], ["Tarifas y destinos", "El envío se asigna al país elegido y usa 0,5 kg por par. Los países europeos y de Oriente Medio sin tarifa propia cuestan USD 20. No enviamos a Brasil."], ["Aduanas y retrasos", "El cliente asume aranceles, impuestos y aduanas. El clima, festivos y transportistas pueden causar retrasos."]],
+    returns: [["Devoluciones en 30 días", "Solicita devolución o cambio en 30 días desde la entrega con pedido, modelo y motivo. Espera autorización antes de enviar."], ["Estado", "Incluye producto, accesorios y embalaje en estado inspeccionable. Las devoluciones incompletas, alteradas o dañadas por el cliente pueden reducirse o rechazarse."], ["Reembolso y portes", "Los reembolsos aprobados vuelven al método original tras inspección. Los portes internacionales no relacionados con calidad se confirman en la autorización."]],
+    warranty: [["Garantía limitada de 6 meses", "Los productos elegibles incluyen 6 meses desde la entrega para defectos de fabricación verificados con uso normal."], ["Exclusiones", "Se excluyen normalmente daños accidentales o por líquidos, reparación no autorizada, mal uso, pérdida, robo y desgaste."], ["Reclamaciones", "Envía pedido, modelo, descripción y fotos o vídeo. No envíes el producto antes de recibir instrucciones."]],
+    privacy: [["Información recopilada", "Recopilamos datos de cuentas, pedidos, soporte y garantía. El proveedor procesa la tarjeta y no la almacenamos."], ["Uso", "Usamos datos para cuentas, historial, pedidos, soporte, seguridad y obligaciones legales. No vendemos datos y el análisis opcional requiere consentimiento."], ["Datos de la app", "Las prácticas de app, cámara y traducción se revisarán con la tecnología final antes del lanzamiento. Contáctanos para solicitudes de privacidad."]],
+    terms: [["Pedidos, precios y pago", "Los precios y cargos finales son en USD; la moneda local es estimada. El pedido se acepta mediante checkout y pago verificado, y el proveedor procesa la tarjeta."], ["Uso y responsabilidad", "No abuses ni interfieras con el sitio ni uses productos ilegalmente. Derechos regionales y límites de responsabilidad requieren revisión legal."], ["Ley aplicable", "Los términos se rigen por las leyes del Reino Unido, sujetos a revisión y normas obligatorias de consumo."]],
+    "intellectual-property": [["Propiedad intelectual", "El nombre, diseño, contenido, imágenes y marcas pertenecen a sus titulares o se usan con permiso. No los copies, modifiques ni distribuyas sin autorización."], ["Comunicar una incidencia", "Indica los derechos afectados, la página o producto y la información necesaria para revisar la solicitud."]],
+  } },
+  pt: { effective: "Data de vigência", merchant: "Comerciante", address: "Endereço registrado", contact: "Contato", destination: "Destino", estimate: "Frete estimado para um óculos", other: "Outros países disponíveis da Europa e Oriente Médio", unavailable: "Indisponível", review: "Rascunho — pendente de revisão jurídica. Esta página não constitui aconselhamento jurídico.", sections: {
+    shipping: [["Envio", "Produtos em estoque são processados normalmente em até 3 dias úteis após a aceitação. Os prazos são estimativas a partir do envio."], ["Valores e destinos", "O frete corresponde ao país escolhido e usa 0,5 kg por óculos. Países europeus e do Oriente Médio sem tarifa própria custam USD 20. Não enviamos ao Brasil."], ["Alfândega e atrasos", "Impostos, taxas e desembaraço são do cliente. Clima, feriados e transportadoras podem atrasar a entrega."]],
+    returns: [["Devolução em 30 dias", "Solicite devolução ou troca em até 30 dias da entrega com pedido, modelo e motivo. Aguarde autorização antes de enviar."], ["Condição", "Inclua produto, acessórios e embalagem em condição de inspeção. Itens incompletos, alterados ou danificados pelo cliente podem ser reduzidos ou recusados."], ["Reembolso e postagem", "Reembolsos aprovados voltam ao método original após inspeção. A postagem internacional sem motivo de qualidade será definida na autorização."]],
+    warranty: [["Garantia limitada de 6 meses", "Produtos elegíveis têm 6 meses a partir da entrega para defeitos de fabricação verificados em uso normal."], ["Exclusões", "Danos acidentais ou por líquidos, reparo não autorizado, uso indevido, perda, roubo e desgaste geralmente não são cobertos."], ["Solicitação", "Envie pedido, modelo, descrição e fotos ou vídeo. Não envie o produto antes da orientação."]],
+    privacy: [["Dados coletados", "Coletamos dados de contas, pedidos, suporte e garantia. O provedor processa o cartão e não o armazenamos."], ["Uso", "Usamos dados para contas, histórico, pedidos, suporte, proteção e deveres legais. Não vendemos dados e análises opcionais exigem consentimento."], ["Dados do app", "App, câmera e tradução serão revisados com a tecnologia final antes do lançamento. Fale conosco sobre privacidade."]],
+    terms: [["Pedidos, preços e pagamento", "Preços e cobrança final são em USD; valores locais são estimados. O pedido é aceito pelo checkout e pagamento verificado, e o provedor processa o cartão."], ["Uso e responsabilidade", "Não use o site de forma abusiva nem produtos ilegalmente. Direitos regionais e limites de responsabilidade aguardam revisão jurídica."], ["Lei aplicável", "Os termos seguem as leis do Reino Unido, sujeitos à revisão e normas obrigatórias do consumidor."]],
+    "intellectual-property": [["Propriedade intelectual", "Nome, design, conteúdo, imagens e marcas pertencem aos titulares ou são usados com permissão. Não copie, altere ou distribua sem autorização."], ["Relatar uma questão", "Informe os direitos afetados, a página ou produto e dados suficientes para análise."]],
+  } },
+  ja: { effective: "発効日", merchant: "販売事業者", address: "登録住所", contact: "連絡先", destination: "配送先", estimate: "1点の送料見積り", other: "その他の対応する欧州・中東諸国", unavailable: "配送不可", review: "草案 — 法務確認待ち。本ページは法的助言ではありません。", sections: {
+    shipping: [["発送", "在庫商品は注文受付後、通常3営業日以内に発送処理します。配送日数は発送後の目安です。"], ["送料と配送先", "送料は選択した国と1点0.5kgで計算します。専用料金のない対応する欧州・中東諸国は20米ドルです。ブラジルには配送しません。"], ["関税と遅延", "輸入関税、税金、通関費用はお客様負担です。天候、祝日、配送会社により遅れる場合があります。"]],
+    returns: [["30日間返品", "お届けから30日以内に注文番号、モデル、理由を添えて返品・交換を申請できます。承認前に発送しないでください。"], ["返品状態", "製品、付属品、梱包を検品可能な状態で返送してください。不足、改造、お客様による損傷は減額または対象外となる場合があります。"], ["返金と返送料", "承認後、検品を経て元の方法へ返金します。品質以外の国際返送料負担は承認時に案内します。"]],
+    warranty: [["6か月限定保証", "対象製品は通常使用で確認された製造上の欠陥についてお届けから6か月の限定保証があります。"], ["対象外", "事故・液体損傷、無許可修理、誤使用、紛失、盗難、通常摩耗は原則対象外です。"], ["申請", "注文番号、モデル、症状、写真または動画を送付し、案内前に製品を発送しないでください。"]],
+    privacy: [["収集情報", "アカウント、注文、サポート、保証の情報を収集します。カード情報は決済事業者が処理し保存しません。"], ["利用目的", "アカウント、注文履歴、履行、サポート、安全対策、法的義務に使用します。個人情報は販売せず、任意分析は同意後のみです。"], ["アプリデータ", "アプリ、カメラ、翻訳の取扱いは本番技術に基づき公開前に確認します。プライバシーのご依頼はお問い合わせください。"]],
+    terms: [["注文・価格・支払い", "価格と最終請求は米ドルで、現地通貨は参考です。注文は確認済み決済により受理され、カードは決済事業者が処理します。"], ["利用と責任", "サイトの不正利用、妨害、違法な製品利用は禁止です。地域の消費者権利と責任制限は法務確認の対象です。"], ["準拠法", "本規約は英国法に従いますが、最終確認と強制適用される消費者法に従います。"]],
+    "intellectual-property": [["知的財産権", "名称、デザイン、コンテンツ、画像、商標は各権利者に帰属するか許可を得て使用しています。無断複製、変更、配布は禁止です。"], ["報告", "影響を受ける権利、関連ページまたは製品、確認に必要な情報をお送りください。"]],
+  } },
+  ko: { effective: "시행일", merchant: "판매자", address: "등록 주소", contact: "연락처", destination: "목적지", estimate: "제품 1개 예상 배송비", other: "기타 이용 가능한 유럽 및 중동 국가", unavailable: "배송 불가", review: "초안 — 법률 검토 대기 중. 이 페이지는 법률 자문이 아닙니다.", sections: {
+    shipping: [["발송", "재고 상품은 주문 승인 후 일반적으로 영업일 기준 3일 이내 발송 처리됩니다. 배송 기간은 발송 후 예상치입니다."], ["배송비 및 목적지", "배송비는 선택한 국가와 제품당 0.5kg으로 계산합니다. 전용 요금이 없는 이용 가능한 유럽·중동 국가는 USD 20입니다. 브라질에는 배송하지 않습니다."], ["관세 및 지연", "수입 관세, 세금, 통관 비용은 고객 부담입니다. 날씨, 공휴일, 운송사 사정으로 지연될 수 있습니다."]],
+    returns: [["30일 반품", "배송 후 30일 이내 주문 번호, 모델, 사유와 함께 반품 또는 교환을 요청할 수 있습니다. 승인 전 발송하지 마세요."], ["반품 상태", "제품, 액세서리, 포장을 검사 가능한 상태로 포함해야 합니다. 누락, 개조, 고객 손상은 환불이 줄거나 거절될 수 있습니다."], ["환불 및 반송비", "승인된 환불은 검사 후 원 결제 수단으로 지급됩니다. 품질 외 사유의 국제 반송비는 승인 시 안내합니다."]],
+    warranty: [["6개월 제한 보증", "대상 제품은 정상 사용 중 확인된 제조 결함에 대해 배송일부터 6개월 제한 보증이 제공됩니다."], ["제외", "사고·침수 손상, 무단 수리, 오용, 분실, 도난, 정상 마모는 보통 제외됩니다."], ["신청", "주문 번호, 모델, 문제 설명, 사진 또는 영상을 보내고 안내 전 제품을 발송하지 마세요."]],
+    privacy: [["수집 정보", "계정, 주문, 지원, 보증 정보를 수집합니다. 카드 정보는 결제사가 처리하며 저장하지 않습니다."], ["사용", "계정, 주문 내역, 이행, 지원, 보안, 법적 의무에 사용합니다. 개인정보를 판매하지 않으며 선택 분석은 동의 후에만 로드됩니다."], ["앱 데이터", "앱, 카메라, 번역 데이터 처리는 출시 전 최종 기술을 기준으로 검토합니다. 개인정보 문의는 연락해 주세요."]],
+    terms: [["주문·가격·결제", "가격과 최종 청구는 USD이며 현지 통화는 예상치입니다. 주문은 확인된 결제로 승인되고 카드는 결제사가 처리합니다."], ["사용과 책임", "사이트 악용, 방해, 불법적인 제품 사용을 금지합니다. 지역 소비자 권리와 책임 제한은 법률 검토 대상입니다."], ["준거법", "본 약관은 영국 법률을 따르며 최종 검토와 강행 소비자법의 적용을 받습니다."]],
+    "intellectual-property": [["지식재산권", "명칭, 디자인, 콘텐츠, 이미지, 상표는 각 권리자 소유이거나 허가를 받아 사용됩니다. 허가 없이 복사, 수정, 배포할 수 없습니다."], ["신고", "영향받는 권리, 관련 페이지 또는 제품, 검토에 필요한 정보를 보내 주세요."]],
+  } },
+};
+
+const special = new Set(["malaysia_west", "malaysia_east", "singapore", "thailand", "vietnam", "taiwan", "australia", "philippines", "indonesia", "united_states", "brazil"]);
+function identity(locale: Locale) { const t = copy[locale]; return <p><strong>{t.merchant}:</strong> {businessDetails.legalName}<br/><strong>{t.address}:</strong> {businessDetails.registeredAddress}<br/><strong>{t.contact}:</strong> <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a></p>; }
+function destination(id: string, fallback: string, locale: Locale) { const name = new Intl.DisplayNames([locale], { type: "region" }).of(getShippingDestinationCountryCode(id)) ?? fallback; return id === "malaysia_west" ? `${name} — West Malaysia` : id === "malaysia_east" ? `${name} — East Malaysia` : name; }
 
 export function PolicyContent({ locale, type }: { locale: Locale; type: PolicyType }) {
-  const path = (value: string) => `/${locale}${value}`;
-  const effective = <p className="text-sm">Effective date: {businessDetails.effectiveDate}</p>;
-
-  if (type === "shipping") return <>
-    {effective}
-    <h2>Order processing and dispatch</h2>
-    <p>Orders are processed for dispatch within 3 business days after a completed order is accepted. Delivery is provided by available international carriers. Delivery times are estimates and begin after dispatch.</p>
-    <h2>Shipping charges and estimated transit time</h2>
-    <div className="not-prose overflow-x-auto"><table className="w-full min-w-[540px] border-collapse text-left text-sm"><thead><tr className="border-b border-[var(--line)]"><th className="py-3 pr-4">Destination</th><th className="py-3 pr-4">Shipping charge</th><th className="py-3">Estimated transit time</th></tr></thead><tbody>{shippingRules.filter((rule) => !rule.excluded).map((rule) => <tr className="border-b border-[var(--line)]" key={rule.region}><td className="py-3 pr-4 font-semibold">{rule.region}</td><td className="py-3 pr-4">USD {rule.usdFee.toFixed(2)}</td><td className="py-3">{rule.estimatedDays}</td></tr>)}</tbody></table></div>
-    <p>Shipping charges are shown in USD. We do not currently advertise a free-shipping promotion. We are unable to ship to Brazil. Import duties, taxes, customs clearance charges and other destination-country fees are the customer&apos;s responsibility unless local law requires otherwise.</p>
-    <h2>Delivery delays</h2>
-    <p>Carrier capacity, customs inspections, weather, public holidays, pandemics and other events outside our reasonable control may delay delivery. We will use reasonable efforts to assist with delivery enquiries, but cannot guarantee a carrier&apos;s delivery date.</p>
-    <h2>Contact</h2>
-    <BusinessIdentity/>
-  </>;
-
-  if (type === "returns") return <>
-    {effective}
-    <h2>30-day return window</h2>
-    <p>You may request a return or exchange within 30 days of delivery. To start a request, email <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a> with your order number, product model and the reason for the request. Please wait for return instructions before sending an item.</p>
-    <h2>Return condition</h2>
-    <p>Returned items should include the original product, accessories and packaging, and be in a condition suitable for inspection. We may assess a return that is incomplete, damaged after delivery, altered, or missing accessories before a refund or exchange is approved.</p>
-    <h2>Refund timing and return postage</h2>
-    <p>Once an authorised return is received and inspected, we will notify you of the outcome. Any approved refund is issued to the original payment method after the payment provider completes its processing. Return-postage responsibility for non-quality international returns will be confirmed in the return authorisation before the item is sent.</p>
-    <h2>Faulty, damaged or incorrect items</h2>
-    <p>If an item arrives damaged, faulty or incorrect, contact us promptly with your order number and available photos or video. This helps us assess the issue and provide the appropriate next step.</p>
-    <BusinessIdentity/>
-  </>;
-
-  if (type === "warranty") return <>
-    {effective}
-    <h2>Limited warranty</h2>
-    <p>Eligible CoWin Glasses products include a 6-month limited warranty from delivery. The warranty covers verified manufacturing defects under normal intended use.</p>
-    <h2>What is not covered</h2>
-    <p>The warranty generally does not cover accidental damage, liquid damage, unauthorised repair or modification, normal wear, misuse, loss, theft, or damage caused by use outside product instructions.</p>
-    <h2>How to make a claim</h2>
-    <p>Contact <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a> with the order number, product model, issue description and available photo or video. We may request additional information to assess the claim.</p>
-    <BusinessIdentity/>
-  </>;
-
-  if (type === "privacy") return <>
-    {effective}
-    <h2>Who is responsible for this website</h2>
-    <BusinessIdentity/>
-    <h2>Information we collect</h2>
-    <p>We collect information you provide through customer-support and warranty forms, including contact details, order references and your message. When an enabled checkout is introduced, payment-card information will be handled by the selected payment provider and will not be stored by this website.</p>
-    <h2>How we use information</h2>
-    <p>We use information to respond to support requests, assess warranty claims, provide order-related assistance, protect the site and meet applicable legal obligations. We do not sell personal information.</p>
-    <h2>App and product data</h2>
-    <p>CoWin app, camera and translation data practices depend on the final production technology and will be published before those services are made available. We will update this policy when those data flows are confirmed.</p>
-    <h2>Your questions</h2>
-    <p>For privacy questions or requests, contact <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a>.</p>
-  </>;
-
-  if (type === "intellectual-property") return <>
-    {effective}
-    <h2>Intellectual property rights</h2>
-    <p>The CoWin name, website design, content, product images, trademarks and other intellectual property displayed on this website belong to, or are used with permission by, their respective owners. You may not copy, reproduce, modify, distribute or use them without prior written permission.</p>
-    <h2>Report a concern</h2>
-    <p>If you believe that material on this website infringes your intellectual property rights, email <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a>. Please identify the rights you believe are affected, the relevant website address or product, and enough information for us to review your request.</p>
-    <object data="https://www.9-bill.com/index/legal" aria-label="Intellectual property rights notice" className="mt-4 block h-20 w-full rounded-lg border border-[var(--line)] bg-white">
-      <p>Unable to display the intellectual property notice. <a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">Open the notice in a new tab</a>.</p>
-    </object>
-    <p className="mt-3 text-sm">If the embedded notice is unavailable, <a className="font-bold underline underline-offset-4" href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">open the intellectual property notice in a new tab</a>.</p>
-    <BusinessIdentity/>
-  </>;
-
-  return <>
-    {effective}
-    <h2>Merchant information</h2>
-    <BusinessIdentity/>
-    <h2>Orders, prices and payment</h2>
-    <p>Product prices are shown in USD. Local-currency figures are estimates only; the final payment is charged in USD. A purchase contract is formed only when an order is accepted through an enabled checkout. Where checkout is not enabled, no payment information is collected or approved.</p>
-    <h2>Shipping, returns and warranty</h2>
-    <p>Shipping, returns and warranty information forms part of these Terms. Please review our <Link href={path("/support/shipping-delivery")}>Shipping &amp; Delivery</Link>, <Link href={path("/support/returns-refunds")}>Returns &amp; Refunds</Link> and <Link href={path("/support/warranty")}>Warranty &amp; Support</Link> pages before ordering.</p>
-    <h2>GOVERNING LAW</h2>
-    <p>These Terms of Service and any separate agreements whereby we provide you Services shall be governed by and construed in accordance with the laws of UK.</p>
-  </>;
+  const t = copy[locale]; const path = (value: string) => `/${locale}${value}`;
+  return <><p className="rounded-xl bg-[#fff8e9] p-4 text-sm font-semibold">{t.review}</p><p className="text-sm">{t.effective}: {businessDetails.effectiveDate}</p>{t.sections[type].map(([title, body]) => <section key={title}><h2>{title}</h2><p>{body}</p></section>)}{type === "shipping" && <div className="not-prose overflow-x-auto"><table className="w-full min-w-[540px] border-collapse text-start text-sm"><thead><tr className="border-b border-[var(--line)]"><th className="py-3 pe-4">{t.destination}</th><th className="py-3">{t.estimate}</th></tr></thead><tbody>{shippingDestinations.filter((item) => special.has(item.id)).map((item) => { const rate = quoteShipping(item.id, 1); return <tr className="border-b border-[var(--line)]" key={item.id}><td className="py-3 pe-4 font-semibold">{destination(item.id, item.label, locale)}</td><td className="py-3">{rate.status === "unavailable" ? t.unavailable : `USD ${rate.totalUsd.toFixed(2)}`}</td></tr>; })}<tr><td className="py-3 pe-4 font-semibold">{t.other}</td><td className="py-3">USD 20.00</td></tr></tbody></table></div>}{type === "terms" && <p><Link href={path("/support/shipping-delivery")}>Shipping &amp; Delivery</Link> · <Link href={path("/support/returns-refunds")}>Returns &amp; Refunds</Link> · <Link href={path("/support/warranty")}>Warranty &amp; Support</Link></p>}{type === "intellectual-property" && <><object data="https://www.9-bill.com/index/legal" aria-label="Intellectual property rights notice" className="mt-4 block h-20 w-full rounded-lg border border-[var(--line)] bg-white"><p><a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">Open notice</a></p></object><p><a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">Open intellectual property notice</a></p></>}{identity(locale)}</>;
 }
