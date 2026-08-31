@@ -31,7 +31,7 @@ const roleRows = [
 
 function ignorableMigrationError(error: unknown) {
   const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
-  return code === "42P07" || code === "42710";
+  return code === "42P07" || code === "42710" || code === "42701";
 }
 
 async function bootstrap() {

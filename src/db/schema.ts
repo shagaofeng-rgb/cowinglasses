@@ -393,12 +393,137 @@ export const contentArticles = pgTable("content_articles", {
   seoTitle: varchar("seo_title", { length: 255 }),
   seoDescription: varchar("seo_description", { length: 320 }),
   seoKeywords: text("seo_keywords"),
+  imageUrl: text("image_url"),
+  imageAlt: varchar("image_alt", { length: 255 }),
+  authorName: varchar("author_name", { length: 160 }).default("CoWin Editorial Team").notNull(),
+  editorialDisclaimer: text("editorial_disclaimer"),
+  contentFingerprint: varchar("content_fingerprint", { length: 128 }),
+  automationCandidateId: uuid("automation_candidate_id"),
+  isAutomated: boolean("is_automated").default(false).notNull(),
   indexStatus: varchar("index_status", { length: 32 }).default("unknown").notNull(),
   publishedAt: timestamp("published_at", { withTimezone: true }),
   createdBy: uuid("created_by").references(() => adminUsers.id, { onDelete: "set null" }),
   createdAt,
   updatedAt,
-}, (table) => [uniqueIndex("content_articles_type_slug_unique").on(table.type, table.slug), index("content_articles_status_published_idx").on(table.status, table.publishedAt)]);
+}, (table) => [uniqueIndex("content_articles_type_slug_unique").on(table.type, table.slug), uniqueIndex("content_articles_fingerprint_unique").on(table.contentFingerprint), index("content_articles_status_published_idx").on(table.status, table.publishedAt)]);
+
+export const contentArticleTranslations = pgTable("content_article_translations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").notNull().references(() => contentArticles.id, { onDelete: "cascade" }),
+  locale: varchar("locale", { length: 8 }).notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  excerpt: text("excerpt"),
+  body: text("body"),
+  seoTitle: varchar("seo_title", { length: 255 }),
+  seoDescription: varchar("seo_description", { length: 320 }),
+  seoKeywords: text("seo_keywords"),
+  keyTakeaways: jsonb("key_takeaways").$type<string[]>().default([]).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("content_article_translations_article_locale_unique").on(table.articleId, table.locale), index("content_article_translations_locale_idx").on(table.locale)]);
+
+export const articleSources = pgTable("article_sources", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").notNull().references(() => contentArticles.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 200 }).notNull(),
+  domain: varchar("domain", { length: 255 }).notNull(),
+  url: text("url").notNull(),
+  title: text("title"),
+  author: varchar("author", { length: 200 }),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  isPrimary: boolean("is_primary").default(false).notNull(),
+  createdAt,
+}, (table) => [uniqueIndex("article_sources_article_url_unique").on(table.articleId, table.url), index("article_sources_article_idx").on(table.articleId)]);
+
+export const newsSources = pgTable("news_sources", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sourceKey: varchar("source_key", { length: 96 }).notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  domain: varchar("domain", { length: 255 }).notNull(),
+  feedUrl: text("feed_url").notNull(),
+  tier: varchar("tier", { length: 16 }).default("secondary").notNull(),
+  trustScore: integer("trust_score").default(70).notNull(),
+  allowedTopics: jsonb("allowed_topics").$type<string[]>().default([]).notNull(),
+  isActive: boolean("is_active").default(true).notNull(),
+  healthStatus: varchar("health_status", { length: 24 }).default("unknown").notNull(),
+  consecutiveFailures: integer("consecutive_failures").default(0).notNull(),
+  lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+  lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+  lastError: text("last_error"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("news_sources_key_unique").on(table.sourceKey), uniqueIndex("news_sources_feed_unique").on(table.feedUrl), index("news_sources_active_health_idx").on(table.isActive, table.healthStatus)]);
+
+export const newsCandidates = pgTable("news_candidates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  sourceId: uuid("source_id").notNull().references(() => newsSources.id, { onDelete: "restrict" }),
+  sourceUrl: text("source_url").notNull(),
+  normalizedUrl: text("normalized_url").notNull(),
+  urlHash: varchar("url_hash", { length: 128 }).notNull(),
+  title: text("title").notNull(),
+  titleHash: varchar("title_hash", { length: 128 }).notNull(),
+  summary: text("summary").notNull(),
+  contentFingerprint: varchar("content_fingerprint", { length: 128 }).notNull(),
+  sourceAuthor: varchar("source_author", { length: 200 }),
+  sourcePublishedAt: timestamp("source_published_at", { withTimezone: true }).notNull(),
+  topics: jsonb("topics").$type<string[]>().default([]).notNull(),
+  score: integer("score").default(0).notNull(),
+  status: varchar("status", { length: 32 }).default("discovered").notNull(),
+  rejectReason: text("reject_reason"),
+  attempts: integer("attempts").default(0).notNull(),
+  reservedCycle: varchar("reserved_cycle", { length: 80 }),
+  usedArticleId: uuid("used_article_id").references(() => contentArticles.id, { onDelete: "set null" }),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("news_candidates_url_hash_unique").on(table.urlHash), uniqueIndex("news_candidates_fingerprint_unique").on(table.contentFingerprint), index("news_candidates_status_score_idx").on(table.status, table.score), index("news_candidates_source_published_idx").on(table.sourcePublishedAt)]);
+
+export const newsAutomationState = pgTable("news_automation_state", {
+  key: varchar("key", { length: 64 }).primaryKey(),
+  enabled: boolean("enabled").default(true).notNull(),
+  publishingMode: varchar("publishing_mode", { length: 24 }).default("review").notNull(),
+  intervalHours: integer("interval_hours").default(48).notNull(),
+  minScore: integer("min_score").default(70).notNull(),
+  lastIngestAt: timestamp("last_ingest_at", { withTimezone: true }),
+  lastPublishedAt: timestamp("last_published_at", { withTimezone: true }),
+  nextEligibleAt: timestamp("next_eligible_at", { withTimezone: true }),
+  topicCursor: integer("topic_cursor").default(0).notNull(),
+  updatedBy: uuid("updated_by").references(() => adminUsers.id, { onDelete: "set null" }),
+  updatedAt,
+});
+
+export const newsAutomationRuns = pgTable("news_automation_runs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  kind: varchar("kind", { length: 24 }).notNull(),
+  trigger: varchar("trigger", { length: 24 }).notNull(),
+  status: varchar("status", { length: 32 }).notNull(),
+  candidateCount: integer("candidate_count").default(0).notNull(),
+  rejectedCount: integer("rejected_count").default(0).notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  publishedArticleId: uuid("published_article_id").references(() => contentArticles.id, { onDelete: "set null" }),
+  publishedSlug: varchar("published_slug", { length: 260 }),
+  reason: text("reason").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
+  startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt,
+}, (table) => [index("news_automation_runs_started_idx").on(table.startedAt), index("news_automation_runs_status_idx").on(table.status)]);
+
+export const newsDeliveryChecks = pgTable("news_delivery_checks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  articleId: uuid("article_id").notNull().references(() => contentArticles.id, { onDelete: "cascade" }),
+  passed: boolean("passed").default(false).notNull(),
+  results: jsonb("results").$type<Record<string, unknown>>().default({}).notNull(),
+  error: text("error"),
+  checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [index("news_delivery_checks_article_idx").on(table.articleId), index("news_delivery_checks_checked_idx").on(table.checkedAt)]);
+
+export const newsJobLocks = pgTable("news_job_locks", {
+  lockKey: varchar("lock_key", { length: 96 }).primaryKey(),
+  token: uuid("token").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [index("news_job_locks_expires_idx").on(table.expiresAt)]);
 
 export const mediaAssets = pgTable("media_assets", {
   id: uuid("id").defaultRandom().primaryKey(),
