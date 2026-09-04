@@ -1,0 +1,21 @@
+{
+  "direction": "Lensworld / Lens Tunnel",
+  "generator": "built-in imagegen",
+  "assets": [
+    {
+      "output": "public/images/home/lensworld/movement-coast.webp",
+      "usage": "G200 movement lens chapter",
+      "prompt": "Use case: photorealistic-natural. Asset type: CoWin Glasses homepage lens-scene background, desktop and mobile responsive crop. A fashion-editorial action photograph from directly behind a cyclist accelerating on a dramatic coastal mountain road, designed to appear inside a giant cyan smart-glasses lens. Wide 3:2 landscape, strong central vanishing point, premium sports campaign realism, crisp late-morning sunlight, deep blacks and cool cyan-blue environment. No logos, text, UI, watermark, product specifications, floating graphics, additional people or impossible anatomy."
+    },
+    {
+      "output": "public/images/home/lensworld/everyday-architecture.webp",
+      "usage": "GL1 everyday lens chapter",
+      "prompt": "Use case: photorealistic-natural. Asset type: CoWin Glasses homepage lens-scene background, responsive crop. A minimal fashion-editorial photograph of one adult walking away through a contemporary white concrete street, created to appear inside a clear smart-glasses lens. Wide 3:2 landscape, deep central vanishing point, hard clear daylight, white, silver-grey and charcoal palette. No logos, text, UI, watermark, product claims, floating graphics, crowds or distorted architecture."
+    },
+    {
+      "output": "public/images/home/lensworld/create-night.webp",
+      "usage": "V03-T5 creator lens chapter",
+      "prompt": "Use case: photorealistic-natural. Asset type: CoWin Glasses homepage lens-scene background, responsive crop. A cinematic fashion-editorial photograph of one young adult creator walking away through a modern night city, designed to appear inside a dark sunglass lens. Wide 3:2 landscape, central vanishing point, optical black with cool cyan highlights, subtle warm distant lights. No logos, text, UI, watermark, emphasized camera device, product claims, floating graphics, crowds or cyberpunk neon overload."
+    }
+  ]
+}

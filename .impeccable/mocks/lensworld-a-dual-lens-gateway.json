@@ -1,0 +1,10 @@
+{
+  "id": "lensworld-a-dual-lens-gateway",
+  "title": "Dual-lens Gateway",
+  "approved": false,
+  "surface": "homepage",
+  "direction": "Lensworld",
+  "desktop": "Two simultaneous lifestyle worlds framed by the two lenses.",
+  "mobile": "One lens becomes one full-screen chapter; commerce lives in the sticky bridge rail.",
+  "promptFile": "lensworld-a-dual-lens-gateway.prompt.txt"
+}

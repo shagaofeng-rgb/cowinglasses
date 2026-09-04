@@ -1,0 +1,10 @@
+{
+  "id": "lensworld-b-infinite-visor-rail",
+  "title": "Infinite Visor Rail",
+  "approved": false,
+  "surface": "homepage",
+  "direction": "Lensworld",
+  "desktop": "One continuous shield lens becomes a cinematic use-case reel with commerce mounted on the temple.",
+  "mobile": "The visor becomes a vertical swipe story with a persistent temple checkout control.",
+  "promptFile": "lensworld-b-infinite-visor-rail.prompt.txt"
+}

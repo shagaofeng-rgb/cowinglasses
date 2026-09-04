@@ -1,0 +1,75 @@
+{
+  "title": "Choose the new CoWin homepage world",
+  "question": "All four options keep real products and sales clarity. Choose the visual world that should lead the final homepage build.",
+  "options": [
+    {
+      "id": "departure-motion",
+      "label": "Departure Motion",
+      "kicker": "THE PROPOSED DIRECTION",
+      "lineage": "airport wayfinding, boarding passes and technical travel gear",
+      "thesis": "A moving departure board turns each CoWin model into a clear route for music, travel or creation.",
+      "palette": ["#154BFF", "#FF5A36", "#F2F4EF", "#111318"],
+      "materials": ["mirrored lens blue", "thermal ticket stock", "black ripstop"],
+      "viewport": "A cobalt route field carries the main proposition while G200 and V03-T5 appear as two departure choices with real prices and direct CTAs.",
+      "risk": "Wayfinding details must stay subordinate or the page can feel like an airline service.",
+      "sketch": ".impeccable/sketches/departure-motion.png"
+    },
+    {
+      "id": "colorblock-run-club",
+      "label": "Colorblock Run Club",
+      "kicker": "ALTERNATE 01",
+      "lineage": "modular Dutch identity systems and contemporary run-club graphics",
+      "thesis": "Real product photography and saturated modular bars make the catalogue feel like wearable street equipment.",
+      "palette": ["#00B7FF", "#FF1F8F", "#FFD400", "#32D74B"],
+      "materials": ["cool concrete", "flat vector tape", "photographic depth"],
+      "viewport": "A large G200 photograph crosses a hard grid while colored bars label Move, Listen and Explore; two compact price cards remain immediately actionable.",
+      "risk": "Too many equal colors could weaken the hierarchy unless one color owns each section.",
+      "case": "Wins audience identification through fashion energy; product clarity stays strong because every band maps to a use case.",
+      "sketch": ".impeccable/sketches/colorblock-run-club.png",
+      "hero": "https://impeccable.style/worlds/cards/studio-dumbar-identity-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/studio-dumbar-identity.webp"
+    },
+    {
+      "id": "kinetic-lens-field",
+      "label": "Kinetic Lens Field",
+      "kicker": "ALTERNATE 02",
+      "lineage": "experiential media portals and lens-refraction light fields",
+      "thesis": "The homepage behaves like light passing through a lens, with products suspended inside a responsive field.",
+      "palette": ["#06122D", "#705CFF", "#68D8FF", "#FF6138"],
+      "materials": ["optical interference", "fine film grain", "matte black glass"],
+      "viewport": "An oversized G200 floats over a deep moving light field, with the proposition and two grounded product choices held in a precise lower rail.",
+      "risk": "Highest production and performance cost; the atmospheric field can outrun ecommerce clarity if overused.",
+      "case": "Strongest technology impression, but weaker immediate product comparison than Departure Motion.",
+      "sketch": ".impeccable/sketches/kinetic-lens-field.png",
+      "hero": "https://impeccable.style/worlds/cards/webgl-shader-portal-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/webgl-shader-portal.webp"
+    },
+    {
+      "id": "street-sprint-zine",
+      "label": "Street Sprint Zine",
+      "kicker": "ALTERNATE 03",
+      "lineage": "independent sport zines, race flyers and torn campaign posters",
+      "thesis": "A graphic race-day collage makes CoWin feel young, fast and unapologetically wearable.",
+      "palette": ["#E31324", "#090909", "#F4F0E8", "#B7F229"],
+      "materials": ["torn matte paper", "halftone ink", "marker arrows"],
+      "viewport": "A cropped cyclist and G200 cutout collide with the main proposition; launch price and Shop now sit on clean white ticket panels.",
+      "risk": "Fuses poorly with premium everyday frames if the torn-paper language is used beyond campaign moments.",
+      "case": "Highest youth and sport energy, but the narrowest cross-category reach for the full catalogue.",
+      "sketch": ".impeccable/sketches/street-sprint-zine.png",
+      "hero": "https://impeccable.style/worlds/cards/pop-culture-shelf-rebel-menu-interface-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/pop-culture-shelf-rebel-menu-interface.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "Premium category standard",
+    "thesis": "A familiar luxury-tech storefront executed with restrained typography, a clean split hero and polished product photography.",
+    "palette": ["#F7F7F4", "#101112", "#CBE53B", "#D8DAD5"],
+    "materials": ["white studio sweep", "soft-touch black", "brushed aluminium"],
+    "viewport": "Editorial copy and a single large product share the first viewport, followed by two conventional featured-product cards.",
+    "risk": "Easy to trust and shop, but less ownable and more similar to established eyewear and consumer-tech brands.",
+    "sketch": ".impeccable/sketches/premium-category-standard.png"
+  },
+  "steer": true
+}

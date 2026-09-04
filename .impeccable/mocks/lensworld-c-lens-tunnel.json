@@ -1,0 +1,10 @@
+{
+  "id": "lensworld-c-lens-tunnel",
+  "title": "Lens Tunnel",
+  "approved": true,
+  "surface": "homepage",
+  "direction": "Lensworld",
+  "desktop": "Three eyewear frames create a perspective runway from movement to everyday to creator use.",
+  "mobile": "A vertical sequence of lens portals uses an optical-axis timeline and sticky commerce bridge.",
+  "promptFile": "lensworld-c-lens-tunnel.prompt.txt"
+}

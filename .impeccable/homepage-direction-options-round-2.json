@@ -1,0 +1,60 @@
+{
+  "title": "CoWin homepage — pushed beyond the standard hero",
+  "question": "These directions replace the ecommerce hero skeleton itself. Choose one world, ask for a hybrid, or re-roll again.",
+  "options": [
+    {
+      "id": "lensworld",
+      "label": "Lensworld",
+      "kicker": "THE PROPOSED DIRECTION",
+      "lineage": "first-person sport vision, optical masks and product-shaped navigation",
+      "thesis": "The glasses are not shown on the homepage—the homepage exists inside the glasses.",
+      "palette": ["#050608", "#19B9F4", "#EAFBFF", "#CFFF32"],
+      "materials": ["mirrored blue lens", "matte black frame", "moving daylight worlds"],
+      "viewport": "An enormous G200 frame extends beyond the viewport; each lens is a live scene, navigation follows the brow, and buying happens inside the lens.",
+      "risk": "The frame mask must adapt carefully on narrow screens so the product-shaped interface remains usable.",
+      "sketch": ".impeccable/sketches/lensworld.png"
+    },
+    {
+      "id": "carbon-chrome",
+      "label": "Carbon / Chrome",
+      "kicker": "ALTERNATE 01",
+      "lineage": "raku fracture, performance materials and severe fashion campaigns",
+      "thesis": "CoWin becomes an object revealed by heat, fracture and smoke rather than a product on a white sweep.",
+      "palette": ["#080908", "#E7E4DC", "#FF4A1C", "#21ACE5"],
+      "materials": ["carbonized clay", "cracked silver glaze", "blackened steel"],
+      "viewport": "A giant diagonal G200 interrupts a fractured headline while its real price glows from an ember seam and V03-T5 appears through smoke.",
+      "risk": "This world is powerful and premium but demands disciplined restraint across policy, account and support pages.",
+      "case": "Strongest fashion authority and material identity while keeping one decisive product action.",
+      "sketch": ".impeccable/sketches/carbon-chrome.png",
+      "hero": "https://impeccable.style/worlds/cards/clay-ceramics-fracture-raku-smoke-flash-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/clay-ceramics-fracture-raku-smoke-flash.webp"
+    },
+    {
+      "id": "signal-deck",
+      "label": "Signal Deck 39.99",
+      "kicker": "ALTERNATE 02",
+      "lineage": "precision laboratory instruments and glowing number tubes",
+      "thesis": "Shopping becomes tuning: rotate the model selector, watch the real price arrive, then activate the frame.",
+      "palette": ["#0B0D0E", "#1C1F24", "#FF8A00", "#21ACE5"],
+      "materials": ["blackened steel", "tube glass", "anode mesh"],
+      "viewport": "G200 is suspended inside one full-screen instrument, USD 39.99 glows behind it, and a physical selector switches to GL1 or V03-T5.",
+      "risk": "Most ownable interaction, but the industrial character is less natural for softer everyday and fashion frames.",
+      "case": "Highest memorability and product-specific interaction; narrower emotional range than Lensworld.",
+      "sketch": ".impeccable/sketches/signal-deck.png",
+      "hero": "https://impeccable.style/worlds/cards/signals-instruments-nixie-laboratory-counter-hero.webp",
+      "board": "https://impeccable.style/worlds/cards/signals-instruments-nixie-laboratory-counter.webp"
+    }
+  ],
+  "reroll": true,
+  "canon": true,
+  "canonCard": {
+    "label": "Return to premium convention",
+    "thesis": "The restrained category-standard option remains available if experimentation stops serving the sale.",
+    "palette": ["#F7F7F4", "#101112", "#CBE53B", "#D8DAD5"],
+    "materials": ["white studio sweep", "soft-touch black", "brushed aluminium"],
+    "viewport": "Editorial copy and one large product share a familiar premium ecommerce viewport.",
+    "risk": "Clear and safe, but already rejected for lacking a distinctive CoWin point of view.",
+    "sketch": ".impeccable/sketches/premium-category-standard.png"
+  },
+  "steer": true
+}
