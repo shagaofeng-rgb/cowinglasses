@@ -204,6 +204,7 @@ const ar: Messages = {
   announcement: "شحن عالمي · إرسال خلال 3 أيام عمل · إرجاع خلال 30 يوماً",
   common: {
     ...en.common,
+    searchPlaceholder: "ابحث عن الإطارات والميزات",
     shopNow: "تسوق الآن",
     learnMore: "اعرف المزيد",
     viewAll: "عرض الكل",
@@ -300,6 +301,7 @@ const es: Messages = {
     "Envío global · Despacho en 3 días hábiles · Devoluciones de 30 días",
   common: {
     ...en.common,
+    searchPlaceholder: "Buscar monturas y funciones",
     shopNow: "Comprar",
     learnMore: "Más información",
     addToCart: "Añadir al carrito",
@@ -391,6 +393,7 @@ const pt: Messages = {
     "Entrega global · Envio em até 3 dias úteis · Devoluções em 30 dias",
   common: {
     ...en.common,
+    searchPlaceholder: "Buscar armações e recursos",
     shopNow: "Comprar",
     learnMore: "Saiba mais",
     addToCart: "Adicionar ao carrinho",
@@ -482,6 +485,7 @@ const ja: Messages = {
   announcement: "世界配送 · 3営業日以内に発送 · 30日間返品",
   common: {
     ...en.common,
+    searchPlaceholder: "フレームや機能を検索",
     shopNow: "購入する",
     learnMore: "詳しく見る",
     addToCart: "カートに追加",
@@ -570,6 +574,7 @@ const ko: Messages = {
   announcement: "글로벌 배송 · 영업일 기준 3일 내 발송 · 30일 반품",
   common: {
     ...en.common,
+    searchPlaceholder: "프레임 및 기능 검색",
     shopNow: "쇼핑하기",
     learnMore: "자세히 보기",
     addToCart: "장바구니 담기",

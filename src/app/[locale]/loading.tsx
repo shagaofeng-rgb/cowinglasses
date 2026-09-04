@@ -1,1 +1,2 @@
-export default function Loading() { return <div className="shell animate-pulse py-10"><div className="h-8 w-40 rounded bg-zinc-200"/><div className="mt-8 grid gap-5 md:grid-cols-3">{[1,2,3].map((item) => <div className="h-96 rounded-3xl bg-zinc-200" key={item}/>)}</div></div>; }
+import styles from "@/components/layout/storefront-design.module.css";
+export default function Loading() { return <div className={styles.loadingGrid} aria-label="Loading"><div/><div/><div/></div>; }

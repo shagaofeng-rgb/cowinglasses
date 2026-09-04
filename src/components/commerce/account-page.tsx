@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Locale } from "@/lib/i18n";
+import styles from "@/components/layout/storefront-design.module.css";
 
 type AccountOrder = {
   orderNumber: string;
@@ -219,17 +220,18 @@ export function AccountPage({ locale }: { locale: Locale }) {
     setData(null);
   }
   return (
-    <main className="bg-[#f3f6f4]">
-      <section className="shell min-h-[60dvh] py-12 md:py-20">
-        <p className="eyebrow">{t.eyebrow}</p>
-        <div className="mt-3 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+    <div className={styles.accountPage}>
+      <section className={styles.accountHeader}>
+        <div className="shell py-16 md:py-24">
+          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
           <div>
-            <h1 className="max-w-3xl text-4xl font-black tracking-[-.06em] md:text-6xl">
+            <h1 className={styles.accountTitle}>
               {t.title}
             </h1>
-            <p className="mt-5 max-w-2xl leading-7 text-[var(--muted)]">
+            <p className="mt-6 max-w-2xl leading-7 text-[#c2cbce]">
               {t.intro}
             </p>
+            <p className="mt-7 text-xs font-bold uppercase tracking-[.14em] text-[var(--lime)]">{t.eyebrow}</p>
           </div>
           {data && (
             <button
@@ -240,15 +242,18 @@ export function AccountPage({ locale }: { locale: Locale }) {
               {t.signOut}
             </button>
           )}
+          </div>
         </div>
+      </section>
+      <section className={`shell min-h-[38dvh] ${styles.section} ${styles.formSurface}`}>
         {loading ? (
           <div
-            className="mt-10 h-40 animate-pulse rounded-3xl bg-white"
+            className="h-40 animate-pulse rounded-2xl bg-white"
             aria-label="Loading"
           />
         ) : data ? (
-          <section className="mt-10">
-            <div className="rounded-2xl border border-[var(--line)] bg-white p-5">
+          <section>
+            <div className={`${styles.accountIdentity} p-5`}>
               <p className="font-black">
                 {[data.customer.firstName, data.customer.lastName]
                   .filter(Boolean)
@@ -264,7 +269,7 @@ export function AccountPage({ locale }: { locale: Locale }) {
                 {data.orders.map((order) => (
                   <article
                     key={order.orderNumber}
-                    className="rounded-3xl border border-[var(--line)] bg-white p-5 md:p-7"
+                    className={styles.orderCard}
                   >
                     <div className="flex flex-wrap justify-between gap-3">
                       <div>
@@ -325,7 +330,7 @@ export function AccountPage({ locale }: { locale: Locale }) {
         ) : (
           <form
             action={login}
-            className="mt-10 max-w-lg rounded-3xl border border-[var(--line)] bg-white p-6 md:p-8"
+            className={styles.accountForm}
           >
             <label className="grid gap-2">
               <span className="text-sm font-bold">{t.email}</span>
@@ -366,6 +371,6 @@ export function AccountPage({ locale }: { locale: Locale }) {
           </form>
         )}
       </section>
-    </main>
+    </div>
   );
 }

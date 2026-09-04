@@ -24,6 +24,7 @@ import {
   type PolicyType,
 } from "@/components/compliance/policy-content";
 import { AccountPage } from "./account-page";
+import styles from "@/components/layout/storefront-design.module.css";
 
 type RoutePageProps = {
   locale: Locale;
@@ -55,7 +56,7 @@ export function RoutePage({
   if (path === "account") return <AccountPage locale={locale} />;
   if (path === "support" || path === "support/faq")
     return <Support locale={locale} faq={path.endsWith("faq")} />;
-  if (path === "support/contact") return <SupportContact />;
+  if (path === "support/contact") return <SupportContact locale={locale} />;
   if (path === "support/shipping-delivery") return <Policy locale={locale} type="shipping" />;
   if (path === "support/returns-refunds") return <Policy locale={locale} type="returns" />;
   if (path === "support/warranty") return <Policy locale={locale} type="warranty" />;
@@ -71,18 +72,22 @@ function PageHead({
   eyebrow,
   title,
   intro,
+  variant = "default",
 }: {
   eyebrow?: string;
   title: string;
   intro: string;
+  variant?: "default" | "learn";
 }) {
   return (
-    <header className="shell py-10 md:py-16">
-      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-      <h1 className="mt-3 max-w-3xl text-4xl font-black tracking-[-.06em] md:text-6xl">
-        {title}
-      </h1>
-      <p className="mt-5 max-w-2xl leading-7 text-[var(--muted)]">{intro}</p>
+    <header className={`${styles.pageHero} ${variant === "learn" ? styles.pageHeroLearn : ""}`}>
+      <div className={`shell ${styles.pageHeroShell}`}>
+        <div className={styles.pageHeroCopy}>
+          <h1 className={styles.pageHeroTitle}>{title}</h1>
+          <p className={styles.pageHeroIntro}>{intro}</p>
+        </div>
+        <p className={styles.pageHeroIndex}>{eyebrow || "CoWin Glasses"}</p>
+      </div>
     </header>
   );
 }
@@ -112,15 +117,15 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
     [products, query, feature, sort, locale],
   );
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow={t.nav.shop}
         title={t.shop.title}
         intro={t.shop.intro}
       />
-      <section className="shell pb-16">
-        <div className="grid gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-3 md:grid-cols-[1fr_auto_auto]">
-          <label className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--paper)] px-3">
+      <section className={`shell ${styles.sectionTight}`}>
+        <div className={styles.catalogControls}>
+          <label>
             <Search size={17} />
             <input
               value={query}
@@ -133,7 +138,7 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
             aria-label={t.shop.feature}
             value={feature}
             onChange={(e) => setFeature(e.target.value)}
-            className="min-h-11 rounded-xl border border-[var(--line)] px-3"
+            className="min-h-11 px-3"
           >
             <option value="all">{t.shop.filters}</option>
             <option value="translation">AI real-time translation</option>
@@ -146,7 +151,7 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
             aria-label={t.shop.sort}
             value={sort}
             onChange={(e) => setSort(e.target.value)}
-            className="min-h-11 rounded-xl border border-[var(--line)] px-3"
+            className="min-h-11 px-3"
           >
             <option value="featured">{t.shop.newest}</option>
             <option value="low">{t.shop.lowHigh}</option>
@@ -154,13 +159,14 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
           </select>
         </div>
         {shown.length ? (
-          <div className="mt-8 grid gap-x-5 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
+          <div className={styles.catalogGrid}>
             {shown.map((product) => (
               <ProductCard product={product} locale={locale} key={product.id} />
             ))}
           </div>
         ) : (
-          <div className="py-20 text-center">
+          <div className={styles.emptyState}>
+            <div>
             <SlidersHorizontal className="mx-auto" />
             <p className="mt-4 text-[var(--muted)]">{t.common.noResults}</p>
             <button
@@ -172,10 +178,11 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
             >
               {t.common.clear}
             </button>
+            </div>
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }
 function Collection({
@@ -196,13 +203,13 @@ function Collection({
     product.collections.includes(collection as never),
   );
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="Collection"
         title={title}
         intro="Browse models currently published in the CoWin catalogue."
       />
-      <section className="shell grid gap-x-5 gap-y-10 pb-16 sm:grid-cols-2 xl:grid-cols-3">
+      <section className={`shell ${styles.section} ${styles.catalogGrid}`}>
         {subset.length ? (
           subset.map((product) => (
             <ProductCard product={product} locale={locale} key={product.id} />
@@ -213,7 +220,7 @@ function Collection({
           </p>
         )}
       </section>
-    </>
+    </div>
   );
 }
 function Compare({
@@ -228,17 +235,17 @@ function Compare({
   );
   const selected = products.filter((product) => ids.includes(product.id));
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="Compare"
         title="See the shape of your choice."
         intro="Compare up to three currently published models."
       />
-      <section className="shell pb-16">
-        <div className="mb-8 grid gap-3 md:grid-cols-3">
+      <section className={`shell ${styles.section}`}>
+        <div className={styles.comparePicker}>
           {products.map((product) => (
             <label
-              className="flex min-h-12 items-center gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4"
+              className={styles.compareOption}
               key={product.id}
             >
               <input
@@ -258,8 +265,8 @@ function Compare({
             </label>
           ))}
         </div>
-        <div className="overflow-x-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)]">
-          <table className="w-full min-w-[650px] text-left text-sm">
+        <div className={styles.compareTable}>
+          <table className="text-start text-sm">
             <thead>
               <tr>
                 <th className="p-5">Model</th>
@@ -306,16 +313,17 @@ function Compare({
           </table>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 function HowItWorks({ locale }: { locale: Locale }) {
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="How it works"
         title="Wear it. Pair it. Keep your phone close."
         intro="CoWin glasses connect to your phone over Bluetooth. Selected translation functions need the app and your phone's internet connection."
+        variant="learn"
       />
       <Steps
         locale={locale}
@@ -331,21 +339,22 @@ function HowItWorks({ locale }: { locale: Locale }) {
           ],
         ]}
       />
-    </>
+    </div>
   );
 }
 function AppPage({ locale }: { locale: Locale }) {
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="CoWin app"
         title="The connection lives on your phone."
         intro="iOS and Android download links are environment-variable placeholders in this demo. Final permission and privacy notices must be reviewed with the production app."
+        variant="learn"
       />
-      <section className="shell grid gap-8 pb-16 md:grid-cols-2">
-        <div className="rounded-3xl bg-[var(--dark)] p-8 text-white">
-          <h2 className="text-3xl font-black">Get the app</h2>
-          <p className="mt-3 max-w-md leading-7 text-zinc-300">
+      <section className={`shell ${styles.section} ${styles.splitFeature}`}>
+        <div className={styles.darkPlate}>
+          <h2 className={styles.plateTitle}>Get the app</h2>
+          <p className={styles.plateCopy}>
             Pair, personalize settings and use connected features with the CoWin
             mobile app.
           </p>
@@ -367,8 +376,8 @@ function AppPage({ locale }: { locale: Locale }) {
             </a>
           </div>
         </div>
-        <div className="rounded-3xl bg-[var(--surface)] p-8">
-          <h2 className="text-2xl font-black">Permissions, clearly named.</h2>
+        <div className={styles.lightPlate}>
+          <h2 className={styles.plateTitle}>Permissions, clearly named.</h2>
           <ul className="mt-6 grid gap-4 text-sm leading-6 text-[var(--muted)]">
             <li>
               <Check className="mr-2 inline text-[var(--lime)]" size={17} />
@@ -401,18 +410,19 @@ function AppPage({ locale }: { locale: Locale }) {
           ],
         ]}
       />
-    </>
+    </div>
   );
 }
 function LensGuide() {
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="Lens Guide"
         title="Prescription lenses, without guesswork."
         intro="Some eligible frames include a standard prescription lens insert. You take that insert to an optician to fit your own prescription lenses."
+        variant="learn"
       />
-      <section className="shell grid gap-5 pb-16 md:grid-cols-3">
+      <section className={`shell ${styles.section} ${styles.stepGrid}`}>
         {[
           [
             "Check",
@@ -427,14 +437,14 @@ function LensGuide() {
             "Your optician makes and fits lenses. CoWin does not provide an online prescription service in this stage.",
           ],
         ].map(([title, text]) => (
-          <div className="rounded-2xl bg-[var(--surface)] p-6" key={title}>
-            <p className="text-3xl font-black text-[var(--lime)]">{title[0]}</p>
-            <h2 className="mt-12 text-xl font-black">{title}</h2>
-            <p className="mt-3 leading-7 text-[var(--muted)]">{text}</p>
+          <div className={styles.stepCard} key={title}>
+            <p className={styles.stepNumber}>{title[0]}</p>
+            <h2>{title}</h2>
+            <p>{text}</p>
           </div>
         ))}
       </section>
-    </>
+    </div>
   );
 }
 const faqCopy: Record<Locale, { intro: string; cards: [string, string, string]; faqs: [string, string][] }> = {
@@ -450,7 +460,7 @@ function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
   const t = messages[locale];
   const localized = faqCopy[locale];
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="Support"
         title={faq ? t.support.faq : t.support.title}
@@ -459,13 +469,14 @@ function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
             ? localized.intro
             : t.support.intro
         }
+        variant="learn"
       />
-      <section className="shell pb-16">
+      <section className={`shell ${styles.section}`}>
         {faq ? (
-          <div className="grid gap-3">
+          <div className={styles.readerArticle}>
             {localized.faqs.map(([question, answer]) => (
               <details
-                className="rounded-2xl bg-[var(--surface)] p-5"
+                className="border-t border-[var(--line)] py-6 first:border-t-black"
                 key={question}
               >
                 <summary className="cursor-pointer font-black">
@@ -478,7 +489,7 @@ function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
             ))}
           </div>
         ) : (
-          <div className="grid gap-5 md:grid-cols-3">
+          <div className={styles.supportGrid}>
             <SupportCard
               title={t.support.faq}
               text={localized.cards[0]}
@@ -500,7 +511,7 @@ function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }
 function SupportCard({
@@ -516,7 +527,7 @@ function SupportCard({
 }) {
   return (
     <Link
-      className="rounded-2xl bg-[var(--surface)] p-6 transition hover:-translate-y-1"
+      className={styles.supportLink}
       href={`/${locale}${href}`}
     >
       <h2 className="text-xl font-black">{title}</h2>
@@ -525,17 +536,18 @@ function SupportCard({
     </Link>
   );
 }
-function SupportContact() {
+function SupportContact({ locale }: { locale: Locale }) {
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="Support"
         title="Contact Support"
         intro="We’re here to help with your CoWin Glasses order, product setup, delivery, returns or warranty."
+        variant="learn"
       />
-      <section className="shell grid gap-10 pb-16 md:grid-cols-[.72fr_1.28fr]">
-        <aside className="h-fit rounded-3xl bg-[var(--dark)] p-7 text-white">
-          <p className="eyebrow text-[#c9d4a5]">Email support</p>
+      <section className={`shell ${styles.section} ${styles.reader}`}>
+        <aside className={`${styles.darkPlate} h-fit`}>
+          <p className="text-xs font-bold uppercase tracking-[.14em] text-[#c9d4a5]">Email support</p>
           <a
             className="mt-4 block text-2xl font-black tracking-[-.04em] underline decoration-[var(--lime)] decoration-2 underline-offset-8"
             href="mailto:info@cowinglasses.com"
@@ -563,9 +575,12 @@ function SupportContact() {
             <a href="mailto:info@cowinglasses.com">info@cowinglasses.com</a> and
             our team will assist with the next steps.
           </p>
+          <div className={`mt-8 border-t border-[var(--line)] pt-8 ${styles.formSurface}`}>
+            <DemoForm locale={locale} kind="support" />
+          </div>
         </SupportArticle>
       </section>
-    </>
+    </div>
   );
 }
 export function ShippingDelivery() {
@@ -778,8 +793,8 @@ function SupportArticle({
   compact?: boolean;
 }) {
   return (
-    <section className={compact ? "" : "shell max-w-4xl pb-16"}>
-      <article className="rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-6 leading-7 text-[var(--muted)] [&_a]:font-bold [&_a]:text-[var(--ink)] [&_a]:underline [&_a]:decoration-[var(--lime)] [&_a]:decoration-2 [&_a]:underline-offset-4 [&_ol]:list-decimal [&_ol]:space-y-2 [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-6 md:p-10">
+    <section className={compact ? "" : `shell ${styles.section}`}>
+      <article className={styles.readerArticle}>
         {title && (
           <h2 className="text-3xl font-black tracking-[-.05em] text-[var(--ink)]">
             {title}
@@ -798,10 +813,8 @@ function SupportSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-[var(--line)] py-8 first:border-t-0 first:pt-0">
-      <h2 className="text-2xl font-black tracking-[-.04em] text-[var(--ink)]">
-        {title}
-      </h2>
+    <section>
+      <h2>{title}</h2>
       <div className="mt-4 grid gap-4">{children}</div>
     </section>
   );
@@ -818,14 +831,14 @@ function SearchPage({
     localize(product.name, locale).toLowerCase().includes(query.toLowerCase()),
   );
   return (
-    <>
+    <div className={styles.page}>
       <PageHead
         eyebrow="Search"
         title="Find your frame."
         intro="Search the current CoWin catalogue by model name."
       />
-      <section className="shell pb-16">
-        <label className="flex min-h-14 max-w-2xl items-center gap-3 rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-4">
+      <section className={`shell ${styles.section}`}>
+        <label className={`${styles.searchField} flex max-w-2xl items-center gap-3 px-4`}>
           <Search />
           <input
             autoFocus
@@ -836,14 +849,14 @@ function SearchPage({
           />
         </label>
         {query && (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className={styles.catalogGrid}>
             {result.map((product) => (
               <ProductCard product={product} locale={locale} key={product.id} />
             ))}
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }
 function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
@@ -898,28 +911,31 @@ function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
     },
   };
   return (
-    <>
-      <PageHead title={titles[locale][type]} intro={messages[locale].common.draft} />
-      <section className="shell prose pb-16">
-        <PolicyContent locale={locale} type={type} />
-        {type === "warranty" && (
-          <div className="mt-10 max-w-xl rounded-3xl bg-[var(--surface)] p-6">
-            <h2 className="mt-0">{messages[locale].support.contact}</h2>
-            <DemoForm locale={locale} kind="warranty" />
-          </div>
-        )}
+    <div className={styles.page}>
+      <PageHead title={titles[locale][type]} intro={messages[locale].common.draft} variant="learn" />
+      <section className={`shell ${styles.section} ${styles.reader}`}>
+        <div className={styles.readerOptic} aria-hidden="true" />
+        <div className={`${styles.readerArticle} ${styles.formSurface}`}>
+          <PolicyContent locale={locale} type={type} />
+          {type === "warranty" && (
+            <div className="mt-10 max-w-xl border-t border-black pt-8">
+              <h2>{messages[locale].support.contact}</h2>
+              <DemoForm locale={locale} kind="warranty" />
+            </div>
+          )}
+        </div>
       </section>
-    </>
+    </div>
   );
 }
 function Steps({ steps }: { locale: Locale; steps: [string, string][] }) {
   return (
-    <section className="shell grid gap-5 pb-16 md:grid-cols-3">
+    <section className={`shell ${styles.section} ${styles.stepGrid}`}>
       {steps.map(([title, text], index) => (
-        <div className="rounded-2xl bg-[var(--surface)] p-6" key={title}>
-          <p className="text-3xl font-black text-[var(--lime)]">0{index + 1}</p>
-          <h2 className="mt-12 text-xl font-black">{title}</h2>
-          <p className="mt-3 leading-7 text-[var(--muted)]">{text}</p>
+        <div className={styles.stepCard} key={title}>
+          <p className={styles.stepNumber}>0{index + 1}</p>
+          <h2>{title}</h2>
+          <p>{text}</p>
         </div>
       ))}
     </section>
@@ -927,7 +943,7 @@ function Steps({ steps }: { locale: Locale; steps: [string, string][] }) {
 }
 function NotFound({ locale }: { locale: Locale }) {
   return (
-    <section className="shell grid min-h-[55dvh] place-items-center py-16 text-center">
+    <section className={styles.statusPage}>
       <div>
         <p className="eyebrow">404</p>
         <h1 className="mt-3 text-4xl font-black tracking-[-.06em]">

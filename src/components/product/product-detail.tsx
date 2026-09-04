@@ -13,6 +13,7 @@ import { ProductCard } from "./product-card";
 import { ProductFeatureBand } from "./product-feature-band";
 import { products } from "@/data/fixtures/products";
 import { trackStorefrontEvent } from "@/components/analytics/storefront-tracker";
+import styles from "@/components/layout/storefront-design.module.css";
 
 type Fact = { value: string; label: string };
 
@@ -26,10 +27,10 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
   useEffect(() => { trackStorefrontEvent("product_view", { productId: product.id, slug: product.slug }); }, [product.id, product.slug]);
 
   return (
-    <>
-      <section className="shell grid gap-8 py-8 lg:grid-cols-[1.2fr_.8fr] lg:py-14">
-        <div>
-          <div className="overflow-hidden rounded-3xl border border-[var(--line)] bg-white p-4 md:p-6">
+    <div className={styles.page}>
+      <section className={styles.productHero}>
+        <div className={styles.productGallery}>
+          <div className={styles.productMainMedia}>
             <Image
               key={selectedImage}
               src={selectedImage}
@@ -37,19 +38,20 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
               width={1400}
               height={1200}
               priority
-              className="aspect-[4/3] w-full object-contain transition-[filter] duration-300"
+              className="transition-[filter] duration-300"
               style={{ filter: getColourPreviewFilter(product.id, sku.id) }}
               sizes="(max-width: 1024px) 100vw, 60vw"
             />
           </div>
-          <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4" aria-label={`${name} image gallery`}>
+          <div className={styles.galleryRail} aria-label={`${name} image gallery`}>
             {gallery.map((image, index) => (
               <button
                 key={image}
                 type="button"
                 onClick={() => setSelectedImage(image)}
-                className={`overflow-hidden rounded-xl border bg-white p-1 transition hover:border-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)] ${selectedImage === image ? "border-[var(--ink)]" : "border-[var(--line)]"}`}
+                className="p-1 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--ink)]"
                 aria-label={`View ${name} image ${index + 1}`}
+                aria-current={selectedImage === image ? "true" : undefined}
               >
                 <Image src={image} alt="" width={280} height={220} className="aspect-[4/3] w-full object-contain p-1" sizes="(max-width: 640px) 30vw, 15vw" />
               </button>
@@ -57,21 +59,11 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
           </div>
         </div>
 
-        <div className="lg:sticky lg:top-24 lg:self-start">
-          <p className="eyebrow">{product.demo ? t.common.demo : "Now available"}</p>
-          <h1 className="mt-2 text-4xl font-black tracking-[-.06em] md:text-5xl">{name}</h1>
-          <p className="mt-4 text-lg leading-7 text-[var(--muted)]">{localize(product.tagline, locale)}</p>
+        <div className={styles.productInfo}>
+          <h1 className={styles.productTitle}>{name}</h1>
+          <p className={styles.productTagline}>{localize(product.tagline, locale)}</p>
 
-          <div className="mt-6 grid grid-cols-3 overflow-hidden rounded-2xl border border-[var(--line)] bg-white">
-            {facts.map((fact, index) => (
-              <div key={fact.label} className={`min-h-24 p-4 ${index ? "border-l border-[var(--line)]" : ""}`}>
-                <p className="text-base font-black tracking-[-.03em]">{fact.value}</p>
-                <p className="mt-1 text-[10px] leading-4 text-[var(--muted)]">{fact.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6">
+          <div className={styles.productPrice}>
             {product.demo ? (
               <Price usd={product.usdPrice} locale={locale} />
             ) : (
@@ -86,8 +78,17 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
             )}
           </div>
 
+          <div className={styles.factRail}>
+            {facts.map((fact) => (
+              <div key={fact.label}>
+                <p className="text-base font-black tracking-[-.03em]">{fact.value}</p>
+                <p>{fact.label}</p>
+              </div>
+            ))}
+          </div>
+
           {product.colors.length > 1 ? (
-            <fieldset className="mt-7">
+            <fieldset className={styles.colorChoices}>
               <legend className="font-bold">{t.common.chooseColor}</legend>
               <div className="mt-3 flex flex-wrap gap-2">
                 {product.colors.map((color) => (
@@ -120,7 +121,7 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
             <AddToCart product={product} skuId={sku.skuId ?? sku.id} locale={locale} variant="secondary" className="product-action-cart rounded-full uppercase tracking-[.12em]" />
           </div>
 
-          <div className="mt-6 grid gap-3 border-t border-[var(--line)] pt-6 text-sm">
+          <div className={`${styles.productNotices} mt-6 grid gap-3 border-t pt-6 text-sm`}>
             <Notice icon={<Truck size={18} />} title={t.product.dispatch} />
             <Notice icon={<Undo2 size={18} />} title="30-day returns. Terms and return shipping conditions apply." />
             <Notice icon={<ShieldCheck size={18} />} title="6-month limited warranty. Draft policy details apply." />
@@ -131,12 +132,11 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
 
       <ProductFeatureBand product={product} />
 
-      <section id="specifications" className="shell py-14">
-        <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
+      <section id="specifications" className={`shell ${styles.detailSection}`}>
+        <div className={styles.specGrid}>
           <div>
-            <p className="eyebrow">Technical details</p>
-            <h2 className="mt-2 text-4xl font-black tracking-[-.06em]">Technical<br />specifications</h2>
-            <p className="mt-5 max-w-md leading-7 text-[var(--muted)]">
+            <h2 className={styles.detailTitle}>Technical specifications</h2>
+            <p className={styles.detailCopy}>
               {product.id === "g200-sport-audio-glasses"
                 ? "Parameters are transcribed from the supplied G200 product material."
                 : "Product details shown below are limited to the supplied information. Sales confirms the final configuration before payment."}
@@ -147,9 +147,9 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
               </div>
             ) : null}
           </div>
-          <dl className="overflow-hidden rounded-2xl border border-[var(--line)] bg-white">
-            {product.specifications.map((spec, index) => (
-              <div key={spec.label.en} className={`grid gap-2 px-5 py-4 sm:grid-cols-[.85fr_1.15fr] sm:items-center ${index ? "border-t border-[var(--line)]" : ""}`}>
+          <dl className={styles.specList}>
+            {product.specifications.map((spec) => (
+              <div key={spec.label.en}>
                 <dt className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">{localize(spec.label, locale)}</dt>
                 <dd className="font-bold">{localize(spec.value, locale)}</dd>
               </div>
@@ -159,14 +159,13 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
       </section>
 
       {product.detailImages?.length ? (
-        <section id="design" className="border-b border-[var(--line)] bg-white py-14">
-          <div className="shell">
+        <section id="design" className={styles.designBand}>
+          <div className={`shell ${styles.detailSection}`}>
             <div className="mb-8 max-w-2xl">
-              <p className="eyebrow">Product design</p>
-              <h2 className="mt-2 text-4xl font-black tracking-[-.06em]">Designed in detail.</h2>
+              <h2 className={styles.detailTitle}>Designed in detail.</h2>
               <p className="mt-4 leading-7 text-[var(--muted)]">Supplied product-detail artwork for {name}.</p>
             </div>
-            <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-[var(--line)] bg-white">
+            <div className={`mx-auto max-w-5xl ${styles.designMedia}`}>
               {product.detailImages.map((image, index) => (
                 <Image
                   key={image}
@@ -183,16 +182,15 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
         </section>
       ) : null}
 
-      <section className="shell py-14">
-        <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr]">
+      <section className={`shell ${styles.detailSection}`}>
+        <div className={styles.orderGrid}>
           <div>
-            <p className="eyebrow">Order details</p>
-            <h2 className="mt-2 text-4xl font-black tracking-[-.06em]">Request with confidence.</h2>
+            <h2 className={styles.detailTitle}>Request with confidence.</h2>
           </div>
-          <div className="grid gap-3">
+          <div className={styles.infoStack}>
             <InfoBlock title={t.product.box} text={product.inTheBox.map((item) => localize(item, locale)).join(" · ")} />
             <InfoBlock title={t.product.compatibility} text={localize(product.compatibility, locale)} />
-            <div className="rounded-2xl border border-[var(--line)] bg-white p-5">
+            <div className={styles.infoBlock}>
               <h3 className="font-bold">Product FAQ</h3>
               {product.faq.length ? product.faq.map((faq) => (
                 <details key={faq.question.en} className="border-b border-[var(--line)] py-4 last:border-0">
@@ -205,22 +203,22 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
         </div>
       </section>
 
-      <section className="shell border-t border-[var(--line)] py-12">
-        <h2 className="text-3xl font-black tracking-[-.05em]">{t.product.related}</h2>
-        <div className="mt-7 grid gap-5 md:grid-cols-3">
+      <section className={`shell ${styles.detailSection} ${styles.relatedRail}`}>
+        <h2 className={styles.detailTitle}>{t.product.related}</h2>
+        <div className={styles.catalogGrid}>
           {relatedProducts.filter((candidate) => !candidate.demo && candidate.id !== product.id).slice(0, 3).map((candidate) => <ProductCard product={candidate} locale={locale} key={candidate.id} />)}
         </div>
       </section>
 
       <button
         type="button"
-        className="fixed right-5 top-1/2 z-40 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-[var(--ink)] text-white shadow-[0_12px_30px_rgba(0,0,0,.2)] transition hover:-translate-y-[55%] hover:bg-[var(--lime)] hover:text-[var(--ink)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--ink)]"
+        className={styles.backToTop}
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         aria-label="Back to the top of this product page"
       >
         <ArrowUp size={18} strokeWidth={2.5} />
       </button>
-    </>
+    </div>
   );
 }
 
@@ -256,5 +254,5 @@ function Notice({ icon, title }: { icon: React.ReactNode; title: string }) {
 }
 
 function InfoBlock({ title, text, link }: { title: string; text: string; link?: { label: string; href: string } }) {
-  return <div className="rounded-2xl border border-[var(--line)] bg-white p-5"><h3 className="font-bold">{title}</h3><p className="mt-2 leading-7 text-[var(--muted)]">{text}</p>{link && <Link className="mt-4 inline-block font-bold underline underline-offset-4" href={link.href}>{link.label}</Link>}</div>;
+  return <div className={styles.infoBlock}><h3 className="font-bold">{title}</h3><p className="mt-2 leading-7 text-[var(--muted)]">{text}</p>{link && <Link className="mt-4 inline-block font-bold underline underline-offset-4" href={link.href}>{link.label}</Link>}</div>;
 }

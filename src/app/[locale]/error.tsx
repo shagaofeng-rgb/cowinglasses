@@ -1,2 +1,3 @@
 "use client";
-export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) { return <div className="shell grid min-h-[50dvh] place-items-center py-16 text-center"><div><h2 className="text-3xl font-black">Something interrupted this view.</h2><p className="mt-3 text-[var(--muted)]">Please try again. Your cart is stored locally.</p><button className="button-primary mt-6" onClick={reset}>Try again</button></div></div>; }
+import styles from "@/components/layout/storefront-design.module.css";
+export default function Error({ reset }: { error: Error & { digest?: string }; reset: () => void }) { return <section className={styles.statusPage}><div><h2>Something interrupted this view.</h2><p className="mx-auto mt-5 max-w-lg text-[#c2cbce]">Please try again. Your cart is stored locally.</p><button className="button-primary mt-7" onClick={reset}>Try again</button></div></section>; }

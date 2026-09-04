@@ -34,6 +34,7 @@ import {
 import { checkoutCopy } from "./checkout-copy";
 import { localize } from "@/lib/i18n";
 import { messages } from "@/messages";
+import styles from "@/components/layout/storefront-design.module.css";
 
 type CheckoutItem = {
   product: Product;
@@ -191,8 +192,8 @@ export function OrderCheckout({
 
   if (!items.length)
     return (
-      <main className="bg-[#f3f6f4]">
-        <section className="shell grid min-h-[58dvh] place-items-center py-16 text-center">
+      <div className={styles.checkoutPage}>
+        <section className={styles.statusPage}>
           <div>
             {paymentReturn ? (
               <>
@@ -218,13 +219,13 @@ export function OrderCheckout({
             </Link>
           </div>
         </section>
-      </main>
+      </div>
     );
   if (submitState.type === "success")
     return (
-      <main className="bg-[#f3f6f4]">
-        <section className="shell grid min-h-[58dvh] place-items-center py-16 text-center">
-          <div className="max-w-xl rounded-3xl bg-white p-9 shadow-[0_18px_45px_rgba(22,35,29,.08)]">
+      <div className={styles.checkoutPage}>
+        <section className={styles.statusPage}>
+          <div>
             <CheckCircle2 className="mx-auto text-[#7c9400]" size={46} />
             <p className="eyebrow mt-5">{t.orderReceived}</p>
             <h1 className="mt-3 text-4xl font-black tracking-[-.06em]">
@@ -238,16 +239,15 @@ export function OrderCheckout({
             </Link>
           </div>
         </section>
-      </main>
+      </div>
     );
 
   return (
-    <main className="bg-[#f3f6f4]">
+    <div className={`${styles.checkoutPage} ${styles.formSurface}`}>
       <form action={submitOrder}>
-        <section className="shell grid gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_390px] lg:py-16">
-          <div>
-            <p className="eyebrow">{t.checkout}</p>
-            <h1 className="mt-3 text-4xl font-black tracking-[-.06em] md:text-5xl">
+        <section className={`shell ${styles.checkoutLayout}`}>
+          <div className={styles.checkoutFlow}>
+            <h1 className={styles.checkoutTitle}>
               {t.title}
             </h1>
             {paymentReturn && (
@@ -284,7 +284,7 @@ export function OrderCheckout({
                 </label>
               </div>
             </section>
-            <section className="mt-10 rounded-3xl border border-[#c7d887] bg-[#f7fbe9] p-5 md:p-6">
+            <section className={styles.checkoutHighlight}>
               <h2 className="text-2xl font-black tracking-[-.04em]">{t.account}</h2>
               <p className="mt-2 text-sm leading-6 text-[#455216]">{t.accountCopy}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -452,7 +452,7 @@ export function OrderCheckout({
               </a>
             </section>
           </div>
-          <aside className="h-fit rounded-3xl border border-white bg-white p-6 shadow-[0_18px_45px_rgba(22,35,29,.08)] lg:sticky lg:top-24">
+          <aside className={`${styles.checkoutSummary} h-fit p-6 lg:sticky lg:top-24`}>
             <p className="text-xs font-bold uppercase tracking-wide text-[#6b7e0d]">
               {t.summary}
             </p>
@@ -544,7 +544,7 @@ export function OrderCheckout({
           </aside>
         </section>
       </form>
-    </main>
+    </div>
   );
 }
 

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import type { Product } from "@/types/product";
+import styles from "@/components/layout/storefront-design.module.css";
 
 type Feature = {
   icon: string;
@@ -59,7 +60,7 @@ export function ProductFeatureBand({ product }: { product: Product }) {
   const label = isG200 ? "G200 product features" : "Order support";
 
   return (
-    <section className="border-y border-[var(--line)] bg-white" aria-label={label}>
+    <section className={`${styles.featureBand} border-y`} aria-label={label}>
       <div className="shell grid divide-y divide-[var(--line)] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-4">
         {features.map((feature) => (
           <div key={feature.title} className="flex min-h-28 items-center gap-3 py-5 sm:px-5 lg:px-6">
