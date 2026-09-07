@@ -5,6 +5,7 @@ import type { Locale } from "@/lib/i18n";
 import { editorialArticleLabels, messages } from "@/messages";
 import type { PublicArticle, PublicArticleType } from "@/data/repositories/articles";
 import styles from "@/components/layout/storefront-design.module.css";
+import { Pagination } from "@/components/commerce/pagination";
 
 const dateLocales: Record<Locale, string> = {
   en: "en-US",
@@ -19,7 +20,7 @@ function articleDate(article: PublicArticle, locale: Locale) {
   return new Intl.DateTimeFormat(dateLocales[locale], { year: "numeric", month: "long", day: "numeric" }).format(article.publishedAt ?? article.updatedAt);
 }
 
-export function EditorialIndex({ locale, type, articles }: { locale: Locale; type: PublicArticleType; articles: PublicArticle[] }) {
+export function EditorialIndex({ locale, type, articles, currentPage = 1, totalPages = 1 }: { locale: Locale; type: PublicArticleType; articles: PublicArticle[]; currentPage?: number; totalPages?: number }) {
   const t = messages[locale];
   const title = type === "news" ? t.editorial.newsTitle : t.editorial.blogTitle;
   const intro = type === "news" ? t.editorial.newsIntro : t.editorial.blogIntro;
@@ -35,8 +36,9 @@ export function EditorialIndex({ locale, type, articles }: { locale: Locale; typ
       </header>
       <section className={`shell ${styles.section}`}>
         {articles.length ? (
-          <div className={styles.editorialGrid}>
-            {articles.map((article) => (
+          <>
+            <div className={styles.editorialGrid}>
+              {articles.map((article) => (
               <article key={article.id} className={styles.editorialCard}>
                 {article.imageUrl ? (
                   <div className={styles.editorialImage}>
@@ -55,8 +57,10 @@ export function EditorialIndex({ locale, type, articles }: { locale: Locale; typ
                 </Link>
                 </div>
               </article>
-            ))}
-          </div>
+              ))}
+            </div>
+            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={(page) => page === 1 ? `/${locale}/${type}` : `/${locale}/${type}?page=${page}`} label={t.nav[type]} />
+          </>
         ) : (
           <div className="grid min-h-72 place-items-center rounded-3xl border border-dashed border-[var(--line)] bg-white p-8 text-center">
             <div><p className="text-2xl font-black">{t.editorial.empty}</p><Link className="button-secondary mt-6" href={`/${locale}/shop`}>{t.common.continueShopping}</Link></div>

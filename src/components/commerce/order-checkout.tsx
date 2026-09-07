@@ -10,7 +10,7 @@ import {
   ShieldCheck,
   Truck,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
 import {
@@ -46,6 +46,15 @@ type SubmitState =
   | { type: "error"; message: string }
   | { type: "success"; orderNumber: string };
 
+const checkoutSteps: Record<Locale, { labels: string[]; continue: string; back: string; required: string }> = {
+  en: { labels: ["Details", "Delivery", "Payment", "Review"], continue: "Continue", back: "Back", required: "Complete the required details before continuing." },
+  ar: { labels: ["البيانات", "التوصيل", "الدفع", "المراجعة"], continue: "متابعة", back: "رجوع", required: "أكمل البيانات المطلوبة قبل المتابعة." },
+  es: { labels: ["Datos", "Entrega", "Pago", "Revisión"], continue: "Continuar", back: "Atrás", required: "Completa los datos obligatorios antes de continuar." },
+  pt: { labels: ["Dados", "Entrega", "Pagamento", "Revisão"], continue: "Continuar", back: "Voltar", required: "Preencha os dados obrigatórios antes de continuar." },
+  ja: { labels: ["情報", "配送", "支払い", "確認"], continue: "続ける", back: "戻る", required: "続ける前に必須項目を入力してください。" },
+  ko: { labels: ["정보", "배송", "결제", "검토"], continue: "계속", back: "뒤로", required: "계속하려면 필수 정보를 입력하세요." },
+};
+
 export function OrderCheckout({
   locale,
   products,
@@ -67,6 +76,9 @@ export function OrderCheckout({
   const [paymentEnvironment, setPaymentEnvironment] = useState<
     "test" | "production"
   >("test");
+  const [step, setStep] = useState(1);
+  const [stepError, setStepError] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
   const paymentReturn = searchParams.get("payment_return");
   const directProduct = products.find(
     (item) => item.slug === searchParams.get("product"),
@@ -99,6 +111,7 @@ export function OrderCheckout({
   const orderTotal =
     subtotal +
     (shippingQuote?.status === "quoted" ? shippingQuote.totalUsd : 0);
+  const stepCopy = checkoutSteps[locale];
 
   useEffect(() => {
     if (items.length)
@@ -190,6 +203,29 @@ export function OrderCheckout({
     }
   }
 
+  function validateCurrentStep() {
+    const stepRoots = Array.from(formRef.current?.querySelectorAll(`[data-checkout-step="${step}"]`) ?? []);
+    const fields = stepRoots.flatMap((root) => Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("[required]")));
+    const hasMissingField = fields.some((field) => field instanceof HTMLInputElement && field.type === "checkbox" ? !field.checked : !field.value.trim());
+    const data = new FormData(formRef.current ?? undefined);
+    if (hasMissingField || (step === 1 && data.get("accountPassword") !== data.get("confirmPassword"))) {
+      setStepError(step === 1 && data.get("accountPassword") !== data.get("confirmPassword") ? t.passwordMismatch : stepCopy.required);
+      return false;
+    }
+    if (step === 2 && (!shippingQuote || shippingUnavailable)) {
+      setStepError(t.shippingUnavailable);
+      return false;
+    }
+    setStepError("");
+    return true;
+  }
+
+  function advance() {
+    if (!validateCurrentStep()) return;
+    setStep((current) => Math.min(4, current + 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   if (!items.length)
     return (
       <div className={styles.checkoutPage}>
@@ -244,7 +280,7 @@ export function OrderCheckout({
 
   return (
     <div className={`${styles.checkoutPage} ${styles.formSurface}`}>
-      <form action={submitOrder}>
+      <form ref={formRef} action={submitOrder} noValidate onSubmit={(event) => { if (step < 4) { event.preventDefault(); advance(); } else if (!validateCurrentStep()) event.preventDefault(); }}>
         <section className={`shell ${styles.checkoutLayout}`}>
           <div className={styles.checkoutFlow}>
             <h1 className={styles.checkoutTitle}>
@@ -261,7 +297,11 @@ export function OrderCheckout({
             <p className="mt-4 max-w-2xl leading-7 text-[var(--muted)]">
               {t.intro}
             </p>
-            <section className="mt-10">
+            <nav className={styles.checkoutProgress} aria-label="Checkout progress">
+              {stepCopy.labels.map((label, index) => <button key={label} type="button" aria-current={step === index + 1 ? "step" : undefined} disabled={index + 1 > step} onClick={() => { setStep(index + 1); setStepError(""); }}><span>0{index + 1}</span>{label}</button>)}
+            </nav>
+            {stepError && <p role="alert" className={styles.checkoutStepError}>{stepError}</p>}
+            <section className="mt-10" data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
               <h2 className="text-2xl font-black tracking-[-.04em]">{t.contact}</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <Field
@@ -284,15 +324,16 @@ export function OrderCheckout({
                 </label>
               </div>
             </section>
-            <section className={styles.checkoutHighlight}>
+            <section className={styles.checkoutHighlight} data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
               <h2 className="text-2xl font-black tracking-[-.04em]">{t.account}</h2>
               <p className="mt-2 text-sm leading-6 text-[#455216]">{t.accountCopy}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <Field label={t.password} name="accountPassword" type="password" required minLength={10} autoComplete="current-password" />
                 <Field label={t.confirmPassword} name="confirmPassword" type="password" required minLength={10} autoComplete="current-password" />
               </div>
+              <div className={styles.checkoutStepActions}><button type="button" className="button-primary" onClick={advance}>{stepCopy.continue}</button></div>
             </section>
-            <section className="mt-10">
+            <section className="mt-10" data-checkout-step="2" data-step-label="02" hidden={step !== 2}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.delivery}
               </h2>
@@ -311,7 +352,7 @@ export function OrderCheckout({
               </div>
               <ShippingEstimate quote={shippingQuote} locale={locale} />
             </section>
-            <section className="mt-10">
+            <section className="mt-10" data-checkout-step="2" data-step-label="02" hidden={step !== 2}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.shippingMethod}
               </h2>
@@ -328,15 +369,16 @@ export function OrderCheckout({
                   icon={<Truck size={20} />}
                 />
               </div>
+              <div className={styles.checkoutStepActions}><button type="button" className="button-secondary" onClick={() => setStep(1)}>{stepCopy.back}</button><button type="button" className="button-primary" onClick={advance}>{stepCopy.continue}</button></div>
             </section>
-            <section className="mt-10">
+            <section className="mt-10" data-checkout-step="3" data-step-label="03" hidden={step !== 3}>
               <h2 className="text-2xl font-black tracking-[-.04em]">{t.coupon}</h2>
               <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
                 {t.couponCopy}
               </p>
               <Field label={t.couponCode} name="couponCode" full />
             </section>
-            <section className="mt-10">
+            <section className="mt-10" data-checkout-step="3" data-step-label="03" hidden={step !== 3}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.payment}
               </h2>
@@ -362,14 +404,8 @@ export function OrderCheckout({
                 />
               </div>
               <PaymentMethods />
-              {paymentSession && (
-                <OceanpaymentEmbed
-                  session={paymentSession}
-                  production={paymentEnvironment === "production"}
-                />
-              )}
             </section>
-            <section className="mt-10">
+            <section className="mt-10" data-checkout-step="3" data-step-label="03" hidden={step !== 3}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.notes}
               </h2>
@@ -378,8 +414,9 @@ export function OrderCheckout({
                 className="mt-4 min-h-32 w-full rounded-2xl border border-[var(--line)] bg-white p-4 outline-none ring-[var(--lime)] focus:ring-2"
                 placeholder={t.notesPlaceholder}
               />
+              <div className={styles.checkoutStepActions}><button type="button" className="button-secondary" onClick={() => setStep(2)}>{stepCopy.back}</button><button type="button" className="button-primary" onClick={advance}>{stepCopy.continue}</button></div>
             </section>
-            <section className="mt-10 border-t border-[var(--line)] pt-8">
+            <section className="mt-10 border-t border-[var(--line)] pt-8" data-checkout-step="4" data-step-label="04" hidden={step !== 4}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.policies}
               </h2>
@@ -450,6 +487,8 @@ export function OrderCheckout({
               >
                 {t.openNotice}
               </a>
+              <div className={styles.checkoutStepActions}><button type="button" className="button-secondary" onClick={() => setStep(3)}>{stepCopy.back}</button></div>
+              {paymentSession && <OceanpaymentEmbed session={paymentSession} production={paymentEnvironment === "production"} />}
             </section>
           </div>
           <aside className={`${styles.checkoutSummary} h-fit p-6 lg:sticky lg:top-24`}>
@@ -504,11 +543,11 @@ export function OrderCheckout({
               </p>
             )}
             <button
-              type="submit"
+              type={step === 4 ? "submit" : "button"}
+              onClick={step === 4 ? undefined : advance}
               disabled={
                 submitting ||
-                !shippingQuote ||
-                shippingUnavailable ||
+                (step === 4 && (!shippingQuote || shippingUnavailable)) ||
                 Boolean(paymentSession)
               }
               className="button-primary flex w-full items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
@@ -516,7 +555,7 @@ export function OrderCheckout({
               {submitting && (
                 <LoaderCircle className="animate-spin" size={18} />
               )}{" "}
-              {submitting
+              {step < 4 ? stepCopy.continue : submitting
                 ? t.creating
                 : paymentSession
                   ? t.ready

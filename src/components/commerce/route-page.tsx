@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   Check,
@@ -24,6 +25,7 @@ import {
   type PolicyType,
 } from "@/components/compliance/policy-content";
 import { AccountPage } from "./account-page";
+import { clampPage, Pagination } from "./pagination";
 import styles from "@/components/layout/storefront-design.module.css";
 
 type RoutePageProps = {
@@ -93,9 +95,22 @@ function PageHead({
 }
 function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
   const t = messages[locale];
-  const [query, setQuery] = useState("");
-  const [feature, setFeature] = useState("all");
-  const [sort, setSort] = useState("featured");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") ?? "";
+  const feature = searchParams.get("feature") ?? "all";
+  const sort = searchParams.get("sort") ?? "featured";
+  const update = (next: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    Object.entries(next).forEach(([key, value]) => {
+      if (!value || value === "all" || value === "featured") params.delete(key);
+      else params.set(key, value);
+    });
+    if (!("page" in next)) params.delete("page");
+    const value = params.toString();
+    router.replace(value ? `${pathname}?${value}` : pathname, { scroll: false });
+  };
   const shown = useMemo(
     () =>
       products
@@ -116,6 +131,14 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
         ),
     [products, query, feature, sort, locale],
   );
+  const { currentPage, totalPages, start } = clampPage(searchParams.get("page"), shown.length, 6);
+  const visible = shown.slice(start, start + 6);
+  const hrefForPage = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) params.delete("page"); else params.set("page", String(page));
+    const value = params.toString();
+    return value ? `${pathname}?${value}` : pathname;
+  };
   return (
     <div className={styles.page}>
       <PageHead
@@ -129,7 +152,7 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
             <Search size={17} />
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => update({ q: e.target.value })}
               placeholder={t.common.searchPlaceholder}
               className="w-full bg-transparent outline-none"
             />
@@ -137,7 +160,7 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
           <select
             aria-label={t.shop.feature}
             value={feature}
-            onChange={(e) => setFeature(e.target.value)}
+            onChange={(e) => update({ feature: e.target.value })}
             className="min-h-11 px-3"
           >
             <option value="all">{t.shop.filters}</option>
@@ -150,7 +173,7 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
           <select
             aria-label={t.shop.sort}
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => update({ sort: e.target.value })}
             className="min-h-11 px-3"
           >
             <option value="featured">{t.shop.newest}</option>
@@ -159,11 +182,14 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
           </select>
         </div>
         {shown.length ? (
-          <div className={styles.catalogGrid}>
-            {shown.map((product) => (
-              <ProductCard product={product} locale={locale} key={product.id} />
-            ))}
-          </div>
+          <>
+            <div className={styles.catalogGrid}>
+              {visible.map((product) => (
+                <ProductCard product={product} locale={locale} key={product.id} />
+              ))}
+            </div>
+            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={hrefForPage} label={t.nav.shop} />
+          </>
         ) : (
           <div className={styles.emptyState}>
             <div>
@@ -172,8 +198,7 @@ function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
             <button
               className="button-secondary mt-4"
               onClick={() => {
-                setQuery("");
-                setFeature("all");
+                update({ q: "", feature: "all", sort: "featured" });
               }}
             >
               {t.common.clear}
@@ -194,14 +219,19 @@ function Collection({
   slug?: string;
   products: Product[];
 }) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
   const collection = slug || "explore";
   const title = collection
     .split("-")
     .map((word) => word[0].toUpperCase() + word.slice(1))
     .join(" ");
   const subset = products.filter((product) =>
-    product.collections.includes(collection as never),
+    !product.demo && product.collections.includes(collection as never),
   );
+  const { currentPage, totalPages, start } = clampPage(searchParams.get("page"), subset.length, 6);
+  const visible = subset.slice(start, start + 6);
+  const hrefForPage = (page: number) => page === 1 ? pathname : `${pathname}?page=${page}`;
   return (
     <div className={styles.page}>
       <PageHead
@@ -209,11 +239,16 @@ function Collection({
         title={title}
         intro="Browse models currently published in the CoWin catalogue."
       />
-      <section className={`shell ${styles.section} ${styles.catalogGrid}`}>
+      <section className={`shell ${styles.section}`}>
         {subset.length ? (
-          subset.map((product) => (
-            <ProductCard product={product} locale={locale} key={product.id} />
-          ))
+          <>
+            <div className={styles.catalogGrid}>
+              {visible.map((product) => (
+                <ProductCard product={product} locale={locale} key={product.id} />
+              ))}
+            </div>
+            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={hrefForPage} label={title} />
+          </>
         ) : (
           <p className="text-[var(--muted)]">
             No published products are currently assigned to this collection.
@@ -230,10 +265,12 @@ function Compare({
   locale: Locale;
   products: Product[];
 }) {
-  const [ids, setIds] = useState(
-    products.slice(0, 3).map((product) => product.id),
-  );
-  const selected = products.filter((product) => ids.includes(product.id));
+  const published = products.filter((product) => !product.demo);
+  const [ids, setIds] = useState(() => published.slice(0, 3).map((product) => product.id));
+  const selected = published.filter((product) => ids.includes(product.id));
+  const updateSlot = (index: number, id: string) => {
+    setIds((current) => current.map((value, slot) => slot === index ? id : value).filter((value, slot, all) => value && all.indexOf(value) === slot));
+  };
   return (
     <div className={styles.page}>
       <PageHead
@@ -243,25 +280,13 @@ function Compare({
       />
       <section className={`shell ${styles.section}`}>
         <div className={styles.comparePicker}>
-          {products.map((product) => (
-            <label
-              className={styles.compareOption}
-              key={product.id}
-            >
-              <input
-                type="checkbox"
-                checked={ids.includes(product.id)}
-                onChange={() =>
-                  setIds((current) =>
-                    current.includes(product.id)
-                      ? current.filter((id) => id !== product.id)
-                      : current.length < 3
-                        ? [...current, product.id]
-                        : current,
-                  )
-                }
-              />
-              {localize(product.name, locale)}
+          {[0, 1, 2].map((slot) => (
+            <label className={styles.compareOption} key={slot}>
+              <span className="sr-only">Comparison slot {slot + 1}</span>
+              <select value={ids[slot] ?? ""} onChange={(event) => updateSlot(slot, event.target.value)} className="w-full bg-transparent font-bold outline-none">
+                <option value="">Choose a model</option>
+                {published.map((product) => <option value={product.id} key={product.id}>{localize(product.name, locale)}</option>)}
+              </select>
             </label>
           ))}
         </div>
@@ -826,10 +851,28 @@ function SearchPage({
   locale: Locale;
   products: Product[];
 }) {
-  const [query, setQuery] = useState("");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q") ?? "";
   const result = products.filter((product) =>
-    localize(product.name, locale).toLowerCase().includes(query.toLowerCase()),
+    !product.demo && `${localize(product.name, locale)} ${localize(product.description, locale)}`.toLowerCase().includes(query.toLowerCase()),
   );
+  const { currentPage, totalPages, start } = clampPage(searchParams.get("page"), result.length, 6);
+  const visible = result.slice(start, start + 6);
+  const update = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set("q", value); else params.delete("q");
+    params.delete("page");
+    const next = params.toString();
+    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+  };
+  const hrefForPage = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) params.delete("page"); else params.set("page", String(page));
+    const next = params.toString();
+    return next ? `${pathname}?${next}` : pathname;
+  };
   return (
     <div className={styles.page}>
       <PageHead
@@ -843,17 +886,20 @@ function SearchPage({
           <input
             autoFocus
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => update(e.target.value)}
             className="w-full bg-transparent outline-none"
             placeholder="Search CoWin models"
           />
         </label>
         {query && (
-          <div className={styles.catalogGrid}>
-            {result.map((product) => (
-              <ProductCard product={product} locale={locale} key={product.id} />
-            ))}
-          </div>
+          result.length ? <>
+            <div className={styles.catalogGrid}>
+              {visible.map((product) => (
+                <ProductCard product={product} locale={locale} key={product.id} />
+              ))}
+            </div>
+            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={hrefForPage} label="Search" />
+          </> : <p className="mt-10 text-[var(--muted)]">{messages[locale].common.noResults}</p>
         )}
       </section>
     </div>

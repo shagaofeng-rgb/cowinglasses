@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
+import { clampPage, Pagination } from "./pagination";
 import styles from "@/components/layout/storefront-design.module.css";
 
 type AccountOrder = {
@@ -164,6 +166,8 @@ export function AccountPage({ locale }: { locale: Locale }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   async function load() {
     const response = await fetch("/api/storefront/account", {
       cache: "no-store",
@@ -219,6 +223,14 @@ export function AccountPage({ locale }: { locale: Locale }) {
     await fetch("/api/storefront/account/logout", { method: "POST" });
     setData(null);
   }
+  const orderPagination = clampPage(searchParams.get("ordersPage"), data?.orders.length ?? 0, 10);
+  const visibleOrders = data?.orders.slice(orderPagination.start, orderPagination.start + 10) ?? [];
+  const hrefForOrderPage = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (page === 1) params.delete("ordersPage"); else params.set("ordersPage", String(page));
+    const value = params.toString();
+    return value ? `${pathname}?${value}` : pathname;
+  };
   return (
     <div className={styles.accountPage}>
       <section className={styles.accountHeader}>
@@ -265,8 +277,9 @@ export function AccountPage({ locale }: { locale: Locale }) {
             </div>
             <h2 className="mt-10 text-2xl font-black">{t.orders}</h2>
             {data.orders.length ? (
-              <div className="mt-4 grid gap-4">
-                {data.orders.map((order) => (
+              <>
+                <div className="mt-4 grid gap-4">
+                  {visibleOrders.map((order) => (
                   <article
                     key={order.orderNumber}
                     className={styles.orderCard}
@@ -316,8 +329,10 @@ export function AccountPage({ locale }: { locale: Locale }) {
                       {Number(order.shippingAmount).toFixed(2)}
                     </p>
                   </article>
-                ))}
-              </div>
+                  ))}
+                </div>
+                <Pagination locale={locale} currentPage={orderPagination.currentPage} totalPages={orderPagination.totalPages} hrefForPage={hrefForOrderPage} label={t.orders} />
+              </>
             ) : (
               <p className="mt-4 rounded-2xl bg-white p-6 text-[var(--muted)]">
                 {t.empty}

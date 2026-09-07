@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUp, ArrowUpRight, ShieldCheck, Truck, Undo2 } from "lucide-react";
+import { ArrowRight, ArrowUp, ArrowUpRight, ShieldCheck, Truck, Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
@@ -13,11 +13,12 @@ import { ProductCard } from "./product-card";
 import { ProductFeatureBand } from "./product-feature-band";
 import { products } from "@/data/fixtures/products";
 import { trackStorefrontEvent } from "@/components/analytics/storefront-tracker";
+import { productSectionLabel, productSectionsFor, type ProductSection } from "./product-sections";
 import styles from "@/components/layout/storefront-design.module.css";
 
 type Fact = { value: string; label: string };
 
-export function ProductDetail({ product, locale, relatedProducts = products }: { product: Product; locale: Locale; relatedProducts?: Product[] }) {
+export function ProductDetail({ product, locale, relatedProducts = products, section = "overview" }: { product: Product; locale: Locale; relatedProducts?: Product[]; section?: ProductSection }) {
   const [sku, setSku] = useState(product.colors[0]);
   const [selectedImage, setSelectedImage] = useState(product.colors[0]?.images[0] ?? product.heroImage);
   const t = messages[locale];
@@ -25,6 +26,8 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
   const gallery = sku.images.slice(0, 6);
   const facts = getFacts(product);
   useEffect(() => { trackStorefrontEvent("product_view", { productId: product.id, slug: product.slug }); }, [product.id, product.slug]);
+
+  if (section !== "overview") return <ProductDetailSection product={product} locale={locale} section={section} />;
 
   return (
     <div className={styles.page}>
@@ -132,74 +135,23 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
 
       <ProductFeatureBand product={product} />
 
-      <section id="specifications" className={`shell ${styles.detailSection}`}>
-        <div className={styles.specGrid}>
-          <div>
-            <h2 className={styles.detailTitle}>Technical specifications</h2>
-            <p className={styles.detailCopy}>
-              {product.id === "g200-sport-audio-glasses"
-                ? "Parameters are transcribed from the supplied G200 product material."
-                : "Product details shown below are limited to the supplied information. Sales confirms the final configuration before payment."}
-            </p>
-            {product.technicalDiagram ? (
-              <div className="mt-7 grid min-h-72 place-items-center rounded-3xl bg-transparent p-2">
-                <Image src={product.technicalDiagram} alt={`${name} product dimensions`} width={1000} height={800} className="h-auto max-h-80 w-full object-contain mix-blend-multiply" sizes="(max-width: 1024px) 100vw, 40vw" />
-              </div>
-            ) : null}
-          </div>
-          <dl className={styles.specList}>
-            {product.specifications.map((spec) => (
-              <div key={spec.label.en}>
-                <dt className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">{localize(spec.label, locale)}</dt>
-                <dd className="font-bold">{localize(spec.value, locale)}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
-
-      {product.detailImages?.length ? (
-        <section id="design" className={styles.designBand}>
-          <div className={`shell ${styles.detailSection}`}>
-            <div className="mb-8 max-w-2xl">
-              <h2 className={styles.detailTitle}>Designed in detail.</h2>
-              <p className="mt-4 leading-7 text-[var(--muted)]">Supplied product-detail artwork for {name}.</p>
-            </div>
-            <div className={`mx-auto max-w-5xl ${styles.designMedia}`}>
-              {product.detailImages.map((image, index) => (
-                <Image
-                  key={image}
-                  src={image}
-                  alt={`${name} product detail ${index + 1}`}
-                  width={1800}
-                  height={1800}
-                  className="block h-auto w-full"
-                  sizes="(max-width: 1024px) 100vw, 1024px"
-                />
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
+      <ProductSectionNav product={product} locale={locale} />
 
       <section className={`shell ${styles.detailSection}`}>
-        <div className={styles.orderGrid}>
+        <div className={styles.productSectionIntro}>
           <div>
-            <h2 className={styles.detailTitle}>Request with confidence.</h2>
+            <p className="eyebrow">Explore this model</p>
+            <h2 className={styles.detailTitle}>Everything, in its place.</h2>
           </div>
-          <div className={styles.infoStack}>
-            <InfoBlock title={t.product.box} text={product.inTheBox.map((item) => localize(item, locale)).join(" · ")} />
-            <InfoBlock title={t.product.compatibility} text={localize(product.compatibility, locale)} />
-            <div className={styles.infoBlock}>
-              <h3 className="font-bold">Product FAQ</h3>
-              {product.faq.length ? product.faq.map((faq) => (
-                <details key={faq.question.en} className="border-b border-[var(--line)] py-4 last:border-0">
-                  <summary className="cursor-pointer font-bold">{localize(faq.question, locale)}</summary>
-                  <p className="mt-3 leading-6 text-[var(--muted)]">{localize(faq.answer, locale)}</p>
-                </details>
-              )) : <p className="mt-3 text-[var(--muted)]">Sales can provide current order details for this model.</p>}
-            </div>
-          </div>
+          <p className={styles.detailCopy}>Keep the buying view focused. Detailed materials, technical information and support answers each open in their own short, shareable page.</p>
+        </div>
+        <div className={styles.productPathGrid}>
+          {productSectionsFor(product).filter((item) => item !== "overview").map((item) => (
+            <Link key={item} href={`/${locale}/products/${product.slug}/${item}`} className={styles.productPathCard}>
+              <span className="eyebrow">{productSectionLabel(locale, item)}</span>
+              <ArrowRight size={20} aria-hidden="true" />
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -220,6 +172,45 @@ export function ProductDetail({ product, locale, relatedProducts = products }: {
       </button>
     </div>
   );
+}
+
+function ProductSectionNav({ product, locale, active = "overview" }: { product: Product; locale: Locale; active?: ProductSection }) {
+  return <nav className={styles.productSectionNav} aria-label="Product information">
+    <div className="shell">
+      {productSectionsFor(product).map((item) => {
+        const href = item === "overview" ? `/${locale}/products/${product.slug}` : `/${locale}/products/${product.slug}/${item}`;
+        return <Link key={item} href={href} aria-current={active === item ? "page" : undefined}>{productSectionLabel(locale, item)}</Link>;
+      })}
+    </div>
+  </nav>;
+}
+
+function ProductDetailSection({ product, locale, section }: { product: Product; locale: Locale; section: ProductSection }) {
+  const name = localize(product.name, locale);
+  const title = productSectionLabel(locale, section);
+  return <div className={styles.page}>
+    <header className={styles.productCompactHeader}>
+      <div className="shell">
+        <Link href={`/${locale}/products/${product.slug}`} className={styles.productBackLink}>← {name}</Link>
+        <p className="eyebrow">{title}</p>
+        <h1>{title}</h1>
+        <p>{localize(product.tagline, locale)}</p>
+      </div>
+    </header>
+    <ProductSectionNav product={product} locale={locale} active={section} />
+    <main className={`shell ${styles.productSectionPage}`}>
+      {section === "features" && <ProductFeatureBand product={product} />}
+      {section === "specifications" && <section className={styles.specGrid}>
+        <div><h2 className={styles.detailTitle}>Technical specifications</h2><p className={styles.detailCopy}>Only the supplied product information is presented here. Sales confirms a final configuration before payment.</p>{product.technicalDiagram ? <Image src={product.technicalDiagram} alt={`${name} product dimensions`} width={1000} height={800} className="mt-7 h-auto max-h-80 w-full object-contain mix-blend-multiply" sizes="(max-width: 1024px) 100vw, 40vw" /> : null}</div>
+        <dl className={styles.specList}>{product.specifications.map((spec) => <div key={spec.label.en}><dt className="text-xs font-bold uppercase tracking-wide text-[var(--muted)]">{localize(spec.label, locale)}</dt><dd className="font-bold">{localize(spec.value, locale)}</dd></div>)}</dl>
+      </section>}
+      {section === "gallery" && <section className={styles.productGalleryPage}>{[...product.colors.flatMap((color) => color.images), ...(product.detailImages ?? [])].filter((image, index, images) => images.indexOf(image) === index).slice(0, 8).map((image, index) => <Image key={image} src={image} alt={`${name} view ${index + 1}`} width={1600} height={1200} className="h-auto w-full object-contain" sizes="(max-width: 760px) 100vw, 50vw" />)}</section>}
+      {section === "compatibility" && <section className={styles.productReading}><h2 className={styles.detailTitle}>Compatibility</h2><p>{localize(product.compatibility, locale)}</p><Link className="button-secondary mt-7" href={`/${locale}/app`}>Open app connection guide</Link></section>}
+      {section === "in-the-box" && <section className={styles.productReading}><h2 className={styles.detailTitle}>What arrives with your glasses</h2><ul className={styles.productBoxList}>{product.inTheBox.map((item) => <li key={item.en}>{localize(item, locale)}</li>)}</ul></section>}
+      {section === "faq" && <section className={styles.productReading}><h2 className={styles.detailTitle}>Product FAQ</h2>{product.faq.map((faq) => <details key={faq.question.en} className={styles.productFaq}><summary>{localize(faq.question, locale)}</summary><p>{localize(faq.answer, locale)}</p></details>)}</section>}
+      <Link href={`/${locale}/products/${product.slug}`} className="button-secondary mt-10">Back to product overview</Link>
+    </main>
+  </div>;
 }
 
 function getFacts(product: Product): Fact[] {
@@ -251,8 +242,4 @@ function formatUsd(value: number) {
 
 function Notice({ icon, title }: { icon: React.ReactNode; title: string }) {
   return <div className="flex gap-3"><span className="mt-0.5 text-[var(--muted)]">{icon}</span><p>{title}</p></div>;
-}
-
-function InfoBlock({ title, text, link }: { title: string; text: string; link?: { label: string; href: string } }) {
-  return <div className={styles.infoBlock}><h3 className="font-bold">{title}</h3><p className="mt-2 leading-7 text-[var(--muted)]">{text}</p>{link && <Link className="mt-4 inline-block font-bold underline underline-offset-4" href={link.href}>{link.label}</Link>}</div>;
 }
