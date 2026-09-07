@@ -4,7 +4,8 @@ import { isDatabaseConfigured } from "@/db/client";
 import { createTrackedEvent } from "@/lib/analytics/visit-context";
 
 export const runtime = "nodejs";
-const schema = z.object({ eventId: z.string().min(8).max(128), eventName: z.enum(["page_view", "product_view", "add_to_cart", "begin_checkout", "order_created"]), sessionId: z.string().uuid().max(128).optional(), path: z.string().max(2000).optional(), referrer: z.string().max(2000).optional(), source: z.string().max(160).optional(), medium: z.string().max(160).optional(), campaign: z.string().max(160).optional(), productId: z.string().uuid().optional(), orderId: z.string().uuid().optional(), metadata: z.record(z.string(), z.unknown()).optional() });
+const metadataSchema = z.record(z.string(), z.unknown()).optional().refine((value) => !value || JSON.stringify(value).length <= 5_000, "metadata is too large");
+const schema = z.object({ eventId: z.string().min(8).max(128), eventName: z.enum(["page_view", "product_view", "add_to_cart", "begin_checkout", "order_created", "engagement", "scroll_depth"]), sessionId: z.string().uuid().max(128).optional(), path: z.string().max(2000).optional(), referrer: z.string().max(2000).optional(), source: z.string().max(160).optional(), medium: z.string().max(160).optional(), campaign: z.string().max(160).optional(), utmContent: z.string().max(160).optional(), utmTerm: z.string().max(160).optional(), productId: z.string().uuid().optional(), orderId: z.string().uuid().optional(), metadata: metadataSchema });
 
 function requestIp(request: NextRequest) {
   const forwarded = request.headers.get("x-vercel-forwarded-for") || request.headers.get("x-forwarded-for");
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
       campaign: input.campaign,
       productId: input.productId,
       orderId: input.orderId,
-      metadata: input.metadata,
+      metadata: { ...input.metadata, utmContent: input.utmContent, utmTerm: input.utmTerm },
       userAgent: request.headers.get("user-agent") ?? undefined,
       ip: requestIp(request),
       countryCode: request.headers.get("x-vercel-ip-country") ?? undefined,
