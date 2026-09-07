@@ -21,11 +21,20 @@ type Summary = {
   latestRollupAt: Date | null;
 };
 
+function asDate(value: unknown): Date | null {
+  if (value instanceof Date && !Number.isNaN(value.valueOf())) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.valueOf()) ? null : parsed;
+  }
+  return null;
+}
+
 const loadSummary = unstable_cache(async (from: string, to: string): Promise<Summary> => {
   const db = getDatabase();
   const start = new Date(from);
   const end = new Date(to);
-  const [eventMetrics, sessionMetrics, paths, countries, sources, devices, latestEvent, latestRollup] = await Promise.all([
+  const [eventMetrics, sessionMetrics, paths, countries, sources, devices] = await Promise.all([
     db.select({
       pageViews: sql<string>`count(*) filter (where ${storefrontEvents.eventName} = 'page_view')`,
       productViews: sql<string>`count(*) filter (where ${storefrontEvents.eventName} = 'product_view')`,
@@ -38,8 +47,13 @@ const loadSummary = unstable_cache(async (from: string, to: string): Promise<Sum
     db.select({ countryCode: webSessions.countryCode, countryName: webSessions.countryName, sessions: sql<string>`count(*)` }).from(webSessions).where(and(gte(webSessions.startedAt, start), lte(webSessions.startedAt, end))).groupBy(webSessions.countryCode, webSessions.countryName).orderBy(desc(sql`count(*)`)).limit(12),
     db.select({ source: webSessions.source, medium: webSessions.medium, sessions: sql<string>`count(*)`, visitors: sql<string>`count(distinct ${webSessions.visitorId})` }).from(webSessions).where(and(gte(webSessions.startedAt, start), lte(webSessions.startedAt, end))).groupBy(webSessions.source, webSessions.medium).orderBy(desc(sql`count(*)`)).limit(12),
     db.select({ deviceType: webSessions.deviceType, sessions: sql<string>`count(*)` }).from(webSessions).where(and(gte(webSessions.startedAt, start), lte(webSessions.startedAt, end))).groupBy(webSessions.deviceType).orderBy(desc(sql`count(*)`)).limit(6),
-    db.select({ latestEventAt: sql<Date | null>`max(${storefrontEvents.createdAt})` }).from(storefrontEvents),
-    db.select({ latestRollupAt: sql<Date | null>`max(${trafficDailyRollups.updatedAt})` }).from(trafficDailyRollups),
+  ]);
+  // Status metadata must never take down the operational dashboard. This also
+  // lets an older production database continue serving live raw-event metrics
+  // until its optional rollup table has been migrated.
+  const [latestEvent, latestRollup] = await Promise.all([
+    db.select({ latestEventAt: sql<unknown>`max(${storefrontEvents.createdAt})` }).from(storefrontEvents).catch(() => []),
+    db.select({ latestRollupAt: sql<unknown>`max(${trafficDailyRollups.updatedAt})` }).from(trafficDailyRollups).catch(() => []),
   ]);
   return {
     pageViews: Number(eventMetrics[0]?.pageViews ?? 0),
@@ -53,8 +67,8 @@ const loadSummary = unstable_cache(async (from: string, to: string): Promise<Sum
     countries: countries.map((row) => ({ countryCode: row.countryCode, countryName: row.countryName, sessions: Number(row.sessions) })),
     sources: sources.map((row) => ({ source: row.source, medium: row.medium, sessions: Number(row.sessions), visitors: Number(row.visitors) })),
     devices: devices.map((row) => ({ deviceType: row.deviceType, sessions: Number(row.sessions) })),
-    latestEventAt: latestEvent[0]?.latestEventAt ?? null,
-    latestRollupAt: latestRollup[0]?.latestRollupAt ?? null,
+    latestEventAt: asDate(latestEvent[0]?.latestEventAt),
+    latestRollupAt: asDate(latestRollup[0]?.latestRollupAt),
   };
 }, ["traffic-analytics-summary"], { revalidate: 60, tags: ["traffic-analytics"] });
 
