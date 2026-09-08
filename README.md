@@ -41,6 +41,7 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 | Variable | Purpose |
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Canonical base URL used by metadata, sitemap and Product JSON-LD. |
+| `SITE_CONTENT_UPDATED_AT` | ISO timestamp used for evergreen sitemap entries after a verified public-content release. |
 | `NEXT_PUBLIC_IOS_APP_URL` | Future official iOS listing URL. Empty keeps the demo link inactive. |
 | `NEXT_PUBLIC_ANDROID_APP_URL` | Future official Android listing URL. Empty keeps the demo link inactive. |
 | `DATABASE_URL` | Server-only Neon PostgreSQL connection string. Never use a `NEXT_PUBLIC_` prefix. |
@@ -52,6 +53,16 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 | `NEWS_AUTOMATION_CONTENT_MODEL` | OpenAI or Vercel AI Gateway model identifier used by the News composer. |
 | `OPENAI_API_KEY` / `AI_GATEWAY_API_KEY` | Optional model credentials. Vercel deployments can instead use the automatically issued OIDC token. |
 | `INDEXNOW_KEY` | Optional server-only key for notifying Bing/IndexNow after a verified publication. |
+| `GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON` | Server-only service-account JSON for manual Search Console sitemap submission. Grant that account access to the Search Console property. |
+| `GOOGLE_SEARCH_CONSOLE_SITE_URL` | Search Console property, normally `sc-domain:cowinglasses.com`. |
+
+After a production deployment, an authorized maintainer may submit the canonical sitemap without exposing credentials in shell history:
+
+```bash
+GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT_FILE=/secure/path/service-account.json pnpm search-console:submit
+```
+
+The script submits only `https://cowinglasses.com/sitemap.xml` through the Search Console Sitemaps API. It deliberately does not use Google's restricted Indexing API for product pages.
 
 ## First-party traffic analytics
 

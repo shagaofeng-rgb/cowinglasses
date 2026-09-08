@@ -4,6 +4,7 @@ import { ProductDetail } from "@/components/product/product-detail";
 import { isProductSection, productSectionLabel, productSectionsFor } from "@/components/product/product-sections";
 import { getStoreProduct } from "@/data/repositories/products";
 import { isLocale, localize } from "@/lib/i18n";
+import { getProductCanonicalLocale, getProductLanguageAlternates, isProductLocaleIndexable } from "@/lib/seo/product-indexability";
 
 type ProductSectionPageProps = {
   params: Promise<{ locale: string; slug: string; section: string }>;
@@ -15,19 +16,14 @@ export async function generateMetadata({ params }: ProductSectionPageProps): Pro
   const product = await getStoreProduct(slug);
   if (!product || !productSectionsFor(product).includes(section)) return {};
   const label = productSectionLabel(locale, section);
+  const indexable = isProductLocaleIndexable(product, locale);
   return {
     title: `${label} — ${localize(product.name, locale)}`,
     description: localize(product.seo.description, locale),
+    robots: indexable ? undefined : { index: false, follow: true },
     alternates: {
-      canonical: `/${locale}/products/${slug}/${section}`,
-      languages: {
-        en: `/en/products/${slug}/${section}`,
-        ar: `/ar/products/${slug}/${section}`,
-        es: `/es/products/${slug}/${section}`,
-        pt: `/pt/products/${slug}/${section}`,
-        ja: `/ja/products/${slug}/${section}`,
-        ko: `/ko/products/${slug}/${section}`,
-      },
+      canonical: `/${getProductCanonicalLocale(product, locale)}/products/${slug}/${section}`,
+      languages: getProductLanguageAlternates(product, `/${section}`),
     },
   };
 }
