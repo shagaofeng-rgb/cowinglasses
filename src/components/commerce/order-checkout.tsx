@@ -22,6 +22,8 @@ import {
 import { useCart } from "@/providers/cart-provider";
 import type { Product } from "@/types/product";
 import type { ShippingDestinationId, ShippingQuote } from "@/types/commerce";
+import { trackMetaPixel } from "@/components/analytics/meta-pixel";
+import { MetaPurchaseConfirmation } from "@/components/analytics/meta-purchase-confirmation";
 import {
   getStorefrontSessionId,
   trackStorefrontEvent,
@@ -114,12 +116,48 @@ export function OrderCheckout({
   const stepCopy = checkoutSteps[locale];
 
   useEffect(() => {
-    if (items.length)
-      trackStorefrontEvent("begin_checkout", {
-        itemCount: items.length,
-        subtotal,
-      });
-  }, [items.length, subtotal]);
+    if (!items.length) return;
+    const contents = items.map((item) => ({
+      id: item.sku.skuId ?? item.sku.id,
+      quantity: item.quantity,
+      item_price: item.product.usdPrice,
+    }));
+    trackStorefrontEvent("begin_checkout", {
+      itemCount: items.length,
+      subtotal,
+    });
+    trackMetaPixel(
+      "InitiateCheckout",
+      {
+        value: orderTotal,
+        currency: "USD",
+        contents,
+        content_ids: contents.map((item) => item.id),
+        content_type: "product",
+      },
+      `initiate-checkout:${contents.map((item) => `${item.id}x${item.quantity}`).join(",")}:${orderTotal}`,
+    );
+  }, [items, orderTotal, subtotal]);
+
+  useEffect(() => {
+    if (step !== 3 || !items.length) return;
+    const contents = items.map((item) => ({
+      id: item.sku.skuId ?? item.sku.id,
+      quantity: item.quantity,
+      item_price: item.product.usdPrice,
+    }));
+    trackMetaPixel(
+      "AddPaymentInfo",
+      {
+        value: orderTotal,
+        currency: "USD",
+        contents,
+        content_ids: contents.map((item) => item.id),
+        content_type: "product",
+      },
+      `add-payment-info:${contents.map((item) => `${item.id}x${item.quantity}`).join(",")}:${orderTotal}`,
+    );
+  }, [items, orderTotal, step]);
 
   async function submitOrder(formData: FormData) {
     if (!items.length || !shippingQuote || shippingUnavailable) return;
@@ -225,6 +263,31 @@ export function OrderCheckout({
     setStep((current) => Math.min(4, current + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  const returnedOrderNumber = searchParams.get("order");
+  if (paymentReturn && returnedOrderNumber)
+    return (
+      <div className={styles.checkoutPage}>
+        <section className={styles.statusPage}>
+          <div>
+            <CheckCircle2 className="mx-auto text-[#7c9400]" size={46} />
+            <p className="eyebrow mt-5">{t.returnReceived}</p>
+            <h1 className="mt-3 text-4xl font-black tracking-[-.06em]">
+              {t.confirming}
+            </h1>
+            <p className="mt-4 max-w-xl text-[var(--muted)]">
+              {t.returnCopy}
+            </p>
+            <div className="mt-4">
+              <MetaPurchaseConfirmation orderNumber={returnedOrderNumber} />
+            </div>
+            <Link className="button-primary mt-7" href={`/${locale}/shop`}>
+              {t.browse}
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
 
   if (!items.length)
     return (
