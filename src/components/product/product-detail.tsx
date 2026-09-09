@@ -12,6 +12,7 @@ import { AddToCart } from "./add-to-cart";
 import { ProductCard } from "./product-card";
 import { ProductFeatureBand } from "./product-feature-band";
 import { products } from "@/data/fixtures/products";
+import { trackMetaPixel } from "@/components/analytics/meta-pixel";
 import { trackStorefrontEvent } from "@/components/analytics/storefront-tracker";
 import { productSectionLabel, productSectionsFor, type ProductSection } from "./product-sections";
 import styles from "@/components/layout/storefront-design.module.css";
@@ -25,7 +26,20 @@ export function ProductDetail({ product, locale, relatedProducts = products, sec
   const name = localize(product.name, locale);
   const gallery = sku.images.slice(0, 6);
   const facts = getFacts(product);
-  useEffect(() => { trackStorefrontEvent("product_view", { productId: product.id, slug: product.slug }); }, [product.id, product.slug]);
+  useEffect(() => {
+    const contentId = sku.skuId ?? sku.id;
+    trackStorefrontEvent("product_view", { productId: product.id, slug: product.slug });
+    trackMetaPixel(
+      "ViewContent",
+      {
+        content_ids: [contentId],
+        content_type: "product",
+        value: product.usdPrice,
+        currency: "USD",
+      },
+      `view-content:${product.id}:${contentId}`,
+    );
+  }, [product.id, product.slug, product.usdPrice, sku.id, sku.skuId]);
 
   if (section !== "overview") return <ProductDetailSection product={product} locale={locale} section={section} />;
 
