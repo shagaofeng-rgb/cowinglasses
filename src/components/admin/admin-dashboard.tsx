@@ -25,7 +25,7 @@ export async function AdminDashboard({ searchParams }: { searchParams: Promise<{
   const sales = snapshot.paid.reduce((sum, row) => sum + Number(row.total), 0);
   const refunds = snapshot.refundRows.reduce((sum, row) => sum + Number(row.amount), 0);
   const values = [["销售额", money(sales), "已付款订单"], ["订单数", String(snapshot.orderRows.length), "所有订单请求"], ["客单价", money(snapshot.orderRows.length ? sales / snapshot.orderRows.length : 0), "按当前范围订单计算"], ["退款金额", money(refunds), "退款记录"], ["访客数", String(traffic.visitors), "已同意统计的独立访客"], ["会话数", String(traffic.sessions), "30 分钟无操作后自动开始新会话"], ["浏览量", String(traffic.pageViews), "页面浏览事件"], ["加购数", String(traffic.carts), "已记录的加购行为"]];
-  const days = Math.max(1, Math.ceil((range.to.valueOf() - range.from.valueOf()) / 86_400_000) + 1);
+  const days = Math.max(1, Math.round((new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate()).valueOf() - new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate()).valueOf()) / 86_400_000) + 1);
   const visibleDays = Math.min(days, 14);
   const trend = Array.from({ length: visibleDays }, (_, index) => {
     const start = new Date(range.to); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (visibleDays - 1 - index));
