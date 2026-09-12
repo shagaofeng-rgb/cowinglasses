@@ -14,7 +14,15 @@ export function ProductCard({ product, locale }: { product: Product; locale: Loc
   return (
     <article className={styles.productCard}>
       <Link href={`/${locale}/products/${product.slug}`} className={styles.productCardMedia}>
-        <Image src={product.heroImage} alt={name} width={1000} height={800} className={styles.productCardImage} sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw" />
+        <Image
+          src={product.heroImage}
+          alt={name}
+          width={1000}
+          height={800}
+          quality={85}
+          className={styles.productCardImage}
+          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, (max-width: 1536px) 33vw, 480px"
+        />
       </Link>
       <div className={styles.productCardBody}>
         <div>

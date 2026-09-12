@@ -66,12 +66,12 @@ export function AnalyticsConsent() {
     <aside
       role="dialog"
       aria-label={t[0]}
-      className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-2xl border border-white/20 bg-[#17231c]/[.98] p-4 text-white shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:max-w-md"
+      className="fixed inset-x-3 bottom-3 z-50 mx-auto max-w-xl rounded-2xl border border-white/20 bg-[#17231c]/[.98] p-3.5 text-white shadow-2xl backdrop-blur sm:inset-x-auto sm:left-1/2 sm:w-[min(24rem,calc(100vw-2rem))] sm:-translate-x-1/2"
     >
-      <div className="flex flex-col items-start justify-between gap-3 sm:flex-row">
+      <div className="flex flex-col items-start justify-between gap-2.5 sm:flex-row">
         <div>
           <p className="text-sm font-bold">{t[0]}</p>
-          <p className="mt-1 text-xs leading-5 text-white/75">{t[1]}</p>
+          <p className="mt-1 text-xs leading-4 text-white/75">{t[1]}</p>
         </div>
         <div className="flex shrink-0 gap-2">
           <button

@@ -55,9 +55,10 @@ export function ProductDetail({ product, locale, relatedProducts = products, sec
               width={1400}
               height={1200}
               priority
-              className="transition-[filter] duration-300"
+              quality={90}
+              className={`${styles.productMainImage} transition-[filter] duration-300`}
               style={{ filter: getColourPreviewFilter(product.id, sku.id) }}
-              sizes="(max-width: 1024px) 100vw, 60vw"
+              sizes="(max-width: 1023px) 100vw, (max-width: 1536px) 58vw, 900px"
             />
           </div>
           <div className={styles.galleryRail} aria-label={`${name} image gallery`}>
@@ -70,7 +71,7 @@ export function ProductDetail({ product, locale, relatedProducts = products, sec
                 aria-label={`View ${name} image ${index + 1}`}
                 aria-current={selectedImage === image ? "true" : undefined}
               >
-                <Image src={image} alt="" width={280} height={220} className="aspect-[4/3] w-full object-contain p-1" sizes="(max-width: 640px) 30vw, 15vw" />
+                <Image src={image} alt="" width={280} height={220} quality={82} className="aspect-[4/3] w-full object-contain p-1" sizes="(max-width: 640px) 30vw, 15vw" />
               </button>
             ))}
           </div>

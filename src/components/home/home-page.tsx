@@ -119,8 +119,9 @@ export function HomePage({ locale, products = fixtureProducts }: { locale: Local
             width={1200}
             height={900}
             loading="eager"
+            quality={90}
             className={styles.axisImage}
-            sizes="(max-width: 900px) 100vw, 60vw"
+            sizes="(max-width: 900px) 100vw, (max-width: 1536px) 58vw, 980px"
           />
           <div className={styles.axisSpecs}>
             <span><bdi>{weight}</bdi></span>
@@ -154,8 +155,9 @@ export function HomePage({ locale, products = fixtureProducts }: { locale: Local
                     alt={localize(product.name, locale)}
                     width={900}
                     height={680}
+                    quality={85}
                     className={styles.frameImage}
-                    sizes="(max-width: 720px) 86vw, 30vw"
+                    sizes="(max-width: 720px) 86vw, (max-width: 1536px) 42vw, 720px"
                   />
                 </div>
                 <div className={styles.frameMeta}>
@@ -252,7 +254,15 @@ function LensPortal({
   return (
     <article className={`${styles.portal} ${className}`}>
       <Link href={`/${locale}/products/${product.slug}`} className={styles.portalSurface} aria-label={`${name}, ${formatUsd(product.usdPrice)}`}>
-        <Image src={scene} alt="" fill priority={priority} className={styles.sceneImage} sizes={priority ? "(max-width: 900px) 100vw, 64vw" : "(max-width: 900px) 92vw, 38vw"} />
+        <Image
+          src={scene}
+          alt=""
+          fill
+          priority={priority}
+          quality={priority ? 90 : 82}
+          className={styles.sceneImage}
+          sizes={priority ? "(max-width: 900px) 100vw, (max-width: 1536px) 56vw, 870px" : "(max-width: 900px) 92vw, (max-width: 1536px) 31vw, 480px"}
+        />
         <span className={styles.lensTint} aria-hidden="true" />
         <span className={styles.modelStamp} dir="ltr">{number}<b>{shortName(product)}</b></span>
       </Link>

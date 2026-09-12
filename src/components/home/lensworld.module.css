@@ -87,6 +87,7 @@
   position: relative;
   min-height: min(740px, calc(100svh - 132px));
   margin-inline-start: min(18vw, 265px);
+  margin-inline-end: clamp(1rem, 3vw, 3.5rem);
 }
 
 .portal {
@@ -155,16 +156,17 @@
   inset-inline-start: 2%;
   top: 12%;
   z-index: 6;
-  width: min(58vw, 870px);
+  width: min(56vw, 830px);
   height: min(60vh, 500px);
   transform: rotate(-1.6deg);
 }
 
 .portalSecondary {
-  inset-inline-start: 55%;
+  inset-inline-start: auto;
+  inset-inline-end: 10%;
   top: 24%;
   z-index: 4;
-  width: min(32vw, 480px);
+  width: min(31vw, 460px);
   height: min(42vh, 370px);
   border-color: rgba(255, 255, 255, 0.7);
   background: #c8d0d2;
@@ -174,10 +176,11 @@
 .portalSecondary .lensTint { background: rgba(230, 244, 248, 0.08); }
 
 .portalTertiary {
-  inset-inline-start: 80%;
+  inset-inline-start: auto;
+  inset-inline-end: 0;
   top: 34%;
   z-index: 5;
-  width: min(23vw, 350px);
+  width: min(21vw, 320px);
   height: min(34vh, 300px);
   transform: rotate(3deg);
 }
@@ -358,7 +361,7 @@
   transition: transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.axisProduct:hover .axisImage { transform: translateY(-0.4rem) scale(1.025); }
+.axisProduct:hover .axisImage { transform: translateY(-0.4rem); }
 
 .axisSpecs {
   position: absolute;
@@ -456,7 +459,7 @@
   transition: transform 550ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-.frameEntry:hover .frameImage { transform: scale(1.055) rotate(-1deg); }
+.frameEntry:hover .frameImage { transform: translateY(-0.35rem); }
 
 .frameMeta {
   grid-column: 2;
@@ -539,8 +542,8 @@
 @media (max-width: 1150px) {
   .masthead { width: 22vw; }
   .heroTitle { font-size: clamp(4rem, 7vw, 6.3rem); }
-  .portalPrimary { width: 62vw; }
-  .portalSecondary { inset-inline-start: 57%; }
+  .portalPrimary { width: min(57vw, 700px); }
+  .portalSecondary { inset-inline-start: auto; inset-inline-end: 8%; }
   .bridgeCopy { display: none; }
 }
 
