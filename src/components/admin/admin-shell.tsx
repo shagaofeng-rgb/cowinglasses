@@ -56,7 +56,7 @@ export function AdminShell({ children }: AdminShellProps) {
         </nav>
 
         <div className="border-t border-white/10 p-4">
-          {!collapsed ? <><p className="text-sm font-semibold">管理员准备中</p><p className="mt-1 text-xs leading-5 text-white/55">权限、数据库与登录将在下一阶段接入。</p></> : <span className="mx-auto block h-3 w-3 rounded-full bg-[#b8e629]" />}
+          {!collapsed ? <><p className="text-sm font-semibold">受保护的运营后台</p><p className="mt-1 text-xs leading-5 text-white/55">权限控制、会话登录与审计记录已启用。</p></> : <span className="mx-auto block h-3 w-3 rounded-full bg-[#b8e629]" />}
         </div>
       </aside>
 
