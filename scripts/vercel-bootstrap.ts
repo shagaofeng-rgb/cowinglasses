@@ -10,7 +10,6 @@ import {
   permissions,
   rolePermissions,
   roles,
-  storefrontEvents,
 } from "../src/db/schema";
 
 const permissionRows = [
@@ -53,11 +52,6 @@ async function bootstrap() {
     }
 
     const db = drizzle(client);
-    const formCleanupEventId = process.env.FORM_SUBMISSION_CLEANUP_EVENT_ID?.trim();
-    if (formCleanupEventId && /^CW-[A-F0-9]{8}$/.test(formCleanupEventId)) {
-      const deleted = await db.delete(storefrontEvents).where(eq(storefrontEvents.eventId, formCleanupEventId)).returning({ id: storefrontEvents.id });
-      console.info(`已清理 ${deleted.length} 条标记表单审计记录。`);
-    }
     await db.insert(permissions).values(permissionRows.map(([code, name, module]) => ({ code, name, module }))).onConflictDoNothing();
     await db.insert(roles).values(roleRows.map(([code, name, description, isSystem]) => ({ code, name, description, isSystem }))).onConflictDoNothing();
 
