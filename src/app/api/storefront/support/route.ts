@@ -11,6 +11,8 @@ const supportSchema = z.object({
   productModel: z.string().trim().max(240).optional(),
   message: z.string().trim().max(5000).optional(),
   mediaUrl: z.string().trim().url().max(2000).optional().or(z.literal("")),
+  pagePath: z.string().trim().max(500).optional(),
+  website: z.string().max(160).optional(),
 }).superRefine((value, context) => {
   if (value.kind === "newsletter" && !value.email) context.addIssue({ code: "custom", message: "请填写邮箱。" });
   if (value.kind === "support" && (!value.name || !value.email || !value.message)) context.addIssue({ code: "custom", message: "请填写姓名、邮箱和问题描述。" });
@@ -20,14 +22,17 @@ const supportSchema = z.object({
 export async function POST(request: Request) {
   try {
     const payload = supportSchema.parse(await request.json());
+    // Quietly accept honeypot spam so automated clients cannot distinguish the check.
+    if (payload.website) return NextResponse.json({ ok: true }, { status: 201 });
+    const submissionId = `CW-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
     await getDatabase().insert(storefrontEvents).values({
       eventName: "support_form",
-      eventId: crypto.randomUUID(),
-      path: "/support",
+      eventId: submissionId,
+      path: payload.pagePath || "/support",
       source: "storefront",
-      metadata: { ...payload, mediaUrl: payload.mediaUrl || undefined },
+      metadata: { ...payload, website: undefined, submissionId, mediaUrl: payload.mediaUrl || undefined },
     });
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return NextResponse.json({ ok: true, submissionId }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: error.issues[0]?.message ?? "提交内容无效。" }, { status: 400 });
     console.error("support-form-submit", error);

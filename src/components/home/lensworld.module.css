@@ -550,8 +550,8 @@
 @media (max-width: 900px) {
   .hero { min-height: auto; overflow: visible; }
   .heroInner { padding: 2rem 1rem 0; }
-  .masthead { position: relative; inset: auto; width: auto; padding-bottom: 3rem; }
-  .heroTitle { font-size: clamp(4.9rem, 23vw, 8rem); line-height: 0.73; }
+  .masthead { position: relative; inset: auto; width: auto; padding-bottom: 2rem; }
+  .heroTitle { font-size: clamp(4.25rem, 20vw, 7rem); line-height: 0.73; }
   .heroSummary { max-width: 23rem; }
   .tunnelStage { display: flex; min-height: auto; margin: 0; padding-bottom: 2rem; flex-direction: column; gap: 1.2rem; }
   .portal { position: relative; inset: auto; height: min(62svh, 570px); transform: none; }
@@ -559,7 +559,7 @@
   .portalSecondary { z-index: 2; width: 91%; margin-inline-start: auto; }
   .portalTertiary { z-index: 1; width: 82%; margin-inline-start: auto; }
   .sceneImage { object-position: center; }
-  .portalPrimary .sceneImage { object-position: 54% center; }
+  .portalPrimary .sceneImage { object-position: 54% 62%; }
   .productCallout { inset-inline-start: 7%; bottom: 7%; }
   .productCallout p { max-width: 17rem; }
   .productCallout strong { font-size: 2.25rem; }
@@ -607,7 +607,8 @@
 @media (max-width: 560px) {
   .heroInner { padding-inline: 0.75rem; }
   .masthead { padding-inline: 0.25rem; }
-  .portal { height: min(66svh, 520px); padding: 8px; border-radius: 28% 24% 36% 34% / 22% 21% 42% 44%; }
+  .portal { height: min(60svh, 480px); padding: 8px; border-radius: 28% 24% 36% 34% / 22% 21% 42% 44%; }
+  .portalPrimary .sceneImage { object-position: 56% 68%; }
   .portalSecondary { width: 94%; }
   .portalTertiary { width: 88%; }
   .productCallout span { max-width: 15rem; }

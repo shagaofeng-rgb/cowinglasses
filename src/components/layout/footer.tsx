@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, MapPin, MessageCircle } from "lucide-react";
 import { type Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
 import { PaymentMethods } from "@/components/compliance/payment-methods";
@@ -26,8 +26,9 @@ export function Footer({ locale }: { locale: Locale }) {
       <div className="shell grid gap-10 border-t border-white/15 py-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div className="max-w-sm text-xs leading-6 text-zinc-400">
           <p className="font-bold text-white">{businessDetails.legalName}</p>
-          <address className="mt-2 not-italic">{businessDetails.registeredAddress}</address>
+          <a className="mt-2 inline-flex items-start gap-1.5 underline underline-offset-4 hover:text-white" href={businessDetails.googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Open registered address in Google Maps"><MapPin size={14} className="mt-1 shrink-0" aria-hidden="true" /><address className="not-italic">{businessDetails.registeredAddress}</address></a>
           <a className="mt-2 inline-block underline underline-offset-4 hover:text-white" href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a>
+          {businessDetails.whatsappNumber ? <a className="mt-2 flex w-fit items-center gap-1.5 underline underline-offset-4 hover:text-white" href={`https://wa.me/${businessDetails.whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Contact CoWin Glasses on WhatsApp"><MessageCircle size={14} aria-hidden="true" />WhatsApp</a> : null}
         </div>
         <FooterGroup title={t.footer.product} links={[[t.nav.shop, "/shop"], [t.common.compare, "/compare"], [t.nav.howItWorks, "/how-it-works"], [t.common.app, "/app"]]} locale={locale} />
         <FooterGroup title={t.footer.help} links={[[t.footer.contact, "/support/contact"], [t.footer.shipping, "/support/shipping-delivery"], [t.footer.returns, "/support/returns-refunds"], [t.footer.warranty, "/support/warranty"]]} locale={locale} />

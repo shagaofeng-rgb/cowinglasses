@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronDown, Menu, Search, ShoppingBag, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mainNavigation, secondaryNavigation } from "@/config/navigation";
 import { currencies } from "@/config/currencies";
 import { localeMeta, locales, pathFor, type Locale } from "@/lib/i18n";
@@ -11,8 +11,25 @@ import { useCart } from "@/providers/cart-provider";
 
 export function Header({ locale }: { locale: Locale }) {
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const { lines, currency, setCurrency } = useCart();
   const t = messages[locale];
+
+  useEffect(() => {
+    function onPointerDown(event: MouseEvent) {
+      if (!moreMenuRef.current?.contains(event.target as Node)) setMoreOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMoreOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   return (
     <>
@@ -28,14 +45,23 @@ export function Header({ locale }: { locale: Locale }) {
           <Link href={`/${locale}`} dir="ltr" className="text-2xl font-black tracking-[-.1em]" aria-label="CoWin Glasses home">COWIN<span className="text-[var(--lime)]">.</span></Link>
           <nav className="hidden items-center gap-7 lg:flex" aria-label="Main navigation">
             {mainNavigation.map((item) => <Link className="text-sm font-semibold hover:text-[var(--lime)]" key={item.href} href={`/${locale}${item.href}`}>{t.nav[item.label]}</Link>)}
-            <details className="group relative">
-              <summary className="flex cursor-pointer list-none items-center gap-1.5 text-sm font-semibold hover:text-[var(--lime)]">
-                {t.nav.more}<ChevronDown size={15} className="transition-transform group-open:rotate-180" aria-hidden="true" />
-              </summary>
-              <div className="absolute start-1/2 top-full z-40 mt-4 w-56 -translate-x-1/2 rounded-2xl border border-[var(--line)] bg-white p-2 text-black shadow-[0_18px_45px_rgba(22,35,29,.14)]">
-                {secondaryNavigation.map((item) => <Link className="block rounded-xl px-4 py-3 text-sm font-bold hover:bg-[#f3f6f4] hover:text-[#617300]" key={item.href} href={`/${locale}${item.href}`}>{t.nav[item.label]}</Link>)}
-              </div>
-            </details>
+            <div
+              ref={moreMenuRef}
+              className="relative"
+              onMouseEnter={() => setMoreOpen(true)}
+              onMouseLeave={() => setMoreOpen(false)}
+              onFocus={() => setMoreOpen(true)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setMoreOpen(false);
+              }}
+            >
+              <button type="button" aria-expanded={moreOpen} aria-controls="storefront-more-menu" className="flex items-center gap-1.5 text-sm font-semibold hover:text-[var(--lime)]" onClick={() => setMoreOpen((value) => !value)}>
+                {t.nav.more}<ChevronDown size={15} className={`transition-transform ${moreOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+              {moreOpen ? <div id="storefront-more-menu" role="menu" className="absolute start-1/2 top-full z-40 mt-4 w-56 -translate-x-1/2 rounded-2xl border border-[var(--line)] bg-white p-2 text-black shadow-[0_18px_45px_rgba(22,35,29,.14)]">
+                {secondaryNavigation.map((item) => <Link role="menuitem" onClick={() => setMoreOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-bold hover:bg-[#f3f6f4] hover:text-[#617300]" key={item.href} href={`/${locale}${item.href}`}>{t.nav[item.label]}</Link>)}
+              </div> : null}
+            </div>
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
             <label className="sr-only" htmlFor="currency">Currency</label>

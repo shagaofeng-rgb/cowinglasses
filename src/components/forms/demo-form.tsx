@@ -24,10 +24,11 @@ const fieldSets: Record<"support" | "warranty" | "newsletter", Field[]> = {
 
 export function DemoForm({ locale, kind = "support" }: { locale: Locale; kind?: "support" | "warranty" | "newsletter" }) {
   const [state, setState] = useState<"idle" | "submitting" | "sent" | "error">("idle");
+  const [submissionId, setSubmissionId] = useState<string | null>(null);
   const t = messages[locale];
   const fields = fieldSets[kind];
 
-  if (state === "sent") return <p role="status" className="rounded-2xl bg-[#e4edcb] p-5 leading-6">{t.support.formSuccess}</p>;
+  if (state === "sent") return <div role="status" className="rounded-2xl bg-[#e4edcb] p-5 leading-6"><p>{t.support.formSuccess}</p>{submissionId ? <p className="mt-2 font-mono text-xs text-black/60">Reference: {submissionId}</p> : null}</div>;
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,14 +37,17 @@ export function DemoForm({ locale, kind = "support" }: { locale: Locale; kind?: 
     setState("submitting");
     const values = Object.fromEntries(new FormData(form).entries());
     try {
-      const response = await fetch("/api/storefront/support", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, ...values }) });
+      const response = await fetch("/api/storefront/support", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, pagePath: window.location.pathname, ...values }) });
       if (!response.ok) throw new Error("request_failed");
+      const body = await response.json() as { submissionId?: string };
+      setSubmissionId(body.submissionId ?? null);
       setState("sent");
       form.reset();
     } catch { setState("error"); }
   }
 
   return <form className="grid gap-4" onSubmit={submit} noValidate>
+    <label className="sr-only" aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" name="website" /></label>
     {fields.map((field) => <label className="grid gap-2 text-sm font-bold" key={field.name}>{field.label}
       {field.textarea
         ? <textarea name={field.name} required={field.required} className="min-h-28 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-3 font-normal" />
