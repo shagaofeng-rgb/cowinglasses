@@ -74,18 +74,20 @@ The storefront records page views, product views, add-to-cart, checkout and orde
 
 ## News automation, SEO and GEO
 
-The News pipeline deliberately separates discovery from publication:
+As of 2026-10-01, News automation is disabled, including manual pipeline triggers. Existing News articles and third-party Blog publishing are preserved. Google sitemap submission is scheduled every Monday at 09:00 Asia/Shanghai; production Google credentials must be configured for submissions to succeed. See [automation schedule](docs/automation-schedule.md).
 
-- `/api/cron/news-ingest` runs every 12 hours and only collects, normalizes, deduplicates and scores allowlisted RSS/Atom items.
-- `/api/cron/news-publish` checks every 12 hours but the database guard permits at most one publication per 48 hours.
-- `/api/cron/news-source-health` checks source availability daily and temporarily disables repeatedly failing feeds.
+The disabled pipeline previously separated discovery from publication:
+
+- `/api/cron/news-ingest` collected, normalized, deduplicated and scored allowlisted RSS/Atom items. Its schedule is removed.
+- `/api/cron/news-publish` generated and published articles. Its schedule is removed.
+- `/api/cron/news-source-health` checked feed availability. Its schedule is removed.
 - A PostgreSQL lock and unique URL/content fingerprints make retries idempotent across concurrent Vercel Functions.
 - English is the verified fact master. Arabic, Spanish, Portuguese, Japanese and Korean are generated only after the English draft passes the editorial gate.
 - No qualified candidate means no article. The pipeline never fabricates a fallback story or product specifications.
 
 Published News includes visible source attribution, an editorial disclaimer, `NewsArticle` and breadcrumb JSON-LD, canonical/hreflang metadata, `/news-sitemap.xml`, `/news/rss.xml`, and optional IndexNow notification. Google News Sitemap entries are limited to the latest two days; the ordinary sitemap retains all published locale URLs.
 
-Use `/admin/news-operations` to pause automation, switch between automatic and review modes, run ingestion or a dry run, inspect candidate scores, source health, delivery checks and run history. `/admin/news` remains the manual article editor; Blog content is never read or modified by News automation.
+Use `/admin/news-operations` to inspect historical candidates, source health, delivery checks and run history. Pipeline controls are disabled. `/admin/news` remains the manual article editor; Blog content is never read or modified by News automation.
 
 Before the first production release run:
 

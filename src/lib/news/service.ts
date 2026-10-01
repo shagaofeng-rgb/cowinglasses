@@ -81,7 +81,7 @@ export async function ensureNewsAutomationBootstrap() {
   const db = getDatabase();
   await db.insert(newsAutomationState).values({
     key: newsAutomationConfig.stateKey,
-    enabled: true,
+    enabled: newsAutomationConfig.enabled,
     publishingMode: process.env.NEWS_AUTOMATION_PUBLISH_MODE === "review" ? "review" : "auto",
     intervalHours: newsAutomationConfig.intervalHours,
     minScore: newsAutomationConfig.minScore,
@@ -120,6 +120,7 @@ function isWithinDays(value: Date, days: number) {
 }
 
 export async function runNewsIngest(trigger: Trigger = "cron", dryRun = false): Promise<RunResult> {
+  if (!newsAutomationConfig.enabled) return { status: "skipped", reason: "News automation is disabled.", candidateCount: 0, rejectedCount: 0 };
   const startedAt = new Date();
   await ensureNewsAutomationBootstrap();
   const lockKey = `${newsAutomationConfig.stateKey}:pipeline`;
@@ -371,6 +372,7 @@ async function submitIndexNow(articleSlug: string) {
 }
 
 export async function runNewsPublish(trigger: Trigger = "cron", dryRun = false): Promise<RunResult> {
+  if (!newsAutomationConfig.enabled) return { status: "skipped", reason: "News automation is disabled.", candidateCount: 0, rejectedCount: 0 };
   const startedAt = new Date();
   await ensureNewsAutomationBootstrap();
   const lockKey = `${newsAutomationConfig.stateKey}:pipeline`;
@@ -423,6 +425,7 @@ export async function runNewsPublish(trigger: Trigger = "cron", dryRun = false):
 }
 
 export async function runNewsSourceHealth(trigger: Trigger = "cron") {
+  if (!newsAutomationConfig.enabled) return { status: "skipped", reason: "News automation is disabled.", candidateCount: 0, rejectedCount: 0 };
   const startedAt = new Date();
   await ensureNewsAutomationBootstrap();
   const sources = await getDatabase().select().from(newsSources);
@@ -451,11 +454,11 @@ export async function getNewsAutomationDashboard() {
     db.select().from(newsAutomationRuns).orderBy(desc(newsAutomationRuns.startedAt)).limit(40),
     db.select().from(newsDeliveryChecks).orderBy(desc(newsDeliveryChecks.checkedAt)).limit(20),
   ]);
-  return { state: state[0], sources, candidates, runs, checks };
+  return { state: state[0] ? { ...state[0], enabled: newsAutomationConfig.enabled && state[0].enabled } : state[0], sources, candidates, runs, checks };
 }
 
 export async function setNewsAutomationState(input: { enabled?: boolean; publishingMode?: "auto" | "review"; actorId?: string }) {
   await ensureNewsAutomationBootstrap();
   const { actorId, ...values } = input;
-  await getDatabase().update(newsAutomationState).set({ ...values, updatedBy: actorId, updatedAt: new Date() }).where(eq(newsAutomationState.key, newsAutomationConfig.stateKey));
+  await getDatabase().update(newsAutomationState).set({ ...values, ...(!newsAutomationConfig.enabled ? { enabled: false } : {}), updatedBy: actorId, updatedAt: new Date() }).where(eq(newsAutomationState.key, newsAutomationConfig.stateKey));
 }

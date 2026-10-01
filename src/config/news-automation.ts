@@ -1,4 +1,5 @@
 export const newsAutomationConfig = {
+  enabled: false,
   stateKey: "cowin-news",
   intervalHours: 48,
   ingestMaxAgeHours: 72,

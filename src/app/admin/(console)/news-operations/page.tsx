@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { newsAutomationConfig } from "@/config/news-automation";
 import { getNewsAutomationDashboard } from "@/lib/news/service";
 import { requirePermission } from "@/lib/admin/auth";
 import { runNewsDryRunAction, runNewsIngestAction, runNewsPublishAction, runNewsSourceHealthAction, updateNewsAutomationAction } from "./actions";
@@ -16,14 +17,17 @@ export default async function NewsOperationsPage() {
   return <main className="mx-auto max-w-[1500px] px-5 py-7 sm:px-8 lg:px-10">
     <header className="flex flex-col gap-4 border-b border-black/10 pb-7 lg:flex-row lg:items-end lg:justify-between"><div><p className="text-xs font-bold uppercase tracking-[.16em] text-[#538a42]">News Automation</p><h1 className="mt-2 font-serif text-4xl font-bold tracking-[-.04em]">新闻自主运营</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-black/55">每12小时采集与检查，每48小时最多发布一篇。无合格来源时安全跳过，不生成虚假内容。</p></div><Link className="rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-bold" href="/admin/news">进入人工新闻管理</Link></header>
 
+    {!newsAutomationConfig.enabled && <p role="status" className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">News 自动抓取、撰写、总结和发布已停用。以下操作按钮已禁用；历史文章保留，第三方 Blog 发布不受影响。</p>}
     <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <Metric label="运行状态" value={state?.enabled ? "已启用" : "已暂停"}/><Metric label="发布模式" value={state?.publishingMode === "auto" ? "全自动" : "人工审核"}/><Metric label="合格候选" value={String(candidateCount)}/><Metric label="最近采集" value={date(state?.lastIngestAt)}/><Metric label="下次可发布" value={date(state?.nextEligibleAt)}/>
     </section>
 
     <section className="mt-6 grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
       <aside className="grid content-start gap-5">
+        <fieldset disabled={!newsAutomationConfig.enabled} className="grid gap-5 disabled:opacity-50">
         <form action={updateNewsAutomationAction} className="rounded-2xl border border-black/10 bg-white p-5"><h2 className="font-serif text-2xl font-bold">控制中心</h2><label className="mt-4 block text-sm font-semibold">自动化状态<select name="enabled" defaultValue={String(state?.enabled ?? true)} className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2.5"><option value="true">启用</option><option value="false">暂停</option></select></label><label className="mt-4 block text-sm font-semibold">发布模式<select name="publishingMode" defaultValue={state?.publishingMode ?? "auto"} className="mt-1 w-full rounded-xl border border-black/10 px-3 py-2.5"><option value="auto">全自动发布</option><option value="review">生成草稿，人工审核</option></select></label><button className="mt-4 w-full rounded-xl bg-[#17231c] px-4 py-2.5 text-sm font-bold text-white">保存设置</button></form>
         <div className="rounded-2xl border border-black/10 bg-white p-5"><h2 className="font-serif text-2xl font-bold">手动操作</h2><div className="mt-4 grid gap-2"><Action action={runNewsIngestAction} label="立即采集"/><Action action={runNewsDryRunAction} label="发布 Dry Run"/><Action action={runNewsSourceHealthAction} label="检查来源健康"/><Action action={runNewsPublishAction} label="立即执行发布" primary/></div><p className="mt-3 text-xs leading-5 text-black/50">立即发布仍受48小时门槛、候选评分、内容验证和重复锁保护。</p></div>
+        </fieldset>
       </aside>
 
       <div className="grid gap-5">
