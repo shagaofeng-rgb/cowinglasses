@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   if (!article) return {};
   const canonicalLocale = article.contentLocale === locale ? locale : "en";
   return {
-    title: `${article.seoTitle || article.title} | ${siteConfig.name}`,
+    title: { absolute: `${article.seoTitle || article.title} | ${siteConfig.name}` },
     description: article.seoDescription || article.excerpt || undefined,
     keywords: article.seoKeywords || undefined,
     authors: [{ name: article.authorName }],

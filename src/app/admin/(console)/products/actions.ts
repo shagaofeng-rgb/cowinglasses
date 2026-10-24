@@ -29,6 +29,7 @@ export async function createProductAction(_state: ProductFormState, formData: Fo
     });
     await writeAuditLog({ actorId: administrator.id, action: "catalog.product.create", resourceType: "product", resourceId: product.id, result: "success", metadata: { sku: input.sku, status: input.status } });
     revalidatePath("/admin/products");
+    revalidatePath("/", "layout");
     return { success: true, message: "商品、SKU 与初始库存已创建。" };
   } catch (error) {
     console.error("创建商品失败", error);

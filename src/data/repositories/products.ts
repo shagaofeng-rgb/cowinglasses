@@ -1,4 +1,6 @@
 import "server-only";
+import { cache } from "react";
+import { retryDatabaseRead } from "@/db/read-retry";
 import { asc, eq, inArray } from "drizzle-orm";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
 import { productMedia, productOptionValues, productOptions, products as productTable, productSkus } from "@/db/schema";
@@ -20,12 +22,14 @@ export const fixtureProductRepository: ProductRepository = {
 
 type DatabaseProduct = typeof productTable.$inferSelect;
 
-export async function getStoreProducts(): Promise<Product[]> {
+export const getStoreProducts = cache(() => retryDatabaseRead(loadStoreProducts));
+
+async function loadStoreProducts(): Promise<Product[]> {
   if (!isDatabaseConfigured()) return fixtureProducts;
   try {
     const db = getDatabase();
     const records = await db.select().from(productTable).where(eq(productTable.status, "active")).orderBy(asc(productTable.publishedAt), asc(productTable.createdAt));
-    if (!records.length) return fixtureProducts;
+    if (!records.length) return [];
 
     const productIds = records.map((record) => record.id);
     const [skus, options, media] = await Promise.all([
@@ -37,8 +41,8 @@ export async function getStoreProducts(): Promise<Product[]> {
     const optionValues = optionIds.length ? await db.select().from(productOptionValues).where(inArray(productOptionValues.optionId, optionIds)).orderBy(asc(productOptionValues.position)) : [];
     return records.map((record) => toStoreProduct(record, skus, options, optionValues, media));
   } catch (error) {
-    console.error("读取商城商品目录失败，已使用静态安全回退。", error);
-    return fixtureProducts;
+    console.error("读取商城商品目录失败。", error);
+    throw error;
   }
 }
 

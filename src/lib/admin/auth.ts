@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import bcrypt from "bcryptjs";
 import { and, eq } from "drizzle-orm";
 import { getServerSession, type NextAuthOptions } from "next-auth";
@@ -42,12 +43,12 @@ export const adminAuthOptions: NextAuthOptions = {
   },
 };
 
-export async function getCurrentAdmin() {
+export const getCurrentAdmin = cache(async () => {
   const session = await getServerSession(adminAuthOptions);
   if (!session?.user?.id || !isDatabaseConfigured()) return null;
   const user = (await getDatabase().select({ id: adminUsers.id, name: adminUsers.name, email: adminUsers.email, status: adminUsers.status }).from(adminUsers).where(and(eq(adminUsers.id, session.user.id), eq(adminUsers.status, "active"))).limit(1))[0];
   return user ? { ...user, roles: session.user.roles } : null;
-}
+});
 
 export async function requireAdmin() {
   const administrator = await getCurrentAdmin();

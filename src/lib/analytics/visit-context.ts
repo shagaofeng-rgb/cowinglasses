@@ -65,16 +65,18 @@ export async function ensureVisitContext(input: VisitInput, visitorToken?: strin
   const db = getDatabase();
 
   const context = await db.transaction(async (tx) => {
+    // The browser can submit page and product events together on its first visit.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${input.clientSessionId}))`);
     const existingSession = (await tx.select().from(webSessions).where(eq(webSessions.clientSessionId, input.clientSessionId)).limit(1))[0];
     if (existingSession) {
       await tx.update(webSessions).set({ exitPath: input.path ?? existingSession.exitPath, lastSeenAt: now, updatedAt: now }).where(eq(webSessions.id, existingSession.id));
       await tx.update(webVisitors).set({ lastSeenAt: now, updatedAt: now }).where(eq(webVisitors.id, existingSession.visitorId));
-      return { visitorId: existingSession.visitorId, visitSessionId: existingSession.id, visitNumber: existingSession.visitNumber };
+      return { visitorId: existingSession.visitorId, visitSessionId: existingSession.id, visitNumber: existingSession.visitNumber, attribution: { source: existingSession.source ?? attribution.source, medium: existingSession.medium ?? attribution.medium, campaign: existingSession.campaign ?? undefined, referrer: existingSession.referrer ?? undefined, referrerHost: existingSession.referrerHost ?? undefined } };
     }
 
     let visitor = (await tx.select().from(webVisitors).where(eq(webVisitors.visitorHash, visitorHash)).limit(1))[0];
     if (!visitor) {
-      visitor = (await tx.insert(webVisitors).values({ visitorHash, visitCount: 0, firstSeenAt: now, lastSeenAt: now, updatedAt: now }).returning())[0];
+      visitor = (await tx.insert(webVisitors).values({ visitorHash, visitCount: 0, firstSeenAt: now, lastSeenAt: now, updatedAt: now }).onConflictDoUpdate({ target: webVisitors.visitorHash, set: { lastSeenAt: now } }).returning())[0];
     }
     const increased = (await tx.update(webVisitors).set({ visitCount: sql`${webVisitors.visitCount} + 1`, lastSeenAt: now, updatedAt: now }).where(eq(webVisitors.id, visitor.id)).returning({ id: webVisitors.id, visitCount: webVisitors.visitCount }))[0];
     const session = (await tx.insert(webSessions).values({
@@ -105,7 +107,7 @@ export async function ensureVisitContext(input: VisitInput, visitorToken?: strin
     return { visitorId: increased.id, visitSessionId: session.id, visitNumber: increased.visitCount };
   });
 
-  return { ...context, visitorToken: safeVisitorToken, attribution };
+  return { ...context, visitorToken: safeVisitorToken, attribution: context.attribution ?? attribution };
 }
 
 export async function linkVisitToCustomer(clientSessionId: string | undefined, customerId: string) {

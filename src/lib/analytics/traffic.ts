@@ -83,11 +83,13 @@ export function getTrafficSummary(range: DateRange) {
 export async function rebuildTrafficDailyRollups(days = 2) {
   const db = getDatabase();
   const safeDays = Math.min(Math.max(Math.trunc(days), 1), 7);
-  await db.execute(sql`
+  await db.transaction(async (tx) => {
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext('cowin-traffic-rollup'))`);
+  await tx.execute(sql`
     delete from traffic_daily_rollups
     where day >= (current_date - (${safeDays} * interval '1 day'))::date
   `);
-  await db.execute(sql`
+  await tx.execute(sql`
     insert into traffic_daily_rollups (day, source, medium, country_code, sessions, visitors, page_views, add_to_carts, checkouts, orders, updated_at)
     select
       (s.started_at at time zone 'UTC')::date as day,
@@ -106,4 +108,5 @@ export async function rebuildTrafficDailyRollups(days = 2) {
     where s.started_at >= (current_date - (${safeDays} * interval '1 day'))
     group by 1, 2, 3, 4
   `);
+  });
 }

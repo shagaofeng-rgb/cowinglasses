@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   if (!isLocale(locale)) return {};
   const article = await getPublishedArticle("blog", slug, locale);
   if (!article) return {};
-  return { title: `${article.seoTitle || article.title} | ${siteConfig.name}`, description: article.seoDescription || article.excerpt || undefined, keywords: article.seoKeywords || undefined, alternates: { canonical: `/${locale}/blog/${article.slug}` } };
+  return { title: { absolute: `${article.seoTitle || article.title} | ${siteConfig.name}` }, description: article.seoDescription || article.excerpt || undefined, keywords: article.seoKeywords || undefined, alternates: { canonical: `/${locale}/blog/${article.slug}` } };
 }
 
 export default async function BlogArticlePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {

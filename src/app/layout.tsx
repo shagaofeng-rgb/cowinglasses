@@ -17,7 +17,8 @@ const bodyFont = Manrope({
   display: "swap",
 });
 
-const metaPixelCode = `!function(f,b,e,v,n,t,s)
+const metaPixelCode = `(function(){function start(){try{if(localStorage.getItem('cowin-analytics-consent')!=='granted'||window.fbq)return;}catch(e){return;}
+!function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
 if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
@@ -26,7 +27,7 @@ t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '955166104308526');
-fbq('track', 'PageView');`;
+fbq('track', 'PageView');}start();window.addEventListener('cowin-analytics-consent-change',start);})();`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
@@ -45,15 +46,6 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: metaPixelCode }} />
       </head>
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=955166104308526&ev=PageView&noscript=1"
-            alt=""
-          />
-        </noscript>
         {children}
       </body>
     </html>

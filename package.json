@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/news/logic.test.ts src/config/shipping.test.ts src/lib/seo/indexability.test.ts",
+    "test": "tsx --test src/lib/news/logic.test.ts src/config/shipping.test.ts src/lib/seo/indexability.test.ts src/lib/admin/date-range.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:bootstrap": "tsx scripts/vercel-bootstrap.ts",

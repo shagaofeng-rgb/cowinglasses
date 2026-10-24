@@ -1,4 +1,5 @@
 import "server-only";
+import { retryDatabaseRead } from "@/db/read-retry";
 
 import { and, desc, eq, lte } from "drizzle-orm";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
@@ -41,23 +42,23 @@ function toPublicArticle(row: Awaited<ReturnType<typeof selectPublished>>[number
 export async function getPublishedArticles(type: PublicArticleType, locale: Locale = "en"): Promise<PublicArticle[]> {
   if (!isDatabaseConfigured()) return [];
   try {
-    return (await selectPublished(type, locale)).map((row) => toPublicArticle(row));
+    return (await retryDatabaseRead(() => selectPublished(type, locale))).map((row) => toPublicArticle(row));
   } catch (error) {
     console.error(`Unable to read published ${type} articles.`, error);
-    return [];
+    throw error;
   }
 }
 
 export async function getPublishedArticle(type: PublicArticleType, slug: string, locale: Locale = "en"): Promise<PublicArticle | null> {
   if (!isDatabaseConfigured()) return null;
   try {
-    const row = (await selectPublished(type, locale, slug))[0];
+    const row = (await retryDatabaseRead(() => selectPublished(type, locale, slug)))[0];
     if (!row) return null;
     const sources = await getDatabase().select().from(articleSources).where(eq(articleSources.articleId, row.article.id)).orderBy(desc(articleSources.isPrimary));
     return toPublicArticle(row, sources);
   } catch (error) {
     console.error(`Unable to read published ${type} article.`, error);
-    return null;
+    throw error;
   }
 }
 
@@ -66,5 +67,5 @@ export async function getPublishedArticleUrls() {
   try {
     return await getDatabase().select({ type: contentArticles.type, slug: contentArticles.slug, publishedAt: contentArticles.publishedAt, updatedAt: contentArticles.updatedAt })
       .from(contentArticles).where(and(eq(contentArticles.status, "published"), lte(contentArticles.publishedAt, new Date()))).orderBy(desc(contentArticles.publishedAt));
-  } catch (error) { console.error("Unable to read article URLs.", error); return []; }
+  } catch (error) { console.error("Unable to read article URLs.", error); throw error; }
 }

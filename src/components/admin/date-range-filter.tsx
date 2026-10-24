@@ -28,7 +28,7 @@ export function DateRangeFilter({ range, preserve = {}, className = "" }: Props)
         value ? <input key={name} type="hidden" name={name} value={value} /> : null,
       )}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="mr-1 text-xs font-bold uppercase tracking-[.12em] text-black/45">数据范围</span>
+        <span className="mr-1 text-xs font-bold uppercase tracking-[.12em] text-black/45">数据范围（北京时间）</span>
         {quickRanges.map((item) => {
           const active = preset === item.value;
           return (

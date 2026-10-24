@@ -364,6 +364,7 @@
 
 .productHero {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   min-height: calc(100dvh - 7rem);
   background: #0a0c0d;
 }
@@ -377,7 +378,9 @@
 .productMainMedia {
   position: relative;
   display: grid;
-  min-height: clamp(26rem, 52vw, 42rem);
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
   overflow: clip;
   place-items: center;
   aspect-ratio: 4 / 3;
@@ -1477,7 +1480,7 @@
   .editorialHero { min-height: 30rem; }
   .editorialHero::after { width: 92vw; }
   .productHero { min-height: auto; }
-  .productMainMedia { min-height: 26rem; }
+  .productMainMedia { min-height: 0; }
   .productInfo { padding-block: 3rem; }
   .productTitle { font-size: clamp(3.8rem, 18vw, 5.5rem); }
   .backToTop { display: none; }

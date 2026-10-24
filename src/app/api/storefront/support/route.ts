@@ -16,7 +16,7 @@ const supportSchema = z.object({
 }).superRefine((value, context) => {
   if (value.kind === "newsletter" && !value.email) context.addIssue({ code: "custom", message: "请填写邮箱。" });
   if (value.kind === "support" && (!value.name || !value.email || !value.message)) context.addIssue({ code: "custom", message: "请填写姓名、邮箱和问题描述。" });
-  if (value.kind === "warranty" && (!value.orderNumber || !value.productModel || !value.message)) context.addIssue({ code: "custom", message: "请补全售后申请信息。" });
+  if (value.kind === "warranty" && (!value.email || !value.orderNumber || !value.productModel || !value.message)) context.addIssue({ code: "custom", message: "请补全售后申请信息及联系邮箱。" });
 });
 
 export async function POST(request: Request) {

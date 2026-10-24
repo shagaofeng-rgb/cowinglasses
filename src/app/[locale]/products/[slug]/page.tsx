@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const indexable = isProductLocaleIndexable(product, locale);
 
   return {
-    title: localize(product.seo.title, locale),
+    title: { absolute: localize(product.seo.title, locale) },
     description: localize(product.seo.description, locale),
     robots: indexable ? undefined : { index: false, follow: true },
     alternates: {

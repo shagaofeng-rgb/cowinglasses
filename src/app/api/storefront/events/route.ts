@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("Storefront analytics event rejected", error);
-    return NextResponse.json({ success: false, error: { code: "INVALID_EVENT" } }, { status: 400 });
+    const invalid = error instanceof z.ZodError || error instanceof SyntaxError;
+    return NextResponse.json({ success: false, error: { code: invalid ? "INVALID_EVENT" : "EVENT_UNAVAILABLE" } }, { status: invalid ? 400 : 503 });
   }
 }

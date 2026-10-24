@@ -27,32 +27,45 @@ function sessionId() {
   return id;
 }
 function readQueue() { try { return JSON.parse(window.sessionStorage.getItem(QUEUE_KEY) ?? "[]") as QueuedEvent[]; } catch { return []; } }
-function saveQueue(queue: QueuedEvent[]) { window.sessionStorage.setItem(QUEUE_KEY, JSON.stringify(queue.slice(-20))); }
+function saveQueue(queue: QueuedEvent[]) { try { window.sessionStorage.setItem(QUEUE_KEY, JSON.stringify(queue.slice(-20))); } catch { /* Storage denial must not interrupt shopping. */ } }
+let flushing = false;
 async function flushQueue() {
+  if (flushing) return;
   if (!hasAnalyticsConsent()) return;
   const queue = readQueue();
   if (!queue.length) return;
-  const remaining: QueuedEvent[] = [];
+  flushing = true;
+  const delivered = new Set<string>();
+  try {
   for (const item of queue) {
     try {
       const response = await fetch("/api/storefront/events", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", keepalive: true, body: JSON.stringify(item) });
-      if (!response.ok) remaining.push(item);
-    } catch { remaining.push(item); }
+      if (response.ok) delivered.add(item.eventId);
+    } catch { /* Keep failed events queued for retry. */ }
   }
-  saveQueue(remaining);
+  saveQueue(readQueue().filter((item) => !delivered.has(item.eventId)));
+  } finally { flushing = false; }
 }
-export function hasAnalyticsConsent() { return typeof window !== "undefined" && window.localStorage.getItem("cowin-analytics-consent") === "granted"; }
-export function getStorefrontSessionId() { return typeof window === "undefined" ? undefined : sessionId(); }
+export function hasAnalyticsConsent() { try { return typeof window !== "undefined" && window.localStorage.getItem("cowin-analytics-consent") === "granted"; } catch { return false; } }
+export function getStorefrontSessionId() { try { return typeof window === "undefined" ? undefined : sessionId(); } catch { return undefined; } }
 export function trackStorefrontEvent(eventName: AnalyticsEventName, metadata: Record<string, unknown> = {}) {
   if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
+  const currentSessionId = getStorefrontSessionId();
+  if (!currentSessionId) return;
   const query = new URLSearchParams(window.location.search);
-  const event: QueuedEvent = { eventId: crypto.randomUUID(), eventName, sessionId: sessionId(), path: window.location.pathname, referrer: document.referrer || undefined, source: query.get("utm_source") ?? undefined, medium: query.get("utm_medium") ?? undefined, campaign: query.get("utm_campaign") ?? undefined, utmContent: query.get("utm_content") ?? undefined, utmTerm: query.get("utm_term") ?? undefined, metadata };
+  const event: QueuedEvent = { eventId: crypto.randomUUID(), eventName, sessionId: currentSessionId, path: window.location.pathname, referrer: document.referrer || undefined, source: query.get("utm_source") ?? undefined, medium: query.get("utm_medium") ?? undefined, campaign: query.get("utm_campaign") ?? undefined, utmContent: query.get("utm_content") ?? undefined, utmTerm: query.get("utm_term") ?? undefined, metadata };
   saveQueue([...readQueue(), event]);
   void flushQueue();
 }
 export function StorefrontTracker() {
   const pathname = usePathname(); const searchParams = useSearchParams();
   useEffect(() => { trackStorefrontEvent("page_view"); void flushQueue(); }, [pathname, searchParams]);
+  useEffect(() => {
+    const retry = () => { void flushQueue(); };
+    const timer = window.setInterval(retry, 15000);
+    window.addEventListener("online", retry);
+    return () => { window.clearInterval(timer); window.removeEventListener("online", retry); };
+  }, []);
   useEffect(() => {
     const startedAt = Date.now(); const reached = new Set<number>();
     const onScroll = () => { const maximum = document.documentElement.scrollHeight - window.innerHeight; const percent = maximum > 0 ? Math.round(window.scrollY / maximum * 100) : 100; for (const threshold of [50, 90]) if (percent >= threshold && !reached.has(threshold)) { reached.add(threshold); trackStorefrontEvent("scroll_depth", { percent: threshold }); } };

@@ -20,6 +20,7 @@ export function trackMetaPixel(
   dedupeKey?: string,
 ) {
   if (typeof window === "undefined") return;
+  try { if (window.localStorage.getItem("cowin-analytics-consent") !== "granted") return; } catch { return; }
   if (dedupeKey && window.sessionStorage.getItem(dedupeKey)) return;
   if (typeof window.fbq !== "function") return;
 

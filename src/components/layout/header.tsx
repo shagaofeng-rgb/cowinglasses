@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { mainNavigation, secondaryNavigation } from "@/config/navigation";
@@ -10,6 +11,11 @@ import { messages } from "@/messages";
 import { useCart } from "@/providers/cart-provider";
 
 export function Header({ locale }: { locale: Locale }) {
+  const pathname = usePathname();
+  return <HeaderContent key={pathname} locale={locale} pathname={pathname} />;
+}
+
+function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string }) {
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDivElement>(null);
@@ -21,7 +27,7 @@ export function Header({ locale }: { locale: Locale }) {
       if (!moreMenuRef.current?.contains(event.target as Node)) setMoreOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setMoreOpen(false);
+      if (event.key === "Escape") { setMoreOpen(false); setOpen(false); }
     }
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -30,6 +36,18 @@ export function Header({ locale }: { locale: Locale }) {
       document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previous; };
+  }, [open]);
+
+  function changeLanguage(next: Locale) {
+    document.cookie = `cowin-locale=${next};path=/;max-age=31536000`;
+    window.location.assign(pathFor(next, pathname.replace(/^\/(en|ar|es|pt|ja|ko)(?=\/|$)/, "")) + window.location.search);
+  }
 
   return (
     <>
@@ -55,25 +73,25 @@ export function Header({ locale }: { locale: Locale }) {
                 if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setMoreOpen(false);
               }}
             >
-              <button type="button" aria-expanded={moreOpen} aria-controls="storefront-more-menu" className="flex items-center gap-1.5 text-sm font-semibold hover:text-[var(--lime)]" onClick={() => setMoreOpen((value) => !value)}>
+              <button type="button" aria-expanded={moreOpen} aria-controls="storefront-more-menu" className="flex items-center gap-1.5 text-sm font-semibold hover:text-[var(--lime)]" onClick={() => setMoreOpen(true)}>
                 {t.nav.more}<ChevronDown size={15} className={`transition-transform ${moreOpen ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
-              {moreOpen ? <div id="storefront-more-menu" role="menu" className="absolute start-1/2 top-full z-40 mt-4 w-56 -translate-x-1/2 rounded-2xl border border-[var(--line)] bg-white p-2 text-black shadow-[0_18px_45px_rgba(22,35,29,.14)]">
-                {secondaryNavigation.map((item) => <Link role="menuitem" onClick={() => setMoreOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-bold hover:bg-[#f3f6f4] hover:text-[#617300]" key={item.href} href={`/${locale}${item.href}`}>{t.nav[item.label]}</Link>)}
-              </div> : null}
+              {moreOpen ? <div className="absolute start-0 top-full z-40 w-56 pt-4"><div id="storefront-more-menu" className="rounded-2xl border border-[var(--line)] bg-white p-2 text-black shadow-[0_18px_45px_rgba(22,35,29,.14)]">
+                {secondaryNavigation.map((item) => <Link onClick={() => setMoreOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-bold hover:bg-[#f3f6f4] hover:text-[#617300]" key={item.href} href={`/${locale}${item.href}`}>{t.nav[item.label]}</Link>)}
+              </div></div> : null}
             </div>
           </nav>
           <div className="hidden items-center gap-4 lg:flex">
             <label className="sr-only" htmlFor="currency">Currency</label>
             <select id="currency" value={currency} onChange={(event) => setCurrency(event.target.value as typeof currency)} className="bg-transparent text-xs font-bold [&>option]:text-black" aria-label="Choose currency">{currencies.map((code) => <option key={code}>{code}</option>)}</select>
             <label className="sr-only" htmlFor="language">Language</label>
-            <select id="language" value={locale} onChange={(event) => { document.cookie = `cowin-locale=${event.target.value};path=/;max-age=31536000`; window.location.assign(pathFor(event.target.value as Locale)); }} className="bg-transparent text-xs font-bold [&>option]:text-black" aria-label="Choose language">{locales.map((code) => <option key={code} value={code}>{localeMeta[code].nativeLabel}</option>)}</select>
+            <select id="language" value={locale} onChange={(event) => changeLanguage(event.target.value as Locale)} className="bg-transparent text-xs font-bold [&>option]:text-black" aria-label="Choose language">{locales.map((code) => <option key={code} value={code}>{localeMeta[code].nativeLabel}</option>)}</select>
             <Link href={`/${locale}/search`} aria-label={t.nav.search}><Search size={20} /></Link>
             <Link href={`/${locale}/cart`} className="relative" aria-label={t.nav.cart}><ShoppingBag size={20} />{lines.length > 0 && <span className="absolute -end-3 -top-3 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--lime)] px-1 text-[10px] font-bold text-black">{lines.length}</span>}</Link>
           </div>
           <button className="lg:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         </div>
-        {open && <div className="border-t border-white/10 bg-[#090b0c] text-white lg:hidden">
+        {open && <div className="max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-white/10 bg-[#090b0c] text-white lg:hidden">
           <nav className="shell grid gap-1 py-4" aria-label="Mobile navigation">
             {mainNavigation.map((item) => <Link onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-white/10" key={item.href} href={`/${locale}${item.href}`}>{t.nav[item.label]}</Link>)}
             <div className="my-2 border-y border-white/10 py-2">
@@ -84,7 +102,7 @@ export function Header({ locale }: { locale: Locale }) {
             <Link onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-white/10" href={`/${locale}/cart`}>{t.nav.cart} ({lines.length})</Link>
             <div className="mt-2 flex gap-3 px-3">
               <select value={currency} onChange={(event) => setCurrency(event.target.value as typeof currency)} className="min-h-11 rounded-xl border border-white/15 bg-[#151719] px-3 font-bold text-white [&>option]:text-black" aria-label="Choose currency">{currencies.map((code) => <option key={code}>{code}</option>)}</select>
-              <select value={locale} onChange={(event) => { document.cookie = `cowin-locale=${event.target.value};path=/;max-age=31536000`; window.location.assign(pathFor(event.target.value as Locale)); }} className="min-h-11 rounded-xl border border-white/15 bg-[#151719] px-3 font-bold text-white [&>option]:text-black" aria-label="Choose language">{locales.map((code) => <option key={code}>{localeMeta[code].nativeLabel}</option>)}</select>
+              <select value={locale} onChange={(event) => changeLanguage(event.target.value as Locale)} className="min-h-11 rounded-xl border border-white/15 bg-[#151719] px-3 font-bold text-white [&>option]:text-black" aria-label="Choose language">{locales.map((code) => <option key={code} value={code}>{localeMeta[code].nativeLabel}</option>)}</select>
             </div>
           </nav>
         </div>}

@@ -12,7 +12,7 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  return { title: `${messages[locale].editorial.newsTitle} | ${siteConfig.name}`, description: messages[locale].editorial.newsIntro, alternates: { canonical: `/${locale}/news`, languages: { en: "/en/news", ar: "/ar/news", es: "/es/news", pt: "/pt/news", ja: "/ja/news", ko: "/ko/news", "x-default": "/en/news" } } };
+  return { title: { absolute: `${messages[locale].editorial.newsTitle} | ${siteConfig.name}` }, description: messages[locale].editorial.newsIntro, alternates: { canonical: `/${locale}/news`, languages: { en: "/en/news", ar: "/ar/news", es: "/es/news", pt: "/pt/news", ja: "/ja/news", ko: "/ko/news", "x-default": "/en/news" } } };
 }
 
 export default async function NewsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ page?: string }> }) {
