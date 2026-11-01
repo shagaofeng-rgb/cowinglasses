@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
+import { learning, collectionTitles } from "@/messages/learning";
 import { products as fixtureProducts } from "@/data/fixtures/products";
 import { ProductCard } from "@/components/product/product-card";
 import { CartPage } from "./cart-page";
@@ -54,7 +55,7 @@ export function RoutePage({
     return <SearchPage locale={locale} products={products} />;
   if (path === "how-it-works") return <HowItWorks locale={locale} />;
   if (path === "app") return <AppPage locale={locale} />;
-  if (path === "lens-guide") return <LensGuide />;
+  if (path === "lens-guide") return <LensGuide locale={locale} />;
   if (path === "account") return <AccountPage locale={locale} />;
   if (path === "support" || path === "support/faq")
     return <Support locale={locale} faq={path.endsWith("faq")} />;
@@ -222,10 +223,7 @@ function Collection({
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const collection = slug || "explore";
-  const title = collection
-    .split("-")
-    .map((word) => word[0].toUpperCase() + word.slice(1))
-    .join(" ");
+  const title = collectionTitles[locale][collection] || collectionTitles.en[collection];
   const subset = products.filter((product) =>
     !product.demo && product.collections.includes(collection as never),
   );
@@ -235,9 +233,9 @@ function Collection({
   return (
     <div className={styles.page}>
       <PageHead
-        eyebrow="Collection"
+        eyebrow={messages[locale].nav.shop}
         title={title}
-        intro="Browse models currently published in the CoWin catalogue."
+        intro={messages[locale].shop.intro}
       />
       <section className={`shell ${styles.section}`}>
         {subset.length ? (
@@ -342,135 +340,41 @@ function Compare({
   );
 }
 function HowItWorks({ locale }: { locale: Locale }) {
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow="How it works"
-        title="Wear it. Pair it. Keep your phone close."
-        intro="CoWin glasses connect to your phone over Bluetooth. Selected translation functions need the app and your phone's internet connection."
-        variant="learn"
-      />
-      <Steps
-        locale={locale}
-        steps={[
-          ["Wear", "Choose your frame, lens and configured capabilities."],
-          [
-            "Pair",
-            "Use Bluetooth to connect supported CoWin glasses to the mobile app.",
-          ],
-          [
-            "Connect",
-            "Translation requires the CoWin app and phone internet. Glasses do not connect directly to the internet.",
-          ],
-        ]}
-      />
-    </div>
-  );
+  const copy = learning[locale].how;
+  return <div className={styles.page}>
+    <PageHead eyebrow={messages[locale].nav.howItWorks} title={copy.title} intro={copy.intro} variant="learn" />
+    <Steps locale={locale} steps={copy.steps} />
+  </div>;
 }
 function AppPage({ locale }: { locale: Locale }) {
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow="CoWin app"
-        title="The connection lives on your phone."
-        intro="iOS and Android download links are environment-variable placeholders in this demo. Final permission and privacy notices must be reviewed with the production app."
-        variant="learn"
-      />
-      <section className={`shell ${styles.section} ${styles.splitFeature}`}>
-        <div className={styles.darkPlate}>
-          <h2 className={styles.plateTitle}>Get the app</h2>
-          <p className={styles.plateCopy}>
-            Pair, personalize settings and use connected features with the CoWin
-            mobile app.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <a
-              className="button-primary"
-              href={process.env.NEXT_PUBLIC_IOS_APP_URL || "#app-link-pending"}
-            >
-              <Download size={17} />
-              iOS download
-            </a>
-            <a
-              className="button-secondary"
-              href={
-                process.env.NEXT_PUBLIC_ANDROID_APP_URL || "#app-link-pending"
-              }
-            >
-              Android download
-            </a>
-          </div>
+  const copy = learning[locale];
+  return <div className={styles.page}>
+    <PageHead eyebrow={messages[locale].common.app} title={copy.app.title} intro={copy.app.intro} variant="learn" />
+    <section className={`shell ${styles.section} ${styles.splitFeature}`}>
+      <div className={styles.darkPlate}>
+        <h2 className={styles.plateTitle}>{copy.download}</h2>
+        <p className={styles.plateCopy}>{copy.app.intro}</p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <a className="button-primary" href={process.env.NEXT_PUBLIC_IOS_APP_URL || "#app-link-pending"}><Download size={17} />{copy.ios}</a>
+          <a className="button-secondary" href={process.env.NEXT_PUBLIC_ANDROID_APP_URL || "#app-link-pending"}>{copy.android}</a>
         </div>
-        <div className={styles.lightPlate}>
-          <h2 className={styles.plateTitle}>Permissions, clearly named.</h2>
-          <ul className="mt-6 grid gap-4 text-sm leading-6 text-[var(--muted)]">
-            <li>
-              <Check className="mr-2 inline text-[var(--lime)]" size={17} />
-              Bluetooth permission is used to pair compatible glasses.
-            </li>
-            <li>
-              <Check className="mr-2 inline text-[var(--lime)]" size={17} />
-              Camera and translation data handling require final technical
-              review.
-            </li>
-            <li>
-              <Check className="mr-2 inline text-[var(--lime)]" size={17} />
-              The app&apos;s privacy terms will be updated before production
-              launch.
-            </li>
-          </ul>
-        </div>
-      </section>
-      <Steps
-        locale={locale}
-        steps={[
-          [
-            "Install",
-            "Use the official iOS or Android listing when it is available.",
-          ],
-          ["Pair", "Follow on-screen Bluetooth pairing instructions."],
-          [
-            "Review",
-            "Approve only the permissions needed for your selected features.",
-          ],
-        ]}
-      />
-    </div>
-  );
+      </div>
+      <div className={styles.lightPlate}>
+        <h2 className={styles.plateTitle}>{copy.permissions}</h2>
+        <ul className="mt-6 grid gap-4 text-sm leading-6 text-[var(--muted)]">
+          {copy.notices.map(notice => <li key={notice}><Check className="me-2 inline text-[var(--lime)]" size={17} />{notice}</li>)}
+        </ul>
+      </div>
+    </section>
+    <Steps locale={locale} steps={copy.app.steps} />
+  </div>;
 }
-function LensGuide() {
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow="Lens Guide"
-        title="Prescription lenses, without guesswork."
-        intro="Some eligible frames include a standard prescription lens insert. You take that insert to an optician to fit your own prescription lenses."
-        variant="learn"
-      />
-      <section className={`shell ${styles.section} ${styles.stepGrid}`}>
-        {[
-          [
-            "Check",
-            "Confirm that your chosen model is marked Prescription-lens ready.",
-          ],
-          [
-            "Bring",
-            "Bring the standard insert and your prescription to an optician of your choice.",
-          ],
-          [
-            "Fit",
-            "Your optician makes and fits lenses. CoWin does not provide an online prescription service in this stage.",
-          ],
-        ].map(([title, text]) => (
-          <div className={styles.stepCard} key={title}>
-            <p className={styles.stepNumber}>{title[0]}</p>
-            <h2>{title}</h2>
-            <p>{text}</p>
-          </div>
-        ))}
-      </section>
-    </div>
-  );
+function LensGuide({ locale }: { locale: Locale }) {
+  const copy = learning[locale].lens;
+  return <div className={styles.page}>
+    <PageHead eyebrow={messages[locale].nav.lensGuide} title={copy.title} intro={copy.intro} variant="learn" />
+    <Steps locale={locale} steps={copy.steps} />
+  </div>;
 }
 const faqCopy: Record<Locale, { intro: string; cards: [string, string, string]; faqs: [string, string][] }> = {
   en: { intro: "Answers about delivery, support, returns and connected features.", cards: ["Find answers about connection, delivery, returns and lens inserts.", "Reach the support team by email for help with orders and product questions.", "Start a warranty request with order and issue details."], faqs: [["When will my order dispatch?", "Orders are normally processed and dispatched within 3 business days after payment is confirmed."], ["Do translation glasses connect to the internet?", "No. Translation needs the CoWin app, Bluetooth and your phone's internet connection."], ["Do you ship to Brazil?", "No. We are unable to ship to Brazil at this time."], ["How long is the warranty?", "Eligible CoWin Glasses products include a 6-month limited warranty from delivery."]] },

@@ -11,7 +11,8 @@ export const revalidate = 300;
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
-  return { title: messages[locale].editorial.blogTitle, description: messages[locale].editorial.blogIntro, alternates: { canonical: `/${locale}/blog` } };
+  const hasArticles = (await getPublishedArticles("blog", locale)).length > 0;
+  return { title: messages[locale].editorial.blogTitle, description: messages[locale].editorial.blogIntro, robots: hasArticles ? undefined : { index: false, follow: true }, alternates: { canonical: `/${locale}/blog` } };
 }
 
 export default async function BlogPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ page?: string }> }) {

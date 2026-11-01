@@ -5,6 +5,23 @@ import { getProductLanguageAlternates, getProductSearchLocales, isProductLocaleI
 import { indexableStorefrontPaths, noIndexStorefrontPaths } from "@/lib/seo/sitemap-config";
 import { legacyStorefrontRedirects } from "@/lib/seo/legacy-redirects";
 import { isCollectionIndexable } from "@/lib/seo/collection-indexability";
+import { learning, collectionTitles } from "@/messages/learning";
+import { locales } from "@/types/localization";
+
+test("learning pages have complete translated search-facing content", () => {
+  for (const locale of locales) {
+    for (const kind of ["how", "lens", "app"] as const) {
+      const guide = learning[locale][kind];
+      assert.equal(guide.steps.length, 3);
+      assert.ok(guide.steps.every(([title, body]) => title.trim() && body.trim()));
+      if (locale !== "en") {
+        assert.notEqual(guide.title, learning.en[kind].title);
+        assert.notEqual(guide.intro, learning.en[kind].intro);
+      }
+    }
+    assert.deepEqual(Object.keys(collectionTitles[locale]), Object.keys(collectionTitles.en));
+  }
+});
 
 test("empty and demo-only collections stay out of search until real products are assigned", () => {
   assert.equal(isCollectionIndexable("/collections/photochromic-sun", []), false);

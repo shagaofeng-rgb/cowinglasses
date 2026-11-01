@@ -1,25 +1,140 @@
-gsc_category,url,last_crawled,disposition,action,google_canonical_evidence
-404,https://cowinglasses.com/support/warranty,8 Sept 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/warranty,未读取Google选择规范页
-404,https://cowinglasses.com/policies/intellectual-property,30 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/policies/intellectual-property,未读取Google选择规范页
-404,https://cowinglasses.com/compare,30 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/compare,未读取Google选择规范页
-404,https://cowinglasses.com/policies/terms,26 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/policies/terms,未读取Google选择规范页
-404,https://cowinglasses.com/shop,25 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/shop,未读取Google选择规范页
-404,https://cowinglasses.com/app,25 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/app,未读取Google选择规范页
-404,https://cowinglasses.com/support/shipping-delivery,25 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/shipping-delivery,未读取Google选择规范页
-404,https://cowinglasses.com/support/contact,21 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/contact,未读取Google选择规范页
-404,https://cowinglasses.com/&,21 Aug 2026,有意排除,保留真实404，无对应内容,未读取Google选择规范页
-404,https://cowinglasses.com/$,20 Aug 2026,有意排除,保留真实404，无对应内容,未读取Google选择规范页
-404,https://cowinglasses.com/how-it-works,20 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/how-it-works,未读取Google选择规范页
-404,https://cowinglasses.com/support/returns-refunds,20 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/returns-refunds,未读取Google选择规范页
-soft404,https://cowinglasses.com/ja/checkout,4 Sept 2026,有意排除,结账页面保持noindex,未读取Google选择规范页
-soft404,https://cowinglasses.com/ar/collections/photochromic-sun,31 Aug 2026,有意排除,noindex；空分类同时移出Sitemap,未读取Google选择规范页
-alternative,https://cowinglasses.com/ko/checkout?product=v03-t8,7 Sept 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/en/support/contact?product=gl1,5 Sept 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/en/support/contact?product=gl12-9,5 Sept 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/ko/checkout?product=gl15-1&color=gl15-1-black,1 Sept 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/ko/checkout?product=g300,1 Sept 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/ja/checkout?product=v03-t6&color=v03-t6-sunglasses,31 Aug 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/ja/checkout?product=g200-sport-audio-glasses,31 Aug 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/ko/checkout?product=gl1,30 Aug 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/pt/checkout?product=gl12-8&color=gl12-8-black,30 Aug 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
-alternative,https://cowinglasses.com/es/checkout?product=g200-sport-audio-glasses&color=g200-sport-audio-glasses-blue-mirror-lens,30 Aug 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页
+category,url,lastCrawled,status,location,canonical,robots,gscUserCanonical,googleCanonical,inspectionCrawl,disposition,action
+404,https://cowinglasses.com/support/warranty,8 Sept 2026,308,/en/support/warranty,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/policies/intellectual-property,30 Aug 2026,308,/en/policies/intellectual-property,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/compare,30 Aug 2026,308,/en/compare,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/policies/terms,26 Aug 2026,308,/en/policies/terms,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/shop,25 Aug 2026,308,/en/shop,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/app,25 Aug 2026,308,/en/app,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/support/shipping-delivery,25 Aug 2026,308,/en/support/shipping-delivery,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/support/contact,21 Aug 2026,308,/en/support/contact,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/&,21 Aug 2026,404,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,保留真实404，无对应内容
+404,https://cowinglasses.com/$,20 Aug 2026,404,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,保留真实404，无对应内容
+404,https://cowinglasses.com/how-it-works,20 Aug 2026,308,/en/how-it-works,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+404,https://cowinglasses.com/support/returns-refunds,20 Aug 2026,308,/en/support/returns-refunds,,,,未单独Inspection；GSC分类提供排除原因,,已修复，等待重抓,同内容308迁移到/en
+soft404,https://cowinglasses.com/ja/checkout,4 Sept 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除，验证已开始,结账/空分类noindex，空分类移出Sitemap
+soft404,https://cowinglasses.com/ar/collections/photochromic-sun,31 Aug 2026,200,,https://cowinglasses.com/ar/collections/photochromic-sun,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除，验证已开始,结账/空分类noindex，空分类移出Sitemap
+alternative,https://cowinglasses.com/ko/checkout?product=v03-t8,7 Sept 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/en/support/contact?product=gl1,5 Sept 2026,200,,https://cowinglasses.com/en/support/contact,,,未单独Inspection；GSC分类提供排除原因,,有意排除,联系表单参数规范化到无参数页
+alternative,https://cowinglasses.com/en/support/contact?product=gl12-9,5 Sept 2026,200,,https://cowinglasses.com/en/support/contact,,,未单独Inspection；GSC分类提供排除原因,,有意排除,联系表单参数规范化到无参数页
+alternative,https://cowinglasses.com/ko/checkout?product=gl15-1&color=gl15-1-black,1 Sept 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ko/checkout?product=g300,1 Sept 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=v03-t6&color=v03-t6-sunglasses,31 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=g200-sport-audio-glasses,31 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ko/checkout?product=gl1,30 Aug 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/pt/checkout?product=gl12-8&color=gl12-8-black,30 Aug 2026,200,,https://cowinglasses.com/pt/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/es/checkout?product=g200-sport-audio-glasses&color=g200-sport-audio-glasses-blue-mirror-lens,30 Aug 2026,200,,https://cowinglasses.com/es/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ar/checkout?product=v03-t6&color=v03-t6-sunglasses,30 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ko/checkout?product=v03-t6,30 Aug 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/pt/checkout?product=v03-t5&color=v03-t5-sunglasses,30 Aug 2026,200,,https://cowinglasses.com/pt/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/es/checkout?product=gl15-1,30 Aug 2026,200,,https://cowinglasses.com/es/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=gl12-9,30 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/pt/checkout?product=gl15-1&color=gl15-1-black,30 Aug 2026,200,,https://cowinglasses.com/pt/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ko/checkout?product=g200-sport-audio-glasses,30 Aug 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ar/checkout?product=gl15-1,30 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/es/checkout?product=g06-l,30 Aug 2026,200,,https://cowinglasses.com/es/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ar/checkout?product=cw-studio-demo&color=studio-ink,30 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ko/checkout?product=gl16-3&color=gl16-3-black,30 Aug 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=v03-t5,30 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/es/checkout?product=gl7,30 Aug 2026,200,,https://cowinglasses.com/es/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/es/checkout?product=v03-pro,30 Aug 2026,200,,https://cowinglasses.com/es/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ar/checkout?product=gl7,30 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ar/checkout?product=gl8,30 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/pt/checkout?product=gl6,30 Aug 2026,200,,https://cowinglasses.com/pt/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/pt/checkout?product=gl12-9&color=gl12-9-black,29 Aug 2026,200,,https://cowinglasses.com/pt/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/en/checkout?product=v03-t6&color=v03-t6-sunglasses,29 Aug 2026,200,,https://cowinglasses.com/en/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ar/checkout?product=gl16-3,29 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/es/checkout?product=gl12-8&color=gl12-8-black,27 Aug 2026,200,,https://cowinglasses.com/es/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ar/checkout?product=v03-t8,27 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ko/checkout?product=g06-t&color=g06-t-brown,25 Aug 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=gl1&color=gl1-steel-grey,25 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=gl15-2&color=gl15-2-black,25 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=v03-t8&color=v03-t8-black,25 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=g300,25 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/pt/support/contact?product=g200-sport-audio-glasses&color=g200-sport-audio-glasses-blue-mirror-lens&source=checkout,23 Aug 2026,200,,https://cowinglasses.com/pt/support/contact,,,未单独Inspection；GSC分类提供排除原因,,有意排除,联系表单参数规范化到无参数页
+alternative,https://cowinglasses.com/ar/checkout?product=g06-l,23 Aug 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=g06-t,22 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=gl15-1,22 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/ja/checkout?product=cw-vision-demo&color=vision-graphite,22 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+alternative,https://cowinglasses.com/en/checkout?product=gl6&color=gl6-black-preference,22 Aug 2026,200,,https://cowinglasses.com/en/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex并合并参数规范页
+conflicts,https://cowinglasses.com/ko/account,7 Sept 2026,200,,https://cowinglasses.com/ko/account,"noindex, follow",https://cowinglasses.com/ko/account,https://cowinglasses.com/pt/account,"7 Sept 2026, 16:19:42",有意排除，等待重抓,当前noindex；Google历史抓取仍显示旧可索引状态
+conflicts,https://cowinglasses.com/ar/collections/music-movement,6 Sept 2026,200,,https://cowinglasses.com/ar/collections/music-movement,,https://cowinglasses.com/ar/collections/music-movement,https://cowinglasses.com/ja/collections/music-movement,"6 Sept 2026, 10:41:17",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/en/how-it-works,6 Sept 2026,200,,https://cowinglasses.com/en/how-it-works,,https://cowinglasses.com/en/how-it-works,https://cowinglasses.com/pt/how-it-works,"6 Sept 2026, 09:51:13",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ja/collections/explore,4 Sept 2026,200,,https://cowinglasses.com/ja/collections/explore,,https://cowinglasses.com/ja/collections/explore,https://cowinglasses.com/pt/collections/explore,"4 Sept 2026, 18:32:00",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/es/collections/explore,2 Sept 2026,200,,https://cowinglasses.com/es/collections/explore,,https://cowinglasses.com/es/collections/explore,https://cowinglasses.com/pt/collections/explore,"2 Sept 2026, 23:56:15",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/en/cart,1 Sept 2026,200,,https://cowinglasses.com/en/cart,"noindex, follow",https://cowinglasses.com/en/cart,https://cowinglasses.com/pt/cart,"1 Sept 2026, 21:53:22",有意排除，等待重抓,当前noindex；Google历史抓取仍显示旧可索引状态
+conflicts,https://cowinglasses.com/ar/support,31 Aug 2026,200,,https://cowinglasses.com/ar/support,,https://cowinglasses.com/ar/support,https://cowinglasses.com/es/support,"31 Aug 2026, 06:27:51",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ko/app,30 Aug 2026,200,,https://cowinglasses.com/ko/app,,https://cowinglasses.com/ko/app,https://cowinglasses.com/es/app,"30 Aug 2026, 17:57:52",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/pt/lens-guide,30 Aug 2026,200,,https://cowinglasses.com/pt/lens-guide,,https://cowinglasses.com/pt/lens-guide,https://cowinglasses.com/es/lens-guide,"30 Aug 2026, 15:18:36",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/en/checkout,30 Aug 2026,200,,https://cowinglasses.com/en/checkout,"noindex, follow",https://cowinglasses.com/en/checkout,https://cowinglasses.com/pt/checkout,"30 Aug 2026, 05:36:14",有意排除，等待重抓,当前noindex；Google历史抓取仍显示旧可索引状态
+conflicts,https://cowinglasses.com/pt/collections/everyday,30 Aug 2026,200,,https://cowinglasses.com/pt/collections/everyday,,https://cowinglasses.com/pt/collections/everyday,https://cowinglasses.com/ar/collections/everyday,"30 Aug 2026, 04:41:09",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/en/collections/everyday,30 Aug 2026,200,,https://cowinglasses.com/en/collections/everyday,,https://cowinglasses.com/en/collections/everyday,https://cowinglasses.com/ar/collections/everyday,"30 Aug 2026, 04:41:01",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ar/collections/explore,29 Aug 2026,200,,https://cowinglasses.com/ar/collections/explore,,https://cowinglasses.com/ar/collections/explore,https://cowinglasses.com/pt/collections/explore,"29 Aug 2026, 16:00:54",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ja/support,23 Aug 2026,200,,https://cowinglasses.com/ja/support,,https://cowinglasses.com/ja/support,https://cowinglasses.com/pt/support,"23 Aug 2026, 01:15:48",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/en/support,22 Aug 2026,200,,https://cowinglasses.com/en/support,,https://cowinglasses.com/en/support,https://cowinglasses.com/pt/support,"22 Aug 2026, 10:17:47",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ja/lens-guide,22 Aug 2026,200,,https://cowinglasses.com/ja/lens-guide,,https://cowinglasses.com/ja/lens-guide,https://cowinglasses.com/es/lens-guide,"22 Aug 2026, 10:16:39",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ar/lens-guide,22 Aug 2026,200,,https://cowinglasses.com/ar/lens-guide,,https://cowinglasses.com/ar/lens-guide,https://cowinglasses.com/es/lens-guide,"22 Aug 2026, 07:41:13",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ja/app,21 Aug 2026,200,,https://cowinglasses.com/ja/app,,https://cowinglasses.com/ja/app,https://cowinglasses.com/es/app,"21 Aug 2026, 18:58:04",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/en/support/faq,21 Aug 2026,200,,https://cowinglasses.com/en/support/faq,,https://cowinglasses.com/en/support/faq,https://cowinglasses.com/pt/support/faq,"21 Aug 2026, 13:30:12",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+conflicts,https://cowinglasses.com/ar/support/faq,21 Aug 2026,200,,https://cowinglasses.com/ar/support/faq,,https://cowinglasses.com/ar/support/faq,https://cowinglasses.com/pt/support/faq,"21 Aug 2026, 12:03:58",已修复/等待重抓,六语正文及标题去重；已有翻译支持页保留；自我canonical不变
+noindex,https://cowinglasses.com/ko/checkout,27 Sept 2026,200,,https://cowinglasses.com/ko/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账保持noindex
+noindex,https://cowinglasses.com/ar/checkout,27 Sept 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账保持noindex
+noindex,https://cowinglasses.com/pt/products/cw-vision-demo,26 Sept 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ar/checkout?product=gl12-8,23 Sept 2026,200,,https://cowinglasses.com/ar/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账保持noindex
+noindex,https://cowinglasses.com/en/checkout?product=gl1&color=gl1-steel-grey,23 Sept 2026,200,,https://cowinglasses.com/en/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账保持noindex
+noindex,https://cowinglasses.com/en/products/cw-daylight-demo,22 Sept 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ja/products/cw-studio-demo,3 Sept 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/en/products/cw-flow-demo,2 Sept 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/es/products/cw-arc-demo,30 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ja/products/cw-daylight-demo,30 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/pt/products/cw-flow-demo,30 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/pt/products/cw-arc-demo,30 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ko/products/cw-daylight-demo,30 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/pt/products/cw-daylight-demo,29 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/en/products/cw-vision-demo,29 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ar/products/cw-flow-demo,27 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ko/products/cw-arc-demo,26 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/pt/products/cw-studio-demo,26 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ko/products/cw-flow-demo,26 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ar/products/cw-vision-demo,25 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ar/products/cw-daylight-demo,25 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ko/products/cw-studio-demo,25 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+noindex,https://cowinglasses.com/ar/products/cw-arc-demo,24 Aug 2026,200,,,noindex,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧demo已退役，当前not-found/noindex；流式HTTP仍200
+redirect,https://cowinglasses.com/,12 Oct 2026,307,/en,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,保留HTTPS/主域/默认语言跳转
+redirect,http://cowinglasses.com/,5 Sept 2026,308,https://cowinglasses.com/,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,保留HTTPS/主域/默认语言跳转
+redirect,http://www.cowinglasses.com/,23 Aug 2026,308,https://www.cowinglasses.com/,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,保留HTTPS/主域/默认语言跳转
+redirect,https://www.cowinglasses.com/,23 Aug 2026,308,https://cowinglasses.com/,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,保留HTTPS/主域/默认语言跳转
+crawled,https://cowinglasses.com/_next/static/css/70483a3170692817.css?dpl=dpl_J5c2rrVdcs1kCR87eZGRdu5Xga7T,26 Sept 2026,404,,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧静态资源不作为HTML搜索落地页；不屏蔽当前资源
+crawled,https://cowinglasses.com/_next/static/media/5fb5c05ff73c0616-s.p.woff2?dpl=dpl_J5c2rrVdcs1kCR87eZGRdu5Xga7T,23 Sept 2026,200,,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧静态资源不作为HTML搜索落地页；不屏蔽当前资源
+crawled,https://cowinglasses.com/_next/static/css/dc40f9d942b45539.css?dpl=dpl_DHDDoCtpzT5y8XumToBsLqoGL2tf,31 Aug 2026,404,,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧静态资源不作为HTML搜索落地页；不屏蔽当前资源
+crawled,https://cowinglasses.com/ja/checkout?product=cw-flow-demo&color=flow-charcoal,30 Aug 2026,200,,https://cowinglasses.com/ja/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex
+crawled,https://cowinglasses.com/es/checkout?product=gl1&color=gl1-steel-grey,30 Aug 2026,200,,https://cowinglasses.com/es/checkout,"noindex, follow",,未单独Inspection；GSC分类提供排除原因,,有意排除,结账noindex
+crawled,https://cowinglasses.com/_next/static/css/dc40f9d942b45539.css?dpl=dpl_B2WP2zKrnoQFUBRPuHDMQ56WdaDX,29 Aug 2026,404,,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧静态资源不作为HTML搜索落地页；不屏蔽当前资源
+crawled,https://cowinglasses.com/_next/static/css/b55a6d85b8b7b6b2.css?dpl=dpl_52z4z32wAsGrDhyZiLLxJwkJ7rV1,25 Aug 2026,404,,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧静态资源不作为HTML搜索落地页；不屏蔽当前资源
+crawled,https://cowinglasses.com/_next/static/css/001020cd05472bbc.css?dpl=dpl_6Rr8zerGq7Aa2Uipnr6JTwV4fGF3,23 Aug 2026,404,,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧静态资源不作为HTML搜索落地页；不屏蔽当前资源
+crawled,https://cowinglasses.com/_next/static/css/2b20ab952f0f88e7.css?dpl=dpl_3FdjVuES2LFPm6TtGdPHu1nnpeCw,21 Aug 2026,404,,,,,未单独Inspection；GSC分类提供排除原因,,有意排除,旧静态资源不作为HTML搜索落地页；不屏蔽当前资源
+discovered,https://cowinglasses.com/ar/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,N/A,200,,https://cowinglasses.com/ar/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ar/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,N/A,200,,https://cowinglasses.com/ar/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ar/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,N/A,200,,https://cowinglasses.com/ar/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/en/blog,N/A,200,,https://cowinglasses.com/en/blog,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,空Blog列表noindex、移出Sitemap；有文章后自动恢复
+discovered,https://cowinglasses.com/en/news,N/A,200,,https://cowinglasses.com/en/news,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/en/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,N/A,200,,https://cowinglasses.com/en/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/en/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,N/A,200,,https://cowinglasses.com/en/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/en/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,N/A,200,,https://cowinglasses.com/en/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/es/blog,N/A,200,,https://cowinglasses.com/es/blog,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,空Blog列表noindex、移出Sitemap；有文章后自动恢复
+discovered,https://cowinglasses.com/es/collections/music-movement,N/A,200,,https://cowinglasses.com/es/collections/music-movement,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/es/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,N/A,200,,https://cowinglasses.com/es/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/es/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,N/A,200,,https://cowinglasses.com/es/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/es/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,N/A,200,,https://cowinglasses.com/es/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ja/blog,N/A,200,,https://cowinglasses.com/ja/blog,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,空Blog列表noindex、移出Sitemap；有文章后自动恢复
+discovered,https://cowinglasses.com/ja/collections/everyday,N/A,200,,https://cowinglasses.com/ja/collections/everyday,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ja/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,N/A,200,,https://cowinglasses.com/ja/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ja/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,N/A,200,,https://cowinglasses.com/ja/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ja/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,N/A,200,,https://cowinglasses.com/ja/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ko/collections/everyday,N/A,200,,https://cowinglasses.com/ko/collections/everyday,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ko/lens-guide,N/A,200,,https://cowinglasses.com/ko/lens-guide,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ko/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,N/A,200,,https://cowinglasses.com/ko/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ko/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,N/A,200,,https://cowinglasses.com/ko/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/ko/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,N/A,200,,https://cowinglasses.com/ko/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/pt/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,N/A,200,,https://cowinglasses.com/pt/news/diy-asteroid-tracking-highlights-precise-imaging-trends-in-enthusiast-optics-5d9174a2,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/pt/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,N/A,200,,https://cowinglasses.com/pt/news/meta-connect-2026-preview-points-to-camera-free-smart-glasses-bdbd1dc5,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取
+discovered,https://cowinglasses.com/pt/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,N/A,200,,https://cowinglasses.com/pt/news/meta-s-camera-free-smart-glasses-highlight-a-new-path-for-connected-wearables-eea9c32e,,,未单独Inspection；GSC分类提供排除原因,,等待重抓,真实News/分类内容保持可抓取

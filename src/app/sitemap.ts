@@ -19,7 +19,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const contentUpdatedAt = new Date(siteConfig.contentUpdatedAt);
 
   return [
-    ...locales.flatMap((locale) => indexableStorefrontPaths.filter(path => isCollectionIndexable(path, catalogue)).map((path) => ({
+    ...locales.flatMap((locale) => indexableStorefrontPaths.filter(path => isCollectionIndexable(path, catalogue) &&
+      (path !== "/blog" || localizedArticles.some(entry => entry.locale === locale && entry.articles.some(article => article.type === "blog")))).map((path) => ({
       url: `${siteConfig.url}/${locale}${path}`,
       lastModified: contentUpdatedAt,
     }))),

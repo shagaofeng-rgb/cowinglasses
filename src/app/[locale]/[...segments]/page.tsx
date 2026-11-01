@@ -7,6 +7,8 @@ import { siteConfig } from "@/config/site";
 import { getStoreProducts } from "@/data/repositories/products";
 import { indexableStorefrontPaths, noIndexStorefrontPaths } from "@/lib/seo/sitemap-config";
 import { isCollectionIndexable } from "@/lib/seo/collection-indexability";
+import { learning, collectionTitles } from "@/messages/learning";
+import { messages } from "@/messages";
 
 const validPaths = new Set<string>([...indexableStorefrontPaths.map(path => path.replace(/^\//, "")), ...noIndexStorefrontPaths]);
 
@@ -15,11 +17,15 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const path = segments.join("/");
   if (!isLocale(locale) || !validPaths.has(path)) notFound();
   const label = path.replace(/\b\w/g, (character) => character.toUpperCase()) || "Shop";
+  const guide = path === "how-it-works" ? learning[locale].how : path === "lens-guide" ? learning[locale].lens : path === "app" ? learning[locale].app : undefined;
+  const collectionTitle = path.startsWith("collections/") ? collectionTitles[locale][segments[1]] : undefined;
+  const localizedTitle = guide?.title || collectionTitle || ({ support: messages[locale].support.title, "support/faq": messages[locale].support.faq, shop: messages[locale].shop.title } as Record<string, string>)[path] || label;
   const indexable = !noIndexStorefrontPaths.has(path) &&
     (!path.startsWith("collections/") || isCollectionIndexable(path, await getStoreProducts()));
 
   return {
-    title: { absolute: `${label} | ${siteConfig.name}` },
+    title: { absolute: `${localizedTitle} | ${siteConfig.name}` },
+    description: guide?.intro || (collectionTitle ? messages[locale].shop.intro : undefined),
     robots: indexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: `/${locale}/${path}`,
