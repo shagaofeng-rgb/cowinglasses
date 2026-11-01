@@ -5,6 +5,7 @@ import { getStoreProducts } from "@/data/repositories/products";
 import { locales } from "@/types/localization";
 import { getProductSearchLocales } from "@/lib/seo/product-indexability";
 import { indexableStorefrontPaths } from "@/lib/seo/sitemap-config";
+import { isCollectionIndexable } from "@/lib/seo/collection-indexability";
 export const revalidate = 300;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [catalogue, localizedArticles] = await Promise.all([
@@ -18,7 +19,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const contentUpdatedAt = new Date(siteConfig.contentUpdatedAt);
 
   return [
-    ...locales.flatMap((locale) => indexableStorefrontPaths.map((path) => ({
+    ...locales.flatMap((locale) => indexableStorefrontPaths.filter(path => isCollectionIndexable(path, catalogue)).map((path) => ({
       url: `${siteConfig.url}/${locale}${path}`,
       lastModified: contentUpdatedAt,
     }))),

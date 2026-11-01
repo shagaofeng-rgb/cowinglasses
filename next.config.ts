@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { legacyStorefrontRedirects } from "./src/lib/seo/legacy-redirects";
 
 const nextConfig: NextConfig = {
   images: {
@@ -40,6 +41,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      ...legacyStorefrontRedirects,
       {
         source: "/:path*",
         has: [{ type: "host", value: "www.cowinglasses.com" }],

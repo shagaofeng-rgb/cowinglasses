@@ -6,6 +6,7 @@ import { isLocale } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
 import { getStoreProducts } from "@/data/repositories/products";
 import { indexableStorefrontPaths, noIndexStorefrontPaths } from "@/lib/seo/sitemap-config";
+import { isCollectionIndexable } from "@/lib/seo/collection-indexability";
 
 const validPaths = new Set<string>([...indexableStorefrontPaths.map(path => path.replace(/^\//, "")), ...noIndexStorefrontPaths]);
 
@@ -14,16 +15,18 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const path = segments.join("/");
   if (!isLocale(locale) || !validPaths.has(path)) notFound();
   const label = path.replace(/\b\w/g, (character) => character.toUpperCase()) || "Shop";
+  const indexable = !noIndexStorefrontPaths.has(path) &&
+    (!path.startsWith("collections/") || isCollectionIndexable(path, await getStoreProducts()));
 
   return {
     title: { absolute: `${label} | ${siteConfig.name}` },
-    robots: noIndexStorefrontPaths.has(path) ? { index: false, follow: true } : undefined,
+    robots: indexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: `/${locale}/${path}`,
-      languages: {
+      languages: indexable ? {
         en: `/en/${path}`, ar: `/ar/${path}`, es: `/es/${path}`,
         pt: `/pt/${path}`, ja: `/ja/${path}`, ko: `/ko/${path}`,
-      },
+      } : undefined,
     },
   };
 }

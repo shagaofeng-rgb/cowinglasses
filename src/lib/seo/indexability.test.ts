@@ -3,6 +3,27 @@ import test from "node:test";
 import { products } from "@/data/fixtures/products";
 import { getProductLanguageAlternates, getProductSearchLocales, isProductLocaleIndexable } from "@/lib/seo/product-indexability";
 import { indexableStorefrontPaths, noIndexStorefrontPaths } from "@/lib/seo/sitemap-config";
+import { legacyStorefrontRedirects } from "@/lib/seo/legacy-redirects";
+import { isCollectionIndexable } from "@/lib/seo/collection-indexability";
+
+test("empty and demo-only collections stay out of search until real products are assigned", () => {
+  assert.equal(isCollectionIndexable("/collections/photochromic-sun", []), false);
+  assert.equal(isCollectionIndexable("collections/photochromic-sun", products.filter(p => p.demo)), false);
+  const live = products.find(p => !p.demo);
+  assert.ok(live);
+  assert.equal(isCollectionIndexable(`collections/${live.collections[0]}`, [live]), true);
+  assert.equal(isCollectionIndexable("/shop", []), true);
+});
+
+test("legacy redirects only map confirmed same-content paths to existing destinations", () => {
+  assert.equal(legacyStorefrontRedirects.length, 10);
+  for (const rule of legacyStorefrontRedirects) {
+    assert.equal(rule.destination, `/en${rule.source}`);
+    assert.equal(rule.permanent, true);
+    assert.ok((indexableStorefrontPaths as readonly string[]).includes(rule.source));
+  }
+  assert.ok(!legacyStorefrontRedirects.some(rule => ["/$", "/&"].includes(rule.source)));
+});
 
 test("demo catalogue entries are not eligible for search indexing", () => {
   const demo = products.find((product) => product.demo);
