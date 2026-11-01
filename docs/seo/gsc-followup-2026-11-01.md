@@ -29,7 +29,7 @@
 ## Google验证状态
 
 - Soft404：2026-11-01界面已确认 **Validation Started**，开始日期01/11/2026；截图 `output/gsc-2026-11-01/soft404-validation-started.jpg`。
-- 规范页冲突：需新内容上线、代表页复测后重启验证；最终受理状态在发布后记录。
+- 规范页冲突：新内容上线且18个说明页复测后，已重启验证；界面确认 **Validation Started，Started 01/11/2026，Pending 20，Failed 0**。这不是最终验证通过。
 - 404与正确替代页、正常redirect、noindex类别不要求归零；有意排除保留，旧Failed状态不能直接当成当前网站故障。
 - Discovered验证原本Started于24/08/2026，不冒充本次新发起。
 
@@ -43,3 +43,14 @@
 - `scripts/gsc-evidence-audit.mjs`：根据公开GSC导出URL复测响应与canonical，不读取浏览器凭据。
 
 不改变News停用状态、第三方Blog发布程序、支付、客户数据与Google周一定时配置。
+
+## 最终发布验收
+
+- 修复提交 `03f9e23` 已推送main；Vercel production `dpl_Ai1awRDC1YeRE5q13xrMj1GTyuYF` 为READY，cowinglasses.com与www正式域名绑定成功。
+- 本地完整build、TypeScript、Lint、16项测试均通过；Vercel生产构建成功。
+- 六语言共18个说明页逐一HTTP200，本地化H1/标题与自我canonical全部一致。阿拉伯语手机390px及日语桌面1440px均无整页横向溢出；手机dir=rtl。
+- Sitemap排除18个空商品分类及6个空Blog列表，当前161条。最终检查161个Sitemap URL及其内链/hreflang共409地址，一致性问题0。
+- 重新提交Sitemap后，GSC显示 **Sitemap submitted successfully**；表格Submitted与Last read均为1 Nov 2026，Status Success，Discovered pages 161。
+- Google验证证据：`output/gsc-2026-11-01/canonical-validation-started.jpg`、`soft404-validation-started.jpg`、`sitemap-submitted-success.jpg`。截图与原始账户UI只留本地，不提交仓库。
+- 逐URL处置表及63条canonical对照已经完整交付；对43条正确替代页，Google分类是正确canonical的证据，表格中的目标为当前HTTP声明，未伪造逐条Google Inspection字段。
+- 10个旧地址的308迁移及两个无效字符URL的404保留。Google重抓与最终验证结果需后续报告更新，不能承诺收录或排名。
