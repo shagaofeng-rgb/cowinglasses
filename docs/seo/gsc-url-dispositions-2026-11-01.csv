@@ -1,16 +1,16 @@
 gsc_category,url,last_crawled,disposition,action,google_canonical_evidence
-404,https://cowinglasses.com/support/warranty,8 Sept 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/support/warranty,未读取Google选择规范页
-404,https://cowinglasses.com/policies/intellectual-property,30 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/policies/intellectual-property,未读取Google选择规范页
-404,https://cowinglasses.com/compare,30 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/compare,未读取Google选择规范页
-404,https://cowinglasses.com/policies/terms,26 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/policies/terms,未读取Google选择规范页
-404,https://cowinglasses.com/shop,25 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/shop,未读取Google选择规范页
-404,https://cowinglasses.com/app,25 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/app,未读取Google选择规范页
-404,https://cowinglasses.com/support/shipping-delivery,25 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/support/shipping-delivery,未读取Google选择规范页
-404,https://cowinglasses.com/support/contact,21 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/support/contact,未读取Google选择规范页
+404,https://cowinglasses.com/support/warranty,8 Sept 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/warranty,未读取Google选择规范页
+404,https://cowinglasses.com/policies/intellectual-property,30 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/policies/intellectual-property,未读取Google选择规范页
+404,https://cowinglasses.com/compare,30 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/compare,未读取Google选择规范页
+404,https://cowinglasses.com/policies/terms,26 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/policies/terms,未读取Google选择规范页
+404,https://cowinglasses.com/shop,25 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/shop,未读取Google选择规范页
+404,https://cowinglasses.com/app,25 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/app,未读取Google选择规范页
+404,https://cowinglasses.com/support/shipping-delivery,25 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/shipping-delivery,未读取Google选择规范页
+404,https://cowinglasses.com/support/contact,21 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/contact,未读取Google选择规范页
 404,https://cowinglasses.com/&,21 Aug 2026,有意排除,保留真实404，无对应内容,未读取Google选择规范页
 404,https://cowinglasses.com/$,20 Aug 2026,有意排除,保留真实404，无对应内容,未读取Google选择规范页
-404,https://cowinglasses.com/how-it-works,20 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/how-it-works,未读取Google选择规范页
-404,https://cowinglasses.com/support/returns-refunds,20 Aug 2026,已修复（待上线复测）,308 → https://cowinglasses.com/en/support/returns-refunds,未读取Google选择规范页
+404,https://cowinglasses.com/how-it-works,20 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/how-it-works,未读取Google选择规范页
+404,https://cowinglasses.com/support/returns-refunds,20 Aug 2026,已修复，已上线，等待Google重抓,308 → https://cowinglasses.com/en/support/returns-refunds,未读取Google选择规范页
 soft404,https://cowinglasses.com/ja/checkout,4 Sept 2026,有意排除,结账页面保持noindex,未读取Google选择规范页
 soft404,https://cowinglasses.com/ar/collections/photochromic-sun,31 Aug 2026,有意排除,noindex；空分类同时移出Sitemap,未读取Google选择规范页
 alternative,https://cowinglasses.com/ko/checkout?product=v03-t8,7 Sept 2026,有意排除,结账noindex；联系表单参数canonical合并到无参数页,未读取Google选择规范页

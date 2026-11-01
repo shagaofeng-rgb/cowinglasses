@@ -40,3 +40,12 @@
 ## 验证原则
 
 仅在对应修复上线且代表URL复测后发起验证。保留真实404和有意noindex，不要求每个排除类别变成零。GSC界面显示验证开始或通过才记为成功；Sitemap提交也不能等同验证修复。当前浏览器交互恢复前，验证状态记录为未提交。
+
+## 发布与上线复测结果
+
+- 修复提交 `ecf759b` 已推送 `shagaofeng-rgb/cowinglasses` 的 main；Vercel production `dpl_J3jAd5yrmx6muha61cEvqYo1RB7D` 为 READY，正式域名及www均绑定成功。
+- 本地 lint、TypeScript、15项测试及完整production build均通过；本地未配置数据库，已跳过数据库bootstrap；Vercel生产环境构建亦成功。
+- 全部10条旧URL实测308且对应目标200；两个无内容地址仍404；阿拉伯语空分类200并输出noindex follow。
+- Sitemap从185条调整为167条，18个空分类均已移除。上线后再次检查167个Sitemap URL与内链/hreflang共415地址，问题数0。完整机器证据位于本地 `output/gsc-2026-11-01/postdeploy/consistency.json`。
+- 上线后尝试点击Soft404的Validate fix，浏览器CDP输入超时；再次读取页面仍为“Finished fixing? / validate fix”，没有验证开始状态，故本次验证**未提交成功**。
+- 当前仍需恢复浏览器连接后补齐20条Google规范页冲突、剩余33条替代页、23条noindex及其他类别明细；再按逐URL Inspection证据决定是否需要进一步修复。未用公开站点检测结果伪装GSC导出完成。
