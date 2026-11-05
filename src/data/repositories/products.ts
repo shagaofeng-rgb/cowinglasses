@@ -24,12 +24,11 @@ export const fixtureProductRepository: ProductRepository = {
 type DatabaseProduct = typeof productTable.$inferSelect;
 
 export const storeCatalogueTag = "storefront-catalogue";
-export const getLiveStoreProducts = cache(() => retryDatabaseRead(loadStoreProducts));
 
 const loadCachedStoreProducts = unstable_cache(
   () => retryDatabaseRead(loadStoreProducts),
   [storeCatalogueTag, process.env.VERCEL_GIT_COMMIT_SHA ?? "local"],
-  { tags: [storeCatalogueTag], revalidate: 600 },
+  { tags: [storeCatalogueTag], revalidate: 7200 },
 );
 
 export const getStoreProducts = cache(async () => {

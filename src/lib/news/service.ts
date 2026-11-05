@@ -3,7 +3,8 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { getVercelOidcToken } from "@vercel/oidc";
 import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { publicEditorialTag } from "@/data/repositories/articles";
 import { newsAutomationConfig } from "@/config/news-automation";
 import { siteConfig } from "@/config/site";
 import { getDatabase } from "@/db/client";
@@ -399,14 +400,13 @@ export async function runNewsPublish(trigger: Trigger = "cron", dryRun = false):
       const translations = {} as Record<Exclude<Locale, "en">, LocalizedDraft>;
       for (const item of translated) { if (!validLocalizedDraft(item.draft)) throw new Error(`${item.locale} translation failed the completeness check.`); translations[item.locale] = item.draft; }
       const article = await publishDraft(candidate, english, translations, state.publishingMode, state.topicCursor);
-      for (const locale of locales) revalidatePath(`/${locale}/news`);
-      for (const locale of locales) revalidatePath(`/${locale}/news/${article.slug}`);
-      revalidatePath("/sitemap.xml"); revalidatePath("/news-sitemap.xml"); revalidatePath("/news/rss.xml");
+      invalidatePublicNews(article.slug);
 
       if (state.publishingMode !== "auto") return recordRun("publish", trigger, { status: "review_pending", reason: "A six-language draft was generated and is waiting for editorial approval.", candidateCount: 1, rejectedCount: 0, publishedSlug: article.slug }, startedAt, { articleId: article.id, attempts: 1 });
       const delivery = await verifyDelivery(article);
       if (!delivery.passed) {
         await db.update(contentArticles).set({ status: "draft", publishedAt: null, indexStatus: "verification_failed", updatedAt: new Date() }).where(eq(contentArticles.id, article.id));
+        invalidatePublicNews(article.slug);
         await db.update(newsCandidates).set({ status: "used", attempts: sql`${newsCandidates.attempts} + 1`, rejectReason: "Frontend delivery verification failed; the generated article remains a draft for review.", updatedAt: new Date() }).where(eq(newsCandidates.id, candidate.id));
         await db.update(newsAutomationState).set({ lastPublishedAt: state.lastPublishedAt, nextEligibleAt: state.nextEligibleAt, topicCursor: state.topicCursor, updatedAt: new Date() }).where(eq(newsAutomationState.key, newsAutomationConfig.stateKey));
         return recordRun("publish", trigger, { status: "retry_pending", reason: "The article was returned to draft because frontend delivery verification failed.", candidateCount: 1, rejectedCount: 1 }, startedAt, { articleId: article.id, delivery, attempts: 1 });
@@ -422,6 +422,15 @@ export async function runNewsPublish(trigger: Trigger = "cron", dryRun = false):
   } finally {
     if (!dryRun && lock !== "dry-run") await releaseJobLock(lockKey, lock);
   }
+}
+
+function invalidatePublicNews(slug: string) {
+  revalidateTag(publicEditorialTag, { expire: 0 });
+  for (const locale of locales) {
+    revalidatePath(`/${locale}/news`);
+    revalidatePath(`/${locale}/news/${slug}`);
+  }
+  for (const path of ["/robots.txt", "/sitemap.xml", "/news-sitemap.xml", "/news/rss.xml"]) revalidatePath(path);
 }
 
 export async function runNewsSourceHealth(trigger: Trigger = "cron") {

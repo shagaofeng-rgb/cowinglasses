@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { RoutePage } from "@/components/commerce/route-page";
 import { isLocale } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
-import { getLiveStoreProducts, getStoreProducts } from "@/data/repositories/products";
+import { getStoreProducts } from "@/data/repositories/products";
 import { indexableStorefrontPaths, noIndexStorefrontPaths } from "@/lib/seo/sitemap-config";
 import { isCollectionIndexable } from "@/lib/seo/collection-indexability";
 import { learning, collectionTitles } from "@/messages/learning";
@@ -41,12 +41,9 @@ export default async function RoutedPage({ params }: { params: Promise<{ locale:
   const path = segments.join("/");
   if (!isLocale(locale) || !validPaths.has(path)) notFound();
 
-  let products;
-  if (path === "cart" || path === "checkout") {
-    products = await getLiveStoreProducts();
-  } else if (path === "shop" || path === "compare" || path === "search" || path.startsWith("collections/")) {
-    products = await getStoreProducts();
-  }
+  const usesCatalogue = ["shop", "compare", "search", "cart", "checkout"].includes(path) || path.startsWith("collections/");
+  // Display only. The order endpoint reads current SKU prices and inventory in its transaction.
+  const products = usesCatalogue ? await getStoreProducts() : undefined;
 
   return <Suspense fallback={null}><RoutePage locale={locale} segments={segments} products={products} /></Suspense>;
 }

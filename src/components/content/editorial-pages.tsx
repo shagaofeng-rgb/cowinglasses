@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { editorialArticleLabels, messages } from "@/messages";
-import type { PublicArticle, PublicArticleType } from "@/data/repositories/articles";
+import type { PublicArticle, PublicArticleSummary, PublicArticleType } from "@/data/repositories/articles";
 import styles from "@/components/layout/storefront-design.module.css";
 import { Pagination } from "@/components/commerce/pagination";
 
@@ -16,11 +16,11 @@ const dateLocales: Record<Locale, string> = {
   ko: "ko-KR",
 };
 
-function articleDate(article: PublicArticle, locale: Locale) {
+function articleDate(article: PublicArticleSummary, locale: Locale) {
   return new Intl.DateTimeFormat(dateLocales[locale], { year: "numeric", month: "long", day: "numeric" }).format(article.publishedAt ?? article.updatedAt);
 }
 
-export function EditorialIndex({ locale, type, articles, currentPage = 1, totalPages = 1 }: { locale: Locale; type: PublicArticleType; articles: PublicArticle[]; currentPage?: number; totalPages?: number }) {
+export function EditorialIndex({ locale, type, articles, currentPage = 1, totalPages = 1 }: { locale: Locale; type: PublicArticleType; articles: PublicArticleSummary[]; currentPage?: number; totalPages?: number }) {
   const t = messages[locale];
   const title = type === "news" ? t.editorial.newsTitle : t.editorial.blogTitle;
   const intro = type === "news" ? t.editorial.newsIntro : t.editorial.blogIntro;
