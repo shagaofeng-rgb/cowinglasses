@@ -1,12 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { z } from "zod";
 import { writeAuditLog } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 import { getDatabase } from "@/db/client";
 import { eq } from "drizzle-orm";
 import { inventoryLevels, inventoryMovements, products, productSkus } from "@/db/schema";
+import { storeCatalogueTag } from "@/data/repositories/products";
 
 const productFormSchema = z.object({ name: z.string().trim().min(2, "请填写至少 2 个字符的商品名称。").max(240), slug: z.string().trim().min(2, "请填写商品 Slug。").max(260).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug 仅支持小写英文、数字和连字符。"), description: z.string().trim().max(10000).optional(), sku: z.string().trim().min(2, "请填写 SKU。").max(128), price: z.string().regex(/^\d+(\.\d{1,2})?$/, "价格格式不正确。"), inventory: z.coerce.number().int().min(0, "库存不能小于 0。").max(1000000), status: z.enum(["draft", "active"]) });
 export type ProductFormState = { success: boolean; message: string };
@@ -27,6 +28,7 @@ export async function createProductAction(_state: ProductFormState, formData: Fo
       await transaction.insert(inventoryLevels).values({ skuId: sku.id, onHand: input.inventory, reorderPoint: 0 });
       return [createdProduct];
     });
+    updateTag(storeCatalogueTag);
     await writeAuditLog({ actorId: administrator.id, action: "catalog.product.create", resourceType: "product", resourceId: product.id, result: "success", metadata: { sku: input.sku, status: input.status } });
     revalidatePath("/admin/products");
     revalidatePath("/", "layout");
@@ -54,6 +56,7 @@ export async function updateProductAction(_state: ProductFormState, formData: Fo
       else await transaction.insert(inventoryLevels).values({ skuId: input.skuId, onHand: input.onHand, reorderPoint: input.reorderPoint });
       if (delta) await transaction.insert(inventoryMovements).values({ skuId: input.skuId, type: current === 0 ? "initial" : "adjustment", quantityDelta: delta, referenceType: "admin_product_edit", referenceId: input.productId, note: "后台商品编辑调整库存", operatorId: administrator.id });
     });
+    updateTag(storeCatalogueTag);
     await writeAuditLog({ actorId: administrator.id, action: "catalog.product.update", resourceType: "product", resourceId: input.productId, result: "success", metadata: { skuId: input.skuId, status: input.status } });
     revalidatePath("/", "layout");
     revalidatePath("/admin/products");

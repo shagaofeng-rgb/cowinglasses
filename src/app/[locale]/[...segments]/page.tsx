@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { RoutePage } from "@/components/commerce/route-page";
 import { isLocale } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
-import { getStoreProducts } from "@/data/repositories/products";
+import { getLiveStoreProducts, getStoreProducts } from "@/data/repositories/products";
 import { indexableStorefrontPaths, noIndexStorefrontPaths } from "@/lib/seo/sitemap-config";
 import { isCollectionIndexable } from "@/lib/seo/collection-indexability";
 import { learning, collectionTitles } from "@/messages/learning";
@@ -36,4 +36,17 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     },
   };
 }
-export default async function RoutedPage({ params }: { params: Promise<{ locale: string; segments?: string[] }> }) { const { locale, segments = [] } = await params; if (!isLocale(locale) || !validPaths.has(segments.join("/"))) notFound(); return <Suspense fallback={null}><RoutePage locale={locale} segments={segments} products={await getStoreProducts()}/></Suspense>; }
+export default async function RoutedPage({ params }: { params: Promise<{ locale: string; segments?: string[] }> }) {
+  const { locale, segments = [] } = await params;
+  const path = segments.join("/");
+  if (!isLocale(locale) || !validPaths.has(path)) notFound();
+
+  let products;
+  if (path === "cart" || path === "checkout") {
+    products = await getLiveStoreProducts();
+  } else if (path === "shop" || path === "compare" || path === "search" || path.startsWith("collections/")) {
+    products = await getStoreProducts();
+  }
+
+  return <Suspense fallback={null}><RoutePage locale={locale} segments={segments} products={products} /></Suspense>;
+}

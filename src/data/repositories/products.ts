@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { retryDatabaseRead } from "@/db/read-retry";
 import { asc, eq, inArray } from "drizzle-orm";
 import { getDatabase, isDatabaseConfigured } from "@/db/client";
@@ -22,7 +23,19 @@ export const fixtureProductRepository: ProductRepository = {
 
 type DatabaseProduct = typeof productTable.$inferSelect;
 
-export const getStoreProducts = cache(() => retryDatabaseRead(loadStoreProducts));
+export const storeCatalogueTag = "storefront-catalogue";
+export const getLiveStoreProducts = cache(() => retryDatabaseRead(loadStoreProducts));
+
+const loadCachedStoreProducts = unstable_cache(
+  () => retryDatabaseRead(loadStoreProducts),
+  [storeCatalogueTag, process.env.VERCEL_GIT_COMMIT_SHA ?? "local"],
+  { tags: [storeCatalogueTag], revalidate: 600 },
+);
+
+export const getStoreProducts = cache(async () => {
+  if (!isDatabaseConfigured()) return fixtureProducts;
+  return loadCachedStoreProducts();
+});
 
 async function loadStoreProducts(): Promise<Product[]> {
   if (!isDatabaseConfigured()) return fixtureProducts;
