@@ -1,6 +1,5 @@
 .page,
-.statusPage,
-.loadingGrid {
+.statusPage {
   --display: var(--font-display, "Arial Narrow"), sans-serif;
   --body: var(--font-body, Arial), sans-serif;
   --mono: ui-monospace, Menlo, Consolas, monospace;
@@ -415,15 +414,13 @@
 .statusPage h1, .statusPage h2 { margin-inline: auto; font-size: clamp(2.5rem,6vw,5rem); line-height: .98; }
 .statusPage p { color: var(--muted); }
 .statusActions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-block-start: 1.15rem; }
-.loadingGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .85rem; min-height: 50vh; padding: clamp(1rem,4vw,4rem); }
-.loadingGrid > div { min-height: 110px; background: var(--surface); border: 1px solid var(--line); }
 
 .headerInterior { background: #151819f5; font-family: var(--font-body, Arial), sans-serif; }
 .headerInterior .headerInner { width: min(100% - clamp(1.9rem, 7vw, 7rem), 1440px); min-height: 64px; height: auto; }
 .headerInterior [aria-current="page"] { color: #d5eb59; }
 .announcementInterior { padding-block: .36rem; font-family: var(--font-body, Arial), sans-serif; font-size: .7rem; line-height: 1.35; }
 .mobileTools { display: none; }
-:global(main#main-content):has(.page, .statusPage, .loadingGrid) + .storeFooter .footerHomeLead { display: none; }
+:global(main#main-content):has(.page, .statusPage) + .storeFooter .footerHomeLead { display: none; }
 
 @media (max-width: 1023px) {
   .headerInterior .headerInner { min-height: 55px; gap: .18rem; }
@@ -478,7 +475,7 @@
   .checkoutProgress button { flex-direction: column; align-items: flex-start; gap: .12rem; }
 }
 .footerMark { display: none; }
-:global(main#main-content):has(.page, .statusPage, .loadingGrid) + .storeFooter .footerMark {
+:global(main#main-content):has(.page, .statusPage) + .storeFooter .footerMark {
   display: inline-block;
   margin-block-end: .55rem;
   color: #f3f5f1;

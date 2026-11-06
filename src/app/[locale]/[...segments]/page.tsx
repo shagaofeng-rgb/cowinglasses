@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { RoutePage } from "@/components/commerce/route-page";
-import { StorefrontLoading } from "@/components/layout/storefront-loading";
 import { shippingDestinationLabels } from "@/lib/shipping-destination-labels";
 import { isLocale, locales } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
@@ -66,11 +65,13 @@ export default async function RoutedPage({ params }: { params: Promise<{ locale:
   const path = segments.join("/");
   if (!isLocale(locale) || !storefrontRoutePaths.has(path)) notFound();
 
+  // The catalogue, checkout and inquiry form use the request URL during their initial render.
+  await connection();
   const usesCatalogue = ["shop", "compare", "search", "cart", "checkout", "quote"].includes(path) || path.startsWith("collections/");
   // Display only. The order endpoint reads current SKU prices and inventory in its transaction.
   const products = usesCatalogue ? await getStoreProducts() : undefined;
 
   const destinationLabels = path === "checkout" || path === "support/shipping-delivery" ? shippingDestinationLabels(locale) : undefined;
 
-  return <Suspense fallback={<StorefrontLoading />}><RoutePage locale={locale} segments={segments} products={products} destinationLabels={destinationLabels} /></Suspense>;
+  return <RoutePage locale={locale} segments={segments} products={products} destinationLabels={destinationLabels} />;
 }
