@@ -9,7 +9,6 @@ import { writeAuditLog } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 
 export type CatalogFormState = { success: boolean; message: string };
-export const initialCatalogFormState: CatalogFormState = { success: false, message: "" };
 const slug = z.string().trim().min(2, "请填写至少 2 个字符的 Slug。").max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug 仅支持小写英文、数字和连字符。");
 const categorySchema = z.object({ id: z.string().uuid().optional(), name: z.string().trim().min(2).max(160), slug, description: z.string().trim().max(2000).optional(), sortOrder: z.coerce.number().int().min(0).max(100000), isActive: z.enum(["true", "false"]).default("true") });
 const brandSchema = z.object({ id: z.string().uuid().optional(), name: z.string().trim().min(2).max(160), slug, description: z.string().trim().max(2000).optional(), logoUrl: z.union([z.literal(""), z.string().url("Logo 地址格式不正确。")]), isActive: z.enum(["true", "false"]).default("true") });

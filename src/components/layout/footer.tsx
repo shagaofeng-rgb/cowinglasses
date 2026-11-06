@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { ArrowUpRight, MapPin, MessageCircle } from "lucide-react";
 import { type Locale } from "@/lib/i18n";
+import { salesCopy } from "@/messages/sales";
 import { messages } from "@/messages";
 import { PaymentMethods } from "@/components/compliance/payment-methods";
+import { AnalyticsPreferences } from "@/components/analytics/analytics-consent";
 import { businessDetails } from "@/config/business";
 import styles from "./storefront-design.module.css";
 
@@ -30,9 +32,10 @@ export function Footer({ locale }: { locale: Locale }) {
           <p className="font-bold text-white">{businessDetails.legalName}</p>
           <a className="mt-2 inline-flex items-start gap-1.5 underline underline-offset-4 hover:text-white" href={businessDetails.googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Open registered address in Google Maps"><MapPin size={14} className="mt-1 shrink-0" aria-hidden="true" /><address className="not-italic">{businessDetails.registeredAddress}</address></a>
           <a className="mt-2 inline-block underline underline-offset-4 hover:text-white" href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a>
-          {businessDetails.whatsappNumber ? <a className="mt-2 flex w-fit items-center gap-1.5 underline underline-offset-4 hover:text-white" href={`https://wa.me/${businessDetails.whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Contact CoWin Glasses on WhatsApp"><MessageCircle size={14} aria-hidden="true" />WhatsApp</a> : null}
+          {businessDetails.whatsappNumber ? <a className="mt-2 flex w-fit items-center gap-1.5 underline underline-offset-4 hover:text-white" href={`https://wa.me/${businessDetails.whatsappNumber}`} target="_blank" rel="noreferrer" aria-label="Contact CoWin Glasses on WhatsApp"><MessageCircle size={14} aria-hidden="true" /><span dir="ltr">+{businessDetails.whatsappNumber}</span></a> : null}
+          <div><AnalyticsPreferences locale={locale} /></div>
         </div>
-        <FooterGroup title={t.footer.product} links={[[t.nav.shop, "/shop"], [t.common.compare, "/compare"], [t.nav.howItWorks, "/how-it-works"], [t.common.app, "/app"]]} locale={locale} />
+        <FooterGroup title={t.footer.product} links={[[t.nav.shop, "/shop"], [t.common.compare, "/compare"], [t.nav.howItWorks, "/how-it-works"], [t.common.app, "/app"], [salesCopy[locale].business, "/quote"]]} locale={locale} />
         <FooterGroup title={t.footer.help} links={[[t.footer.contact, "/support/contact"], [t.footer.shipping, "/support/shipping-delivery"], [t.footer.returns, "/support/returns-refunds"], [t.footer.warranty, "/support/warranty"]]} locale={locale} />
         <FooterGroup title={t.footer.legal} links={[[t.footer.privacy, "/policies/privacy"], [t.footer.terms, "/policies/terms"], [t.footer.intellectualProperty, "/policies/intellectual-property"]]} locale={locale} />
       </div>

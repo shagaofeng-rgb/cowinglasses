@@ -9,7 +9,6 @@ import { writeAuditLog } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 
 export type ReviewState = { success: boolean; message: string };
-export const initialReviewState: ReviewState = { success: false, message: "" };
 const reviewSchema = z.object({ id: z.string().uuid().optional(), status: z.enum(["pending", "published", "hidden"]), adminReply: z.string().trim().max(4000).optional() });
 
 export async function updateReviewAction(_state: ReviewState, formData: FormData): Promise<ReviewState> {

@@ -9,7 +9,6 @@ import { writeAuditLog } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 
 export type UserFormState = { success: boolean; message: string };
-export const initialUserFormState: UserFormState = { success: false, message: "" };
 const schema = z.object({ name: z.string().trim().min(2).max(160), email: z.string().trim().email().max(320), password: z.string().min(12, "密码至少需要 12 位。"), roleId: z.string().uuid() });
 
 export async function createAdminUserAction(_state: UserFormState, formData: FormData): Promise<UserFormState> {

@@ -12,7 +12,17 @@ function requestIp(request: NextRequest) {
   return forwarded?.split(",")[0]?.trim();
 }
 
+export function DELETE(request: NextRequest) {
+  if (request.headers.get("sec-fetch-site") === "cross-site") return new NextResponse(null, { status: 403 });
+  const response = new NextResponse(null, { status: 204, headers: { "Cache-Control": "no-store" } });
+  response.cookies.delete("cowin_visitor");
+  return response;
+}
+
 export async function POST(request: NextRequest) {
+  if (request.headers.get("sec-fetch-site") === "cross-site" || request.cookies.get("cowin_analytics_consent")?.value !== "granted") {
+    return new NextResponse(null, { status: 403, headers: { "Cache-Control": "no-store" } });
+  }
   if (!isDatabaseConfigured()) return NextResponse.json({ success: false, error: { code: "UNAVAILABLE" } }, { status: 503 });
   try {
     const input = schema.parse(await request.json());
@@ -37,7 +47,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set("cowin_visitor", context.visitorToken, { httpOnly: true, maxAge: 60 * 60 * 24 * 365, path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production" });
     return response;
   } catch (error) {
-    console.error("Storefront analytics event rejected", error);
+    console.error("Storefront analytics event rejected", { cause: error instanceof Error ? error.name : "Unknown" });
     const invalid = error instanceof z.ZodError || error instanceof SyntaxError;
     return NextResponse.json({ success: false, error: { code: invalid ? "INVALID_EVENT" : "EVENT_UNAVAILABLE" } }, { status: invalid ? 400 : 503 });
   }

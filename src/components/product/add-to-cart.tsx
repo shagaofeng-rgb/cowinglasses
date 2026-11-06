@@ -14,9 +14,12 @@ export function AddToCart({ product, skuId, locale, quantity = 1 }: {
   locale: Locale;
   quantity?: number;
 }) {
-  const { add } = useCart();
+  const { add, lines, hydrated } = useCart();
   const [added, setAdded] = useState(false);
   const t = messages[locale].common;
+  const sku = product.colors.find((color) => (color.skuId ?? color.id) === skuId);
+  const inCart = lines.find((line) => line.productId === product.id && line.skuId === skuId)?.quantity ?? 0;
+  const canAdd = hydrated && sku?.available && inCart + quantity <= Math.min(sku.availableQuantity ?? 0, 100);
 
   useEffect(() => {
     if (!added) return;
@@ -24,7 +27,7 @@ export function AddToCart({ product, skuId, locale, quantity = 1 }: {
     return () => window.clearTimeout(timeout);
   }, [added]);
 
-  return <button type="button" className="button-primary" onClick={() => {
+  return <button type="button" className="button-primary disabled:opacity-60" disabled={!canAdd} onClick={() => {
     add({ productId: product.id, skuId, quantity });
     trackStorefrontEvent("add_to_cart", { productId: product.id, skuId });
     setAdded(true);

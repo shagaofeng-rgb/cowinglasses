@@ -34,6 +34,7 @@ import {
 } from "@/components/commerce/oceanpayment-embed";
 import { checkoutCopy } from "./checkout-copy";
 import { localize } from "@/lib/i18n";
+import { quoteHref, salesCopy } from "@/messages/sales";
 import { messages } from "@/messages";
 import styles from "@/components/layout/storefront-design.module.css";
 import { InteriorHead } from "@/components/layout/storefront-ui";
@@ -68,8 +69,9 @@ export function OrderCheckout({
   destinationLabels?: Record<string, string>;
 }) {
   const t = checkoutCopy[locale];
+  const sales = salesCopy[locale];
   const searchParams = useSearchParams();
-  const { lines, clear } = useCart();
+  const { lines, clear, hydrated } = useCart();
   const [destinationId, setDestinationId] = useState<
     ShippingDestinationId | ""
   >("");
@@ -84,19 +86,20 @@ export function OrderCheckout({
   const [step, setStep] = useState(1);
   const [stepError, setStepError] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
+  const attempt = useRef<string>(null);
+  const inFlight = useRef(false);
+  const [stockRejected, setStockRejected] = useState(false);
   const paymentReturn = searchParams.get("payment_return");
-  const directProduct = products.find(
-    (item) => item.slug === searchParams.get("product"),
-  );
-  const directSku =
-    directProduct?.colors.find(
-      (color) => color.id === searchParams.get("color"),
-    ) ?? directProduct?.colors[0];
+  const directSlug = searchParams.get("product");
+  const directColor = searchParams.get("color");
+  const directProduct = products.find((item) => item.slug === directSlug);
+  const directSku = directColor ? directProduct?.colors.find((color) => color.id === directColor) : directProduct?.colors[0];
   const requestedQuantity = Number(searchParams.get("quantity"));
   const directQuantity = Number.isInteger(requestedQuantity) && requestedQuantity >= 1 && requestedQuantity <= 10 ? requestedQuantity : 1;
   const items = useMemo<CheckoutItem[]>(() => {
     if (directProduct && directSku)
       return [{ product: directProduct, sku: directSku, quantity: directQuantity }];
+    if (directSlug) return [];
     return lines.flatMap((line) => {
       const product = products.find((item) => item.id === line.productId);
       const sku = product?.colors.find(
@@ -104,11 +107,14 @@ export function OrderCheckout({
       );
       return product && sku ? [{ product, sku, quantity: line.quantity }] : [];
     });
-  }, [directProduct, directSku, directQuantity, lines, products]);
+  }, [directProduct, directSku, directQuantity, directSlug, lines, products]);
   const subtotal = items.reduce(
-    (total, item) => total + item.product.usdPrice * item.quantity,
+    (total, item) => total + (item.sku.usdPrice ?? item.product.usdPrice) * item.quantity,
     0,
   );
+  const stockIssue = items.find((item) => !item.sku.available || item.quantity > Math.min(item.sku.availableQuantity ?? 0, 100));
+  const blocked = stockRejected || Boolean(stockIssue) ||
+    (directSlug ? !directProduct || !directSku : items.length !== lines.length);
   const totalQuantity = items.reduce((total, item) => total + item.quantity, 0);
   const shippingQuote = useMemo(
     () => (destinationId ? quoteShipping(destinationId, totalQuantity) : null),
@@ -121,11 +127,11 @@ export function OrderCheckout({
   const stepCopy = checkoutSteps[locale];
 
   useEffect(() => {
-    if (!items.length) return;
+    if (!items.length || blocked || paymentReturn) return;
     const contents = items.map((item) => ({
       id: item.sku.skuId ?? item.sku.id,
       quantity: item.quantity,
-      item_price: item.product.usdPrice,
+      item_price: (item.sku.usdPrice ?? item.product.usdPrice),
     }));
     trackStorefrontEvent("begin_checkout", {
       itemCount: items.length,
@@ -142,14 +148,14 @@ export function OrderCheckout({
       },
       `initiate-checkout:${contents.map((item) => `${item.id}x${item.quantity}`).join(",")}:${orderTotal}`,
     );
-  }, [items, orderTotal, subtotal]);
+  }, [blocked, items, orderTotal, paymentReturn, subtotal]);
 
   useEffect(() => {
-    if (step !== 3 || !items.length) return;
+    if (step !== 3 || !items.length || blocked) return;
     const contents = items.map((item) => ({
       id: item.sku.skuId ?? item.sku.id,
       quantity: item.quantity,
-      item_price: item.product.usdPrice,
+      item_price: (item.sku.usdPrice ?? item.product.usdPrice),
     }));
     trackMetaPixel(
       "AddPaymentInfo",
@@ -162,15 +168,17 @@ export function OrderCheckout({
       },
       `add-payment-info:${contents.map((item) => `${item.id}x${item.quantity}`).join(",")}:${orderTotal}`,
     );
-  }, [items, orderTotal, step]);
+  }, [blocked, items, orderTotal, step]);
 
   async function submitOrder(formData: FormData) {
-    if (!items.length || !shippingQuote || shippingUnavailable) return;
+    if (inFlight.current || blocked || !items.length || !shippingQuote || shippingUnavailable) return;
     const accountPassword = String(formData.get("accountPassword") ?? "");
     if (accountPassword !== String(formData.get("confirmPassword") ?? "")) {
       setSubmitState({ type: "error", message: t.passwordMismatch });
       return;
     }
+    inFlight.current = true;
+    attempt.current ??= crypto.randomUUID();
     setSubmitting(true);
     setSubmitState({ type: "idle" });
     try {
@@ -178,6 +186,8 @@ export function OrderCheckout({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          requestKey: attempt.current,
+          termsAccepted: formData.get("termsAccepted") === "on",
           lines: items.map((item) => ({
             skuId: item.sku.skuId ?? item.sku.id,
             quantity: item.quantity,
@@ -211,12 +221,18 @@ export function OrderCheckout({
         data?: {
           orderNumber: string;
           payment?: OceanpaymentSession;
+          paymentStatus?: string;
           paymentEnvironment?: "test" | "production";
         };
         error?: { code?: string };
       };
       if (!response.ok || !result.success || !result.data) {
+        if (["INVENTORY_UNCONFIRMED", "INSUFFICIENT_STOCK", "PRODUCT_UNAVAILABLE"].includes(result.error?.code ?? "")) {
+          setStockRejected(true);
+          return;
+        }
         const errors: Record<string, string> = {
+          REQUEST_CONFLICT: sales.conflict,
           ACCOUNT_PASSWORD_INVALID: t.accountInvalid,
           ACCOUNT_LOCKED: t.accountLocked,
           SHIPPING_UNAVAILABLE: t.shippingUnavailable,
@@ -234,6 +250,10 @@ export function OrderCheckout({
         setPaymentEnvironment(result.data.paymentEnvironment ?? "test");
         return;
       }
+      if (payment === "card" && result.data.paymentStatus !== "paid") {
+        setStockRejected(true);
+        return;
+      }
       if (!directProduct) clear();
       setSubmitState({ type: "success", orderNumber: result.data.orderNumber });
     } catch (error) {
@@ -242,6 +262,7 @@ export function OrderCheckout({
         message: error instanceof Error ? error.message : t.orderError,
       });
     } finally {
+      inFlight.current = false;
       setSubmitting(false);
     }
   }
@@ -251,8 +272,8 @@ export function OrderCheckout({
     const fields = stepRoots.flatMap((root) => Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("[required]")));
     const invalid = fields.find((field) => !field.checkValidity() || (field instanceof HTMLInputElement && field.type !== "checkbox" && !field.value.trim()));
     const data = new FormData(formRef.current ?? undefined);
-    if (invalid || (step === 1 && data.get("accountPassword") !== data.get("confirmPassword"))) {
-      setStepError(step === 1 && data.get("accountPassword") !== data.get("confirmPassword") ? t.passwordMismatch : stepCopy.required);
+    if (invalid || (step === 4 && data.get("accountPassword") !== data.get("confirmPassword"))) {
+      setStepError(step === 4 && data.get("accountPassword") !== data.get("confirmPassword") ? t.passwordMismatch : stepCopy.required);
       invalid?.focus();
       return false;
     }
@@ -295,6 +316,39 @@ export function OrderCheckout({
       </div>
     );
 
+  if (submitState.type === "success")
+    return (
+      <div className={`${styles.page} ${styles.checkoutPage}`}>
+        <section className={styles.statusPage}>
+          <div>
+            <CheckCircle2 className="mx-auto text-[#7c9400]" size={46} />
+            <p className="eyebrow mt-5">{t.orderReceived}</p>
+            <h1 className="mt-3 text-4xl font-black tracking-[-.06em]">
+              {t.thankYou}
+            </h1>
+            <p className="mt-4 leading-7 text-[var(--muted)]">
+              <strong>{submitState.orderNumber}</strong>. {t.orderCopy}
+            </p>
+            <Link className="button-primary mt-7" href={`/${locale}/shop`}>
+              {t.continueShopping}
+            </Link>
+          </div>
+        </section>
+      </div>
+    );
+
+  if (!hydrated && !directSlug) return <section className={styles.statusPage} aria-busy="true"><LoaderCircle className="animate-spin" aria-hidden="true" /></section>;
+  if (blocked && !paymentSession) return <section className={styles.statusPage}>
+    <div>
+      <h1 className="text-4xl font-black">{sales.pending}</h1>
+      <p className="mt-4 text-[var(--muted)]">{sales.unavailable}</p>
+      <div className="mt-7 flex flex-wrap justify-center gap-3">
+        <Link className="button-primary" href={quoteHref(locale, stockIssue?.product.slug ?? directProduct?.slug, stockIssue?.sku.id ?? directSku?.id)}>{sales.quote}</Link>
+        <Link className="button-secondary" href={`/${locale}/cart`}>{messages[locale].nav.cart}</Link>
+      </div>
+    </div>
+  </section>;
+
   if (!items.length)
     return (
       <div className={`${styles.page} ${styles.checkoutPage}`}>
@@ -326,31 +380,14 @@ export function OrderCheckout({
         </section>
       </div>
     );
-  if (submitState.type === "success")
-    return (
-      <div className={`${styles.page} ${styles.checkoutPage}`}>
-        <section className={styles.statusPage}>
-          <div>
-            <CheckCircle2 className="mx-auto text-[#7c9400]" size={46} />
-            <p className="eyebrow mt-5">{t.orderReceived}</p>
-            <h1 className="mt-3 text-4xl font-black tracking-[-.06em]">
-              {t.thankYou}
-            </h1>
-            <p className="mt-4 leading-7 text-[var(--muted)]">
-              <strong>{submitState.orderNumber}</strong>. {t.orderCopy}
-            </p>
-            <Link className="button-primary mt-7" href={`/${locale}/shop`}>
-              {t.continueShopping}
-            </Link>
-          </div>
-        </section>
-      </div>
-    );
-
   return (
     <div className={`${styles.page} ${styles.checkoutPage} ${styles.formSurface}`}>
       <InteriorHead eyebrow={storefrontLabels(locale).orderDesk} title={t.title} intro={t.intro} />
-      <form ref={formRef} action={submitOrder} noValidate onSubmit={(event) => { if (step < 4) { event.preventDefault(); advance(); } else if (!validateCurrentStep()) event.preventDefault(); }}>
+      <form ref={formRef} noValidate onChange={() => { if (!inFlight.current) attempt.current = null; }} onSubmit={(event) => {
+        event.preventDefault();
+        if (step < 4) advance();
+        else if (validateCurrentStep()) void submitOrder(new FormData(event.currentTarget));
+      }}>
         <section className={`shell ${styles.checkoutLayout}`}>
           <div className={styles.checkoutFlow}>
             {paymentReturn && (
@@ -361,10 +398,20 @@ export function OrderCheckout({
                 {t.returnCopy}
               </p>
             )}
-            <nav className={styles.checkoutProgress} aria-label="Checkout progress">
-              {stepCopy.labels.slice(0, 3).map((label, index) => <button key={label} type="button" aria-current={Math.min(step, 3) === index + 1 ? "step" : undefined} disabled={Boolean(paymentSession) || index + 1 > step} onClick={() => { setStep(index + 1); setStepError(""); }}><span>0{index + 1}</span>{label}</button>)}
+            <nav className={styles.checkoutProgress} aria-label={t.title}>
+              {stepCopy.labels.map((label, index) => <button key={label} type="button" aria-current={step === index + 1 ? "step" : undefined} disabled={Boolean(paymentSession) || index + 1 > step} onClick={() => { setStep(index + 1); setStepError(""); }}><span>0{index + 1}</span>{label}</button>)}
             </nav>
             {stepError && <p role="alert" className={styles.checkoutStepError}>{stepError}</p>}
+            <section className="mt-6" data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
+                <DestinationSelect
+                  destinationLabels={destinationLabels}
+                  label={t.country}
+                  placeholder={t.chooseCountry}
+                  value={destinationId}
+                  onChange={setDestinationId}
+                />
+              {destinationId && <ShippingEstimate quote={shippingQuote} locale={locale} />}
+            </section>
             <section className="mt-10" data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
               <h2 className="text-2xl font-black tracking-[-.04em]">{t.contact}</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -388,26 +435,11 @@ export function OrderCheckout({
                 </label>
               </div>
             </section>
-            <section className={styles.checkoutHighlight} data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
-              <h2 className="text-2xl font-black tracking-[-.04em]">{t.account}</h2>
-              <p className="mt-2 text-sm leading-6 text-[#455216]">{t.accountCopy}</p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <Field label={t.password} name="accountPassword" type="password" required minLength={10} autoComplete="current-password" />
-                <Field label={t.confirmPassword} name="confirmPassword" type="password" required minLength={10} autoComplete="current-password" />
-              </div>
-            </section>
             <section className="mt-10" data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.delivery}
               </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <DestinationSelect
-                  destinationLabels={destinationLabels}
-                  label={t.country}
-                  placeholder={t.chooseCountry}
-                  value={destinationId}
-                  onChange={setDestinationId}
-                />
                 <Field label={t.address} name="address" full required />
                 <Field label={t.city} name="city" required />
                 <Field label={t.province} name="province" />
@@ -479,6 +511,14 @@ export function OrderCheckout({
                 placeholder={t.notesPlaceholder}
               />
               <div className={styles.checkoutStepActions}><button type="button" className="button-secondary" onClick={() => setStep(2)}>{stepCopy.back}</button><button type="button" className="button-primary" onClick={advance}>{stepCopy.continue}</button></div>
+            </section>
+            <section className={styles.checkoutHighlight} data-checkout-step="4" data-step-label="04" hidden={step !== 4}>
+              <h2 className="text-2xl font-black tracking-[-.04em]">{t.account}</h2>
+              <p className="mt-2 text-sm leading-6 text-[#455216]">{t.accountCopy}</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <Field label={t.password} name="accountPassword" type="password" required minLength={10} autoComplete="current-password" />
+                <Field label={t.confirmPassword} name="confirmPassword" type="password" required minLength={10} autoComplete="current-password" />
+              </div>
             </section>
             <section className="mt-10 border-t border-[var(--line)] pt-8" data-checkout-step="4" data-step-label="04" hidden={step !== 4}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
@@ -580,7 +620,7 @@ export function OrderCheckout({
                       {localize(item.sku.name, locale)} · {item.quantity} {item.quantity === 1 ? t.unit : t.units}
                     </p>
                     <p className="mt-2 text-sm font-bold">
-                      USD {formatUsd(item.product.usdPrice * item.quantity)}
+                      USD {formatUsd((item.sku.usdPrice ?? item.product.usdPrice) * item.quantity)}
                     </p>
                   </div>
                 </div>

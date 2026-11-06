@@ -18,6 +18,10 @@ export interface ColorSku {
   images: string[];
   video?: string;
   available: boolean;
+  /** Omitted until an authorized stock count is recorded. */
+  availableQuantity?: number;
+  usdPrice?: number;
+  compareAtUsdPrice?: number;
 }
 
 export interface CameraSpecs {

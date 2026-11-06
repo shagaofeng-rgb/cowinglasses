@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const locales = new Set(["en", "ar", "es", "pt", "ja", "ko"]);
+import { isLocale } from "@/lib/i18n";
+import { isProductSection } from "@/components/product/product-sections";
+import { missingDocument } from "@/lib/seo/missing-document";
+import { storefrontRoutePaths } from "@/lib/seo/sitemap-config";
+
+const nonStorefrontRoots = new Set(["admin", "api", "_next", "images", ".well-known"]);
 const restrictedStorefrontCountries = new Set(["CN", "IN"]);
 
 function unavailableInRegion() {
@@ -17,7 +22,9 @@ function unavailableInRegion() {
 /** Allows Oceanpayment's 3DS POST return to use the exact checkout URL required by its SDK. */
 export function proxy(request: NextRequest) {
   const parts = request.nextUrl.pathname.split("/").filter(Boolean);
-  const isStorefront = parts.length === 0 || locales.has(parts[0] ?? "");
+  const [first = "", second = "", , section = ""] = parts;
+  const locale = isLocale(first) ? first : null;
+  const isStorefront = !first || locale !== null;
   const country = request.headers.get("x-vercel-ip-country")?.toUpperCase();
 
   // Vercel supplies the country header at the edge. Scope this only to the
@@ -25,7 +32,18 @@ export function proxy(request: NextRequest) {
   // never blocked by a shopper-facing regional policy.
   if (request.method !== "POST" && isStorefront && country && restrictedStorefrontCountries.has(country)) return unavailableInRegion();
 
-  if (request.method !== "POST" || parts.length !== 2 || !locales.has(parts[0]) || !["checkout", "payment-test"].includes(parts[1])) return NextResponse.next();
+  if (request.method === "GET" || request.method === "HEAD") {
+    if (locale && parts.length > 1) {
+      const dynamic = second === "products"
+        ? parts.length === 3 || (parts.length === 4 && isProductSection(section))
+        : (second === "news" || second === "blog") && parts.length === 3;
+      if (!dynamic && !storefrontRoutePaths.has(parts.slice(1).join("/"))) return missingDocument(locale, request.method === "HEAD");
+    } else if (!locale && first && !nonStorefrontRoots.has(first) && !first.includes(".") && parts.join("/") !== "news/rss.xml") {
+      return missingDocument("en", request.method === "HEAD");
+    }
+  }
+
+  if (request.method !== "POST" || parts.length !== 2 || !locale || !["checkout", "payment-test"].includes(parts[1])) return NextResponse.next();
   const url = request.nextUrl.clone();
   url.pathname = "/api/payments/oceanpayment/return";
   url.searchParams.set("__cowin_locale", parts[0]);

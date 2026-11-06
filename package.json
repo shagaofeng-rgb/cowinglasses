@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/news/logic.test.ts src/config/shipping.test.ts src/lib/seo/indexability.test.ts src/lib/admin/date-range.test.ts",
+    "test": "tsx --test src/lib/news/logic.test.ts src/config/shipping.test.ts src/lib/seo/indexability.test.ts src/lib/admin/date-range.test.ts src/lib/admin/server-action-exports.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:bootstrap": "tsx scripts/vercel-bootstrap.ts",
@@ -28,12 +28,12 @@
     "clsx": "latest",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "latest",
-    "next": "latest",
+    "next": "^16.4.5",
     "next-auth": "^4.24.15",
     "postgres": "^3.4.9",
     "react": "latest",
     "react-dom": "latest",
-    "zod": "latest"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "latest",
@@ -41,7 +41,7 @@
     "@types/react-dom": "latest",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.39.1",
-    "eslint-config-next": "latest",
+    "eslint-config-next": "^16.4.5",
     "tailwindcss": "latest",
     "tsx": "^4.23.12",
     "typescript": "^5.9.3"

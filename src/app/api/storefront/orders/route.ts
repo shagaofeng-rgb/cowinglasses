@@ -1,3 +1,7 @@
+import { createHash } from "node:crypto";
+import { revalidateTag } from "next/cache";
+import { storeCatalogueTag } from "@/data/repositories/products";
+import { reserveStock, StockUnavailable } from "@/lib/commerce/stock";
 import { and, asc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
@@ -18,7 +22,6 @@ import {
   customerAccounts,
   customerSessions,
   coupons,
-  inventoryLevels,
   inventoryMovements,
   orderItems,
   orders,
@@ -78,6 +81,8 @@ const checkoutSchema = z.object({
     .regex(/^[A-Za-z0-9_-]*$/, "优惠码格式不正确。")
     .optional()
     .default(""),
+  requestKey: z.string().uuid(),
+  termsAccepted: z.literal(true),
   analyticsSessionId: z.string().uuid().optional(),
   note: z.string().trim().max(2000).optional().default(""),
 });
@@ -99,6 +104,15 @@ function asAmount(cents: number) {
   return (cents / 100).toFixed(2);
 }
 
+function paymentItems(items: Pick<typeof orderItems.$inferSelect, "productName" | "skuCode" | "unitPrice" | "quantity">[]) {
+  return {
+    productName: items.map((item) => item.productName).join(", ").slice(0, 500),
+    productSku: items.map((item) => item.skuCode).filter(Boolean).join(",").slice(0, 500),
+    productPrice: items.map((item) => item.unitPrice).join(",").slice(0, 500),
+    productNum: String(items.reduce((total, item) => total + item.quantity, 0)),
+  };
+}
+
 function makeOrderNumber() {
   const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
   return `CW-${date}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
@@ -109,15 +123,11 @@ function validCheckoutReturnUrl(value: string) {
     const url = new URL(value);
     const host = url.hostname.toLowerCase();
     const deploymentHost = process.env.VERCEL_URL?.toLowerCase();
-    const local =
-      process.env.NODE_ENV !== "production" &&
-      (host === "localhost" || host === "127.0.0.1");
-    const allowed =
-      host === "cowinglasses.com" ||
-      host === "www.cowinglasses.com" ||
-      local ||
-      Boolean(deploymentHost && host === deploymentHost);
-    return allowed && /^\/(en|ar|es|pt|ja|ko)\/checkout$/.test(url.pathname)
+    const loopback = host === "localhost" || host === "127.0.0.1";
+    const local = loopback && (process.env.NODE_ENV !== "production" || deploymentHost === host);
+    const live = host === "cowinglasses.com" || host === "www.cowinglasses.com" || Boolean(deploymentHost && host === deploymentHost);
+    const protocolValid = url.protocol === "https:" || (local && url.protocol === "http:");
+    return (local || live) && protocolValid && !url.username && !url.password && /^\/(en|ar|es|pt|ja|ko)\/checkout$/.test(url.pathname)
       ? url.toString()
       : null;
   } catch {
@@ -198,6 +208,14 @@ export async function POST(request: NextRequest) {
     ),
   );
 
+  if (mergedLines.some((line) => line.quantity > 100)) {
+    return reply(400, { success: false, error: { code: "INVALID_REQUEST" }, requestId: id });
+  }
+  mergedLines.sort((a, b) => a.skuId.localeCompare(b.skuId));
+  const fingerprint = createHash("sha256").update(JSON.stringify({
+    ...payload, lines: mergedLines, accountPassword: undefined, analyticsSessionId: undefined, requestKey: undefined,
+  })).digest("hex");
+
   const shippingQuote = quoteShipping(
     payload.shippingDestinationId,
     mergedLines.reduce((total, line) => total + line.quantity, 0),
@@ -212,68 +230,55 @@ export async function POST(request: NextRequest) {
 
   try {
     const db = getDatabase();
-    const existingIdentity = (
-      await db
-        .select({ customer: customers, account: customerAccounts })
-        .from(customers)
-        .leftJoin(
-          customerAccounts,
-          eq(customerAccounts.customerId, customers.id),
-        )
-        .where(eq(customers.email, payload.customer.email))
-        .limit(1)
-    )[0];
-    if (existingIdentity?.account) {
-      const now = new Date();
-      if (
-        existingIdentity.account.status !== "active" ||
-        (existingIdentity.account.lockedUntil &&
-          existingIdentity.account.lockedUntil > now)
-      ) {
-        return reply(423, {
-          success: false,
-          error: {
-            code: "ACCOUNT_LOCKED",
-            message:
-              "This member account is temporarily locked. Try again later or contact support.",
-          },
-          requestId: id,
-        });
-      }
-      if (
-        !(await bcrypt.compare(
-          payload.accountPassword,
-          existingIdentity.account.passwordHash,
-        ))
-      ) {
-        const attempts = existingIdentity.account.failedLoginAttempts + 1;
-        await db
-          .update(customerAccounts)
-          .set({
-            failedLoginAttempts: attempts >= 5 ? 0 : attempts,
-            lockedUntil:
-              attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : null,
-            updatedAt: now,
-          })
-          .where(eq(customerAccounts.id, existingIdentity.account.id));
-        return reply(401, {
-          success: false,
-          error: {
-            code: attempts >= 5 ? "ACCOUNT_LOCKED" : "ACCOUNT_PASSWORD_INVALID",
-            message:
-              attempts >= 5
-                ? "This member account is temporarily locked. Try again in 15 minutes."
-                : "The password for this email address is incorrect.",
-          },
-          requestId: id,
-        });
-      }
-    }
-    const newPasswordHash = existingIdentity?.account
-      ? null
-      : await bcrypt.hash(payload.accountPassword, 12);
     const session = createCustomerSessionMaterial();
     const order = await db.transaction(async (tx) => {
+      await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${"checkout-email:" + payload.customer.email}, 0))`);
+      const [identity] = await tx.select({ customer: customers, account: customerAccounts })
+        .from(customers).leftJoin(customerAccounts, eq(customerAccounts.customerId, customers.id))
+        .where(eq(customers.email, payload.customer.email)).limit(1);
+      const account = identity?.account;
+      if (account) {
+        const now = new Date();
+        if (account.status !== "active" || (account.lockedUntil && account.lockedUntil > now)) {
+          return new CheckoutError(423, "ACCOUNT_LOCKED", "This member account is temporarily locked. Try again later or contact support.");
+        }
+        if (!(await bcrypt.compare(payload.accountPassword, account.passwordHash))) {
+          const attempts = account.failedLoginAttempts + 1;
+          await tx.update(customerAccounts).set({
+            failedLoginAttempts: attempts >= 5 ? 0 : attempts,
+            lockedUntil: attempts >= 5 ? new Date(now.getTime() + 15 * 60 * 1000) : null,
+            updatedAt: now,
+          }).where(eq(customerAccounts.id, account.id));
+          return new CheckoutError(401, attempts >= 5 ? "ACCOUNT_LOCKED" : "ACCOUNT_PASSWORD_INVALID",
+            attempts >= 5 ? "This member account is temporarily locked. Try again in 15 minutes." : "The password for this email address is incorrect.");
+        }
+      }
+
+      {
+        await tx.execute(sql`select pg_advisory_xact_lock(hashtextextended(${"checkout-key:" + payload.requestKey}, 0))`);
+        const [prior] = await tx.select().from(orders).where(eq(orders.checkoutKey, payload.requestKey)).limit(1).for("update");
+        if (prior) {
+          if (!account || prior.customerId !== identity.customer.id || prior.checkoutFingerprint !== fingerprint) {
+            throw new CheckoutError(409, "REQUEST_CONFLICT", "The checkout details changed. Review your cart and try again.");
+          }
+          const items = await tx.select().from(orderItems).where(eq(orderItems.orderId, prior.id));
+          await tx.insert(customerSessions).values({
+            customerId: prior.customerId, sessionTokenHash: session.tokenHash, expiresAt: session.expiresAt,
+          });
+          return {
+            id: prior.id,
+            orderNumber: prior.orderNumber,
+            amount: prior.totalAmount,
+            countryCode: getShippingDestinationCountryCode(shippingQuote.destinationId),
+            ...paymentItems(items),
+            paymentStatus: prior.paymentStatus,
+            canPay: prior.status === "pending_payment" && prior.paymentStatus === "pending",
+            memberAccountCreated: false,
+            replayed: true,
+          };
+        }
+      }
+
       const skuRows = await tx
         .select({ sku: productSkus, product: products })
         .from(productSkus)
@@ -306,7 +311,7 @@ export async function POST(request: NextRequest) {
             "商品信息已更新，请返回购物车刷新后再提交。",
           );
         const unitCents = Math.round(Number(row.sku.price) * 100);
-        if (!Number.isSafeInteger(unitCents) || unitCents < 0)
+        if (!Number.isSafeInteger(unitCents) || unitCents <= 0)
           throw new CheckoutError(
             500,
             "PRICE_INVALID",
@@ -315,34 +320,9 @@ export async function POST(request: NextRequest) {
         return { ...line, row, unitCents };
       });
 
-      const inventoryRows = await tx
-        .select()
-        .from(inventoryLevels)
-        .where(
-          inArray(
-            inventoryLevels.skuId,
-            mergedLines.map((line) => line.skuId),
-          ),
-        );
-      for (const item of items) {
-        const level = inventoryRows.find((entry) => entry.skuId === item.skuId);
-        if (level && level.onHand - level.reserved < item.quantity) {
-          throw new CheckoutError(
-            409,
-            "INSUFFICIENT_STOCK",
-            `${item.row.product.name} 库存不足，请减少数量或联系销售。`,
-          );
-        }
-      }
+      const reservations = await reserveStock(tx, mergedLines);
 
-      const existingCustomer = existingIdentity
-        ? [existingIdentity.customer]
-        : await tx
-            .select()
-            .from(customers)
-            .where(eq(customers.email, payload.customer.email))
-            .limit(1);
-      const customer = existingCustomer[0]
+      const customer = identity
         ? (
             await tx
               .update(customers)
@@ -353,7 +333,7 @@ export async function POST(request: NextRequest) {
                 acceptsMarketing: payload.customer.acceptsMarketing,
                 updatedAt: new Date(),
               })
-              .where(eq(customers.id, existingCustomer[0].id))
+              .where(eq(customers.id, identity.customer.id))
               .returning({ id: customers.id })
           )[0]
         : (
@@ -370,26 +350,13 @@ export async function POST(request: NextRequest) {
               .returning({ id: customers.id })
           )[0];
 
-      if (!existingIdentity?.account) {
-        if (!newPasswordHash)
-          throw new CheckoutError(
-            500,
-            "ACCOUNT_CREATE_FAILED",
-            "The member account could not be created.",
-          );
-        await tx
-          .insert(customerAccounts)
-          .values({ customerId: customer.id, passwordHash: newPasswordHash });
+      if (!account) {
+        const passwordHash = await bcrypt.hash(payload.accountPassword, 12);
+        await tx.insert(customerAccounts).values({ customerId: customer.id, passwordHash });
       } else {
-        await tx
-          .update(customerAccounts)
-          .set({
-            failedLoginAttempts: 0,
-            lockedUntil: null,
-            lastLoginAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(customerAccounts.id, existingIdentity.account.id));
+        await tx.update(customerAccounts).set({
+          failedLoginAttempts: 0, lockedUntil: null, lastLoginAt: new Date(), updatedAt: new Date(),
+        }).where(eq(customerAccounts.id, account.id));
       }
       await tx
         .insert(customerSessions)
@@ -446,6 +413,7 @@ export async function POST(request: NextRequest) {
       }
       const shippingAddress = {
         ...payload.shippingAddress,
+        country: shippingQuote.destinationLabel,
         shippingMethod: payload.shippingMethod,
         shippingDestinationId: shippingQuote.destinationId,
         shippingQuote: {
@@ -462,6 +430,8 @@ export async function POST(request: NextRequest) {
         .insert(orders)
         .values({
           orderNumber,
+          checkoutKey: payload.requestKey,
+          checkoutFingerprint: fingerprint,
           customerId: customer.id,
           couponId,
           status: "pending_payment",
@@ -534,6 +504,7 @@ export async function POST(request: NextRequest) {
           unitPrice: asAmount(item.unitCents),
           totalAmount: asAmount(item.unitCents * item.quantity),
           snapshot: {
+            inventoryLevelId: reservations.get(item.skuId),
             productSlug: item.row.product.slug,
             optionValueIds: item.row.sku.optionValueIds,
           },
@@ -541,15 +512,6 @@ export async function POST(request: NextRequest) {
       );
 
       for (const item of items) {
-        const level = inventoryRows.find((entry) => entry.skuId === item.skuId);
-        if (!level) continue;
-        await tx
-          .update(inventoryLevels)
-          .set({
-            reserved: level.reserved + item.quantity,
-            updatedAt: new Date(),
-          })
-          .where(eq(inventoryLevels.id, level.id));
         await tx.insert(inventoryMovements).values({
           skuId: item.skuId,
           type: "reservation",
@@ -577,26 +539,25 @@ export async function POST(request: NextRequest) {
         countryCode: getShippingDestinationCountryCode(
           shippingQuote.destinationId,
         ),
-        productName: items
-          .map((item) => item.row.product.name)
-          .join(", ")
-          .slice(0, 500),
-        productSku: items
-          .map((item) => item.row.sku.sku)
-          .filter(Boolean)
-          .join(",")
-          .slice(0, 500),
-        productPrice: items
-          .map((item) => asAmount(item.unitCents))
-          .join(",")
-          .slice(0, 500),
-        productNum: String(
-          items.reduce((total, item) => total + item.quantity, 0),
-        ),
+        ...paymentItems(items.map((item) => ({
+          productName: item.row.product.name,
+          skuCode: item.row.sku.sku,
+          unitPrice: asAmount(item.unitCents),
+          quantity: item.quantity,
+        }))),
+        paymentStatus: "pending" as const,
+        canPay: true,
+        memberAccountCreated: !account,
+        replayed: false,
       };
     });
+    if (order instanceof CheckoutError) throw order;
+    if (!order.replayed) {
+      revalidateTag(storeCatalogueTag, { expire: 0 });
+      revalidateTag("admin-operating-data", { expire: 0 });
+    }
     const payment =
-      payload.paymentPreference === "card" && returnUrl
+      order.canPay && payload.paymentPreference === "card" && returnUrl
         ? createOceanpaymentEmbeddedPayload({
             order_number: order.orderNumber,
             order_currency: "USD",
@@ -618,13 +579,13 @@ export async function POST(request: NextRequest) {
           })
         : undefined;
 
-    const response = reply(201, {
+    const response = reply(order.replayed ? 200 : 201, {
       success: true,
       data: {
         orderNumber: order.orderNumber,
         orderId: order.id,
-        paymentStatus: "pending",
-        memberAccountCreated: !existingIdentity?.account,
+        paymentStatus: order.paymentStatus,
+        memberAccountCreated: order.memberAccountCreated,
         requiresSalesConfirmation: payload.paymentPreference !== "card",
         payment,
         paymentEnvironment: payment ? oceanpaymentEnvironment() : undefined,
@@ -634,6 +595,9 @@ export async function POST(request: NextRequest) {
     setCustomerSessionCookie(response, session.token, session.expiresAt);
     return response;
   } catch (error) {
+    if (error instanceof StockUnavailable) {
+      return reply(409, { success: false, error: { code: error.code }, requestId: id });
+    }
     if (error instanceof CheckoutError) {
       return reply(error.status, {
         success: false,
@@ -641,7 +605,7 @@ export async function POST(request: NextRequest) {
         requestId: id,
       });
     }
-    console.error("Storefront order creation failed", { requestId: id, error });
+    console.error("Storefront order creation failed", { requestId: id, cause: error instanceof Error ? error.name : "Unknown" });
     return reply(500, {
       success: false,
       error: {

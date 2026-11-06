@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { mainNavigation, secondaryNavigation } from "@/config/navigation";
 import { currencies } from "@/config/currencies";
 import { localeMeta, locales, pathFor, type Locale } from "@/lib/i18n";
+import { salesCopy } from "@/messages/sales";
 import { messages } from "@/messages";
 import { useCart } from "@/providers/cart-provider";
 import styles from "./storefront-design.module.css";
@@ -19,9 +20,15 @@ export function Header({ locale }: { locale: Locale }) {
 function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string }) {
   const [open, setOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const moreTrigger = useRef<HTMLButtonElement>(null);
+  const mobileTrigger = useRef<HTMLButtonElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const { lines, currency, setCurrency } = useCart();
   const t = messages[locale];
+  const moreLinks = [
+    ...secondaryNavigation.map((item) => ({ href: item.href, label: t.nav[item.label] })),
+    { href: "/quote", label: salesCopy[locale].business },
+  ];
   const interior = pathname !== `/${locale}` && pathname !== `/${locale}/`;
 
   useEffect(() => {
@@ -29,7 +36,11 @@ function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string 
       if (!moreMenuRef.current?.contains(event.target as Node)) setMoreOpen(false);
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") { setMoreOpen(false); setOpen(false); }
+      if (event.key !== "Escape") return;
+      if (open) mobileTrigger.current?.focus({ preventScroll: true });
+      else if (moreOpen && moreMenuRef.current?.contains(document.activeElement)) moreTrigger.current?.focus({ preventScroll: true });
+      setMoreOpen(false);
+      setOpen(false);
     }
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
@@ -37,13 +48,16 @@ function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string 
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, []);
+  }, [moreOpen, open]);
 
   useEffect(() => {
     if (!open) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = previous; };
+    const wide = window.matchMedia("(min-width: 1024px)");
+    const onResize = () => { if (wide.matches) setOpen(false); };
+    wide.addEventListener("change", onResize);
+    return () => { document.body.style.overflow = previous; wide.removeEventListener("change", onResize); };
   }, [open]);
 
   function changeLanguage(next: Locale) {
@@ -70,16 +84,15 @@ function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string 
               className="relative"
               onMouseEnter={() => setMoreOpen(true)}
               onMouseLeave={() => setMoreOpen(false)}
-              onFocus={() => setMoreOpen(true)}
               onBlur={(event) => {
                 if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setMoreOpen(false);
               }}
             >
-              <button type="button" aria-expanded={moreOpen} aria-controls="storefront-more-menu" className="flex items-center gap-1.5 text-sm font-semibold hover:text-[var(--lime)]" onClick={() => setMoreOpen(true)}>
+              <button ref={moreTrigger} type="button" aria-expanded={moreOpen} aria-controls="storefront-more-menu" className="flex items-center gap-1.5 text-sm font-semibold hover:text-[var(--lime)]" onClick={() => setMoreOpen((current) => !current)}>
                 {t.nav.more}<ChevronDown size={15} className={`transition-transform ${moreOpen ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
               {moreOpen ? <div className="absolute start-0 top-full z-40 w-56 pt-4"><div id="storefront-more-menu" className="rounded-2xl border border-[var(--line)] bg-white p-2 text-black shadow-[0_18px_45px_rgba(22,35,29,.14)]">
-                {secondaryNavigation.map((item) => <Link onClick={() => setMoreOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-bold hover:bg-[#f3f6f4] hover:text-[#617300]" key={item.href} href={`/${locale}${item.href}`} aria-current={interior && pathname === `/${locale}${item.href}` ? "page" : undefined}>{t.nav[item.label]}</Link>)}
+                {moreLinks.map((item) => <Link onClick={() => setMoreOpen(false)} className="block rounded-xl px-4 py-3 text-sm font-bold hover:bg-[#f3f6f4] hover:text-[#617300]" key={item.href} href={`/${locale}${item.href}`} aria-current={interior && pathname === `/${locale}${item.href}` ? "page" : undefined}>{item.label}</Link>)}
               </div></div> : null}
             </div>
           </nav>
@@ -97,14 +110,14 @@ function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string 
             <Link href={`/${locale}/search`} aria-label={t.nav.search}><Search size={20} /></Link>
             <Link href={`/${locale}/cart`} className="relative" aria-label={t.nav.cart}><ShoppingBag size={20} />{lines.length > 0 && <span className="absolute end-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--lime)] px-1 text-[10px] font-bold text-black">{lines.length}</span>}</Link>
           </div>}
-          <button className="lg:hidden" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
+          <button ref={mobileTrigger} type="button" className="grid size-11 place-items-center lg:hidden" aria-controls="storefront-mobile-menu" aria-label={open ? "Close menu" : "Open menu"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <Menu />}</button>
         </div>
-        {open && <div className="max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-white/10 bg-[#090b0c] text-white lg:hidden">
+        {open && <div id="storefront-mobile-menu" className="max-h-[calc(100dvh-72px)] overflow-y-auto overscroll-contain border-t border-white/10 bg-[#090b0c] text-white lg:hidden">
           <nav className="shell grid gap-1 py-4" aria-label="Mobile navigation">
             {mainNavigation.map((item) => <Link onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-white/10" key={item.href} href={`/${locale}${item.href}`} aria-current={interior && pathname === `/${locale}${item.href}` ? "page" : undefined}>{t.nav[item.label]}</Link>)}
             <div className="my-2 border-y border-white/10 py-2">
               <p className="px-3 py-2 text-xs font-black uppercase tracking-[.14em] text-[var(--muted)]">{t.nav.more}</p>
-              {secondaryNavigation.map((item) => <Link onClick={() => setOpen(false)} className="block rounded-xl px-3 py-3 font-bold hover:bg-white/10" key={item.href} href={`/${locale}${item.href}`} aria-current={interior && pathname === `/${locale}${item.href}` ? "page" : undefined}>{t.nav[item.label]}</Link>)}
+              {moreLinks.map((item) => <Link onClick={() => setOpen(false)} className="block rounded-xl px-3 py-3 font-bold hover:bg-white/10" key={item.href} href={`/${locale}${item.href}`} aria-current={interior && pathname === `/${locale}${item.href}` ? "page" : undefined}>{item.label}</Link>)}
             </div>
             <Link onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-white/10" href={`/${locale}/search`}>{t.nav.search}</Link>
             <Link onClick={() => setOpen(false)} className="rounded-xl px-3 py-3 font-bold hover:bg-white/10" href={`/${locale}/cart`}>{t.nav.cart} ({lines.length})</Link>

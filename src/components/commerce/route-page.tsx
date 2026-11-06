@@ -16,11 +16,15 @@ import type { CollectionSlug, Product } from "@/types/product";
 import { ProductCard } from "@/components/product/product-card";
 import { DemoForm } from "@/components/forms/demo-form";
 import { InteriorHead, PanelLink } from "@/components/layout/storefront-ui";
-import { PolicyContent, type PolicyType } from "@/components/compliance/policy-content";
+import { PolicyContent } from "@/components/compliance/policy-content";
+import type { PolicyType } from "@/messages/policies";
+import { faqCopy } from "@/messages/support";
+import { salesCopy } from "@/messages/sales";
 import { CartPage } from "./cart-page";
 import { OrderCheckout } from "./order-checkout";
 import { PaymentVerification } from "./payment-verification";
 import { Price } from "./price";
+import { QuotePage } from "./quote-page";
 import { AccountPage } from "./account-page";
 import { clampPage, Pagination } from "./pagination";
 import styles from "@/components/layout/storefront-design.module.css";
@@ -40,6 +44,7 @@ export function RoutePage({ locale, segments, products = [], destinationLabels }
   const path = segments.join("/");
   const collection = collectionPaths.find((slug) => path === `collections/${slug}`);
   if (path === "shop" || path === "search" || collection) return <Catalogue locale={locale} products={products} collection={collection} search={path === "search"} />;
+  if (path === "quote") return <QuotePage locale={locale} products={products} />;
   if (path === "cart") return <CartPage locale={locale} products={products} />;
   if (path === "checkout") return <OrderCheckout locale={locale} products={products} destinationLabels={destinationLabels} />;
   if (path === "payment-test") return <PaymentVerification locale={locale} />;
@@ -170,6 +175,7 @@ function Compare({ locale, products }: { locale: Locale; products: Product[] }) 
           </th>)}</tr></thead>
           <tbody>
             <tr><th scope="row">{t.shop.price} (USD)</th>{selected.map((product) => <td key={product.id}><Price usd={product.usdPrice} locale={locale} compact /></td>)}</tr>
+            <tr><th scope="row">{salesCopy[locale].availability}</th>{selected.map((product) => <td key={product.id}>{product.colors.some((sku) => sku.available) ? salesCopy[locale].inStock : salesCopy[locale].pending}</td>)}</tr>
             <tr><th scope="row">{t.shop.lens}</th>{selected.map((product) => <td key={product.id}>{product.colors.map((color) => localize(color.name, locale)).join(" · ") || ui.notListed}</td>)}</tr>
             <tr><th scope="row">{t.shop.feature}</th>{selected.map((product) => <td key={product.id}>{product.features.map((feature) => storefrontFeatureName(locale, feature)).join(" · ") || ui.notListed}</td>)}</tr>
             {specs.map(([label, pattern]) => <tr key={label}><th scope="row">{label}</th>{selected.map((product) => {
@@ -227,15 +233,6 @@ function Guide({ locale, path }: { locale: Locale; path: "app" | "how-it-works" 
   </div>;
 }
 
-const faqCopy: Record<Locale, { intro: string; cards: [string, string, string]; faqs: [string, string][] }> = {
-  en: { intro: "Answers about delivery, support, returns and connected features.", cards: ["Find answers about connection, delivery, returns and lens inserts.", "Reach the support team by email for help with orders and product questions.", "Start a warranty request with order and issue details."], faqs: [["When will my order dispatch?", "Orders are normally processed and dispatched within 3 business days after payment is confirmed."], ["Do translation glasses connect to the internet?", "No. Translation needs the CoWin app, Bluetooth and your phone's internet connection."], ["Do you ship to Brazil?", "No. We are unable to ship to Brazil at this time."], ["How long is the warranty?", "Eligible CoWin Glasses products include a 6-month limited warranty from delivery."]] },
-  ar: { intro: "إجابات حول التوصيل والدعم والإرجاع والميزات المتصلة.", cards: ["إجابات حول الاتصال والتوصيل والإرجاع وملحق العدسات.", "تواصل مع الدعم عبر البريد للمساعدة في الطلبات والمنتجات.", "ابدأ طلب ضمان مع رقم الطلب وتفاصيل المشكلة."], faqs: [["متى يتم إرسال طلبي؟", "تتم معالجة الطلبات وإرسالها عادة خلال 3 أيام عمل بعد تأكيد الدفع."], ["هل تتصل نظارات الترجمة بالإنترنت؟", "لا. تحتاج الترجمة إلى تطبيق CoWin والبلوتوث واتصال هاتفك بالإنترنت."], ["هل تشحنون إلى البرازيل؟", "لا يمكننا الشحن إلى البرازيل حالياً."], ["ما مدة الضمان؟", "تشمل المنتجات المؤهلة ضماناً محدوداً لمدة 6 أشهر من تاريخ التسليم."]] },
-  es: { intro: "Respuestas sobre entrega, soporte, devoluciones y funciones conectadas.", cards: ["Respuestas sobre conexión, entrega, devoluciones e insertos de lentes.", "Escribe al equipo para recibir ayuda con pedidos y productos.", "Inicia una solicitud de garantía con el pedido y los detalles del problema."], faqs: [["¿Cuándo se enviará mi pedido?", "Los pedidos se procesan y envían normalmente en 3 días hábiles tras confirmar el pago."], ["¿Las gafas de traducción se conectan a internet?", "No. La traducción necesita la app CoWin, Bluetooth e internet en el teléfono."], ["¿Envían a Brasil?", "No podemos enviar a Brasil actualmente."], ["¿Cuánto dura la garantía?", "Los productos elegibles incluyen una garantía limitada de 6 meses desde la entrega."]] },
-  pt: { intro: "Respostas sobre entrega, suporte, devoluções e recursos conectados.", cards: ["Respostas sobre conexão, entrega, devoluções e encaixe de lentes.", "Fale com a equipe por e-mail para ajuda com pedidos e produtos.", "Inicie uma solicitação de garantia com o pedido e os detalhes do problema."], faqs: [["Quando meu pedido será enviado?", "Os pedidos são processados e enviados normalmente em até 3 dias úteis após a confirmação do pagamento."], ["Os óculos de tradução se conectam à internet?", "Não. A tradução precisa do app CoWin, Bluetooth e internet no telefone."], ["Vocês enviam para o Brasil?", "Não enviamos para o Brasil no momento."], ["Quanto tempo dura a garantia?", "Produtos elegíveis incluem garantia limitada de 6 meses a partir da entrega."]] },
-  ja: { intro: "配送、サポート、返品、接続機能についての回答です。", cards: ["接続、配送、返品、レンズインサートについて確認できます。", "注文や製品の質問はメールでサポートへご連絡ください。", "注文番号と問題の詳細を添えて保証申請を開始できます。"], faqs: [["注文はいつ発送されますか？", "支払い確認後、通常3営業日以内に処理・発送します。"], ["翻訳対応メガネは直接インターネットに接続しますか？", "いいえ。翻訳にはCoWinアプリ、Bluetooth、スマートフォンのインターネット接続が必要です。"], ["ブラジルへ配送できますか？", "現在ブラジルには配送できません。"], ["保証期間はどのくらいですか？", "対象製品にはお届けから6か月の限定保証が付きます。"]] },
-  ko: { intro: "배송, 지원, 반품, 연결 기능에 관한 답변입니다.", cards: ["연결, 배송, 반품, 렌즈 인서트에 관한 답을 확인하세요.", "주문 및 제품 문의는 이메일로 지원팀에 연락하세요.", "주문 번호와 문제 내용을 입력해 보증 요청을 시작하세요."], faqs: [["주문은 언제 발송되나요?", "결제 확인 후 일반적으로 영업일 기준 3일 이내 처리 및 발송됩니다."], ["번역 안경이 인터넷에 직접 연결되나요?", "아닙니다. 번역에는 CoWin 앱, Bluetooth, 휴대폰 인터넷 연결이 필요합니다."], ["브라질로 배송하나요?", "현재 브라질에는 배송할 수 없습니다."], ["보증 기간은 얼마인가요?", "대상 제품은 배송일로부터 6개월 제한 보증이 제공됩니다."]] },
-};
-
 
 function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
   const t = messages[locale];
@@ -273,7 +270,7 @@ function SupportContact({ locale }: { locale: Locale }) {
     <InteriorHead eyebrow={storefrontLabels(locale).service} title={t.support.contact} intro={t.support.intro} />
     <section className={`shell ${styles.section} ${styles.splitFeature}`}>
       <div className={`${styles.infoBlock} ${styles.formSurface}`}><h2>{t.support.contact}</h2><DemoForm locale={locale} kind="support" /></div>
-      <aside className={styles.infoBlock}><Mail size={25} aria-hidden="true" /><h2>{t.footer.help}</h2><a className={styles.textLink} href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a><p>{t.support.intro}</p></aside>
+      <aside className={styles.infoBlock}><Mail size={25} aria-hidden="true" /><h2>{t.footer.help}</h2><Link className={styles.textLink} href={`/${locale}/quote`}>{salesCopy[locale].business}<ArrowUpRight size={15} className="rtl:-rotate-90" aria-hidden="true" /></Link><a className={styles.textLink} href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a><p>{t.support.intro}</p></aside>
     </section>
   </div>;
 }

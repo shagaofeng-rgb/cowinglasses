@@ -47,7 +47,7 @@ export const getCurrentAdmin = cache(async () => {
   const session = await getServerSession(adminAuthOptions);
   if (!session?.user?.id || !isDatabaseConfigured()) return null;
   const user = (await getDatabase().select({ id: adminUsers.id, name: adminUsers.name, email: adminUsers.email, status: adminUsers.status }).from(adminUsers).where(and(eq(adminUsers.id, session.user.id), eq(adminUsers.status, "active"))).limit(1))[0];
-  return user ? { ...user, roles: session.user.roles } : null;
+  return user ? { ...user, roles: await getRolesForUser(user.id) } : null;
 });
 
 export async function requireAdmin() {
@@ -56,10 +56,19 @@ export async function requireAdmin() {
   return administrator;
 }
 
+export const getAdminPermissionCodes = cache(async (adminId: string) => {
+  const records = await getDatabase().selectDistinct({ code: permissions.code })
+    .from(adminUserRoles).innerJoin(rolePermissions, eq(adminUserRoles.roleId, rolePermissions.roleId))
+    .innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id))
+    .where(eq(adminUserRoles.adminUserId, adminId));
+  return records.map((record) => record.code);
+});
+
 export async function requirePermission(permissionCode: string) {
   const administrator = await requireAdmin();
-  if (administrator.roles.includes("super_admin")) return administrator;
-  const allowed = await getDatabase().select({ code: permissions.code }).from(adminUserRoles).innerJoin(rolePermissions, eq(adminUserRoles.roleId, rolePermissions.roleId)).innerJoin(permissions, eq(rolePermissions.permissionId, permissions.id)).where(and(eq(adminUserRoles.adminUserId, administrator.id), eq(permissions.code, permissionCode))).limit(1);
-  if (!allowed[0]) { await writeAuditLog({ actorId: administrator.id, action: "permission.denied", resourceType: "permission", resourceId: permissionCode, result: "denied" }); throw new Error("您没有执行此操作的权限。"); }
+  if (!(await getAdminPermissionCodes(administrator.id)).includes(permissionCode)) {
+    await writeAuditLog({ actorId: administrator.id, action: "permission.denied", resourceType: "permission", resourceId: permissionCode, result: "denied" });
+    redirect("/admin/access-denied");
+  }
   return administrator;
 }

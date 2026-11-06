@@ -406,6 +406,7 @@ export const inventoryLevels = pgTable(
     onHand: integer("on_hand").default(0).notNull(),
     reserved: integer("reserved").default(0).notNull(),
     reorderPoint: integer("reorder_point").default(0).notNull(),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
     updatedAt,
   },
   (table) => [
@@ -583,6 +584,8 @@ export const orders = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     orderNumber: varchar("order_number", { length: 64 }).notNull(),
+    checkoutKey: uuid("checkout_key"),
+    checkoutFingerprint: varchar("checkout_fingerprint", { length: 64 }),
     customerId: uuid("customer_id").references(() => customers.id, {
       onDelete: "set null",
     }),
@@ -624,6 +627,7 @@ export const orders = pgTable(
   },
   (table) => [
     uniqueIndex("orders_number_unique").on(table.orderNumber),
+    uniqueIndex("orders_checkout_key_unique").on(table.checkoutKey),
     index("orders_status_created_idx").on(table.status, table.createdAt),
     index("orders_customer_created_idx").on(table.customerId, table.createdAt),
     index("orders_payment_status_idx").on(table.paymentStatus),
@@ -1173,6 +1177,40 @@ export const channelConnections = pgTable(
   (table) => [
     uniqueIndex("channel_connections_channel_unique").on(table.channel),
     index("channel_connections_status_idx").on(table.status),
+  ],
+);
+
+export const quoteStatus = pgEnum("quote_status", ["new", "in_review", "quoted", "closed"]);
+
+export const quoteRequests = pgTable(
+  "quote_requests",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    requestKey: uuid("request_key").notNull(),
+    reference: varchar("reference", { length: 32 }).notNull(),
+    productId: uuid("product_id").references(() => products.id, { onDelete: "set null" }),
+    skuId: uuid("sku_id").references(() => productSkus.id, { onDelete: "set null" }),
+    model: varchar("model", { length: 240 }),
+    name: varchar("name", { length: 160 }).notNull(),
+    email: varchar("email", { length: 320 }).notNull(),
+    company: varchar("company", { length: 160 }),
+    destination: varchar("destination", { length: 120 }).notNull(),
+    quantity: integer("quantity").notNull(),
+    purpose: varchar("purpose", { length: 32 }).notNull(),
+    message: text("message"),
+    locale: varchar("locale", { length: 8 }).notNull(),
+    status: quoteStatus("status").default("new").notNull(),
+    assignedTo: uuid("assigned_to").references(() => adminUsers.id, { onDelete: "set null" }),
+    quoteAmountUsd: numeric("quote_amount_usd", { precision: 12, scale: 2 }),
+    followUpNote: text("follow_up_note"),
+    createdAt,
+    updatedAt,
+  },
+  (table) => [
+    uniqueIndex("quote_requests_key_unique").on(table.requestKey),
+    uniqueIndex("quote_requests_reference_unique").on(table.reference),
+    index("quote_requests_status_created_idx").on(table.status, table.createdAt),
+    index("quote_requests_email_created_idx").on(table.email, table.createdAt),
   ],
 );
 

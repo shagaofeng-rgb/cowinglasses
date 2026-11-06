@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: ProductSectionPageProps): Pro
   const indexable = isProductLocaleIndexable(product, locale);
   return {
     title: `${label} — ${localize(product.name, locale)}`,
-    description: localize(product.seo.description, locale),
+    description: `${label} · ${localize(product.seo.description, locale)}`,
     robots: indexable ? undefined : { index: false, follow: true },
     alternates: {
       canonical: `/${getProductCanonicalLocale(product, locale)}/products/${slug}/${section}`,

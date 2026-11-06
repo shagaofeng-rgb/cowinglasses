@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { createAdminUserAction, initialUserFormState } from "@/app/admin/(console)/users/actions";
+import { createAdminUserAction } from "@/app/admin/(console)/users/actions";
+
+const initialUserFormState = { success: false, message: "" };
 
 export function CreateAdminUserForm({ roles }: { roles: { id: string; name: string }[] }) {
   const [state, action, pending] = useActionState(createAdminUserAction, initialUserFormState);

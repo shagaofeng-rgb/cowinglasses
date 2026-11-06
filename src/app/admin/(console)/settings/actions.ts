@@ -8,7 +8,6 @@ import { writeAuditLog } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 
 export type SettingsState = { success: boolean; message: string };
-export const initialSettingsState: SettingsState = { success: false, message: "" };
 const schema = z.object({ storeName: z.string().trim().min(2).max(160), siteUrl: z.string().trim().url().max(500), supportEmail: z.string().trim().email().max(320), currency: z.literal("USD"), orderPrefix: z.string().trim().regex(/^[A-Z0-9-]{2,12}$/, "订单前缀仅支持大写字母、数字和连字符。") });
 
 export async function saveStoreSettingsAction(_state: SettingsState, formData: FormData): Promise<SettingsState> {

@@ -1,3 +1,4 @@
+import { serializeJsonLd } from "@/lib/seo/json-ld";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { EditorialArticle } from "@/components/content/editorial-pages";
@@ -33,5 +34,5 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ lo
   const image = article.imageUrl ? (article.imageUrl.startsWith("http") ? article.imageUrl : `${siteConfig.url}${article.imageUrl}`) : undefined;
   const newsSchema = { "@context": "https://schema.org", "@type": "NewsArticle", headline: article.title, description: article.excerpt, image: image ? [image] : undefined, datePublished: article.publishedAt?.toISOString(), dateModified: article.updatedAt.toISOString(), author: { "@type": "Organization", name: article.authorName }, publisher: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url }, mainEntityOfPage: { "@type": "WebPage", "@id": url }, articleSection: "Smart Eyewear News", keywords: article.seoKeywords, citation: article.sources.map((source) => source.url), inLanguage: locale };
   const breadcrumbSchema = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: `${siteConfig.url}/${locale}` }, { "@type": "ListItem", position: 2, name: "News", item: `${siteConfig.url}/${locale}/news` }, { "@type": "ListItem", position: 3, name: article.title, item: url }] };
-  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(newsSchema) }}/><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}/><EditorialArticle locale={locale} type="news" article={article} /></>;
+  return <><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(newsSchema) }}/><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbSchema) }}/><EditorialArticle locale={locale} type="news" article={article} /></>;
 }

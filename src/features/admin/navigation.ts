@@ -51,6 +51,7 @@ export const adminNavigation: AdminNavigationGroup[] = [
     label: "客户与内容",
     items: [
       { href: "/admin/customers", label: "客户管理", description: "客户档案、订单历史、来源与备注", permission: "customers.read" },
+      { href: "/admin/quotes", label: "采购询价", description: "采购需求、负责人、报价和跟进记录", permission: "customers.read" },
       { href: "/admin/forms", label: "客户表单", description: "询盘、订阅与表单提交记录", permission: "customers.read" },
       { href: "/admin/customer-tags", label: "客户标签与分组", description: "标签、分群与运营人群", permission: "customers.read", state: "ready" },
       { href: "/admin/memberships", label: "会员等级", description: "会员规则与客户等级", permission: "customers.read", state: "ready" },

@@ -7,7 +7,6 @@ import { coupons, promotions } from "@/db/schema";
 import { requirePermission } from "@/lib/admin/auth";
 import { writeAuditLog } from "@/lib/admin/audit";
 export type MarketingState = { success: boolean; message: string };
-export const initialMarketingState: MarketingState = { success: false, message: "" };
 const couponSchema = z.object({ id: z.string().uuid().optional(), code: z.string().trim().min(2).max(80).regex(/^[A-Z0-9_-]+$/, "优惠码仅支持大写字母、数字、下划线和连字符。"), discountType: z.enum(["percentage", "fixed"]), discountValue: z.string().regex(/^\d+(\.\d{1,2})?$/), minimumAmount: z.union([z.literal(""), z.string().regex(/^\d+(\.\d{1,2})?$/)]), usageLimit: z.union([z.literal(""), z.coerce.number().int().min(1).max(1000000)]), isActive: z.enum(["true", "false"]) });
 const promoSchema = z.object({ id: z.string().uuid().optional(), name: z.string().trim().min(2).max(160), type: z.enum(["percentage", "fixed", "free_shipping"]), rules: z.string().trim().max(4000).optional(), isActive: z.enum(["true", "false"]) });
 async function complete(actorId: string, action: string, type: string, id: string | undefined, success: boolean) { await writeAuditLog({ actorId, action, resourceType: type, resourceId: id, result: success ? "success" : "failure" }); revalidatePath("/admin/promotions"); }

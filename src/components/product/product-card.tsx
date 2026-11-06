@@ -5,6 +5,7 @@ import type { Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
 import { modelCode } from "@/lib/product-model";
 import { Price } from "@/components/commerce/price";
+import { salesCopy } from "@/messages/sales";
 import { storefrontLabels } from "@/messages/storefront";
 import styles from "@/components/layout/storefront-design.module.css";
 
@@ -23,6 +24,7 @@ export function ProductCard({ product, locale }: { product: Product; locale: Loc
       <div className={styles.productCardBody}>
         <h2 className={styles.productCardTitle}><Link href={href}>{name}</Link></h2>
         <p className={styles.productCardCopy}>{product.colors.length ? product.colors.slice(0, 2).map((sku) => localize(sku.name, locale)).join(" · ") : localize(product.tagline, locale)}</p>
+        <p className="mt-2 text-xs font-semibold text-[var(--muted)]">{product.colors.some((sku) => sku.available) ? salesCopy[locale].inStock : salesCopy[locale].pending}</p>
         <div className={styles.productCardPrice}>
           <Price usd={product.usdPrice} locale={locale} compact />
           <Link href={href} className={styles.textLink} aria-label={`${ui.view} · ${name}`}>{ui.view}<ArrowUpRight size={14} className="rtl:-rotate-90" aria-hidden="true" /></Link>

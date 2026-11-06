@@ -10,7 +10,6 @@ import { writeAuditLog } from "@/lib/admin/audit";
 import { requirePermission } from "@/lib/admin/auth";
 
 export type ContentState = { success: boolean; message: string };
-export const initialContentState: ContentState = { success: false, message: "" };
 const slug = z.string().trim().min(2).max(260).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug 仅支持小写英文、数字和连字符。");
 const articleSchema = z.object({ id: z.string().uuid().optional(), type: z.enum(["news", "blog"]), title: z.string().trim().min(2).max(255), slug, excerpt: z.string().trim().max(1000).optional(), body: z.string().trim().max(30000).optional(), status: z.enum(["draft", "scheduled", "published", "offline"]), seoTitle: z.string().trim().max(255).optional(), seoDescription: z.string().trim().max(320).optional(), seoKeywords: z.string().trim().max(1000).optional() });
 const bannerSchema = z.object({ id: z.string().uuid().optional(), name: z.string().trim().min(2).max(160), placement: z.string().trim().min(2).max(80), imageUrl: z.string().url("请填写有效图片 URL。"), mobileImageUrl: z.union([z.literal(""), z.string().url("移动端图片 URL 不正确。")]), targetUrl: z.union([z.literal(""), z.string().url("跳转 URL 不正确。")]), sortOrder: z.coerce.number().int().min(0).max(100000), isActive: z.enum(["true", "false"]) });

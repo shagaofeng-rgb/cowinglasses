@@ -1,5 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useMemo, useReducer } from "react";
+import { currencies } from "@/config/currencies";
 import type { CartLine, CurrencyCode } from "@/types/commerce";
 
 type CartState = { lines: CartLine[]; hydrated: boolean; currency: CurrencyCode };
@@ -16,8 +17,30 @@ function reducer(state: CartState, action: Action): CartState {
 const CartContext = createContext<(CartState & { add(line: CartLine): void; setQuantity(key: Pick<CartLine, "productId" | "skuId">, quantity: number): void; remove(key: Pick<CartLine, "productId" | "skuId">): void; clear(): void; setCurrency(currency: CurrencyCode): void }) | null>(null);
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initial);
-  useEffect(() => { const saved = window.localStorage.getItem("cowin-cart"); if (saved) { try { dispatch({ type: "hydrate", state: JSON.parse(saved) }); return; } catch { /* safe default */ } } dispatch({ type: "hydrate", state: {} }); }, []);
-  useEffect(() => { if (state.hydrated) window.localStorage.setItem("cowin-cart", JSON.stringify({ lines: state.lines, currency: state.currency })); }, [state]);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("cowin-cart");
+      if (raw) {
+        const saved: unknown = JSON.parse(raw);
+        if (typeof saved === "object" && saved && "lines" in saved && Array.isArray(saved.lines)) {
+          const lines = saved.lines.filter((line): line is CartLine =>
+            Boolean(line) && typeof line.productId === "string" && typeof line.skuId === "string" &&
+            Number.isSafeInteger(line.quantity) && line.quantity > 0);
+          const currency = "currency" in saved && currencies.includes(saved.currency as CurrencyCode)
+            ? saved.currency as CurrencyCode : initial.currency;
+          dispatch({ type: "hydrate", state: { lines, currency } });
+          return;
+        }
+      }
+    } catch { /* Browsers can disable storage. */ }
+    dispatch({ type: "hydrate", state: {} });
+  }, []);
+  useEffect(() => {
+    if (!state.hydrated) return;
+    try {
+      window.localStorage.setItem("cowin-cart", JSON.stringify({ lines: state.lines, currency: state.currency }));
+    } catch { /* The in-memory cart remains usable. */ }
+  }, [state]);
   const value = useMemo(() => ({ ...state, add: (line: CartLine) => dispatch({ type: "add", line }), setQuantity: (key: Pick<CartLine, "productId" | "skuId">, quantity: number) => dispatch({ type: "setQuantity", key, quantity }), remove: (key: Pick<CartLine, "productId" | "skuId">) => dispatch({ type: "remove", key }), clear: () => dispatch({ type: "clear" }), setCurrency: (currency: CurrencyCode) => dispatch({ type: "currency", currency }) }), [state]);
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }

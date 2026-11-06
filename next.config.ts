@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { legacyStorefrontRedirects } from "./src/lib/seo/legacy-redirects";
 
 const nextConfig: NextConfig = {
+  experimental: { globalNotFound: true },
   images: {
     formats: ["image/avif", "image/webp"],
     qualities: [75, 82, 85, 90],

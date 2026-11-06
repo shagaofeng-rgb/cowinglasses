@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { initialSettingsState, saveStoreSettingsAction } from "@/app/admin/(console)/settings/actions";
+import { saveStoreSettingsAction } from "@/app/admin/(console)/settings/actions";
+
+const initialSettingsState = { success: false, message: "" };
 
 export function StoreSettingsForm({ value }: { value: { storeName?: string; siteUrl?: string; supportEmail?: string; currency?: string; orderPrefix?: string } }) {
   const [state, action, pending] = useActionState(saveStoreSettingsAction, initialSettingsState);

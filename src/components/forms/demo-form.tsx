@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
 import { formCopy } from "@/messages/forms";
@@ -25,6 +25,7 @@ const fieldSets: Record<"support" | "warranty" | "newsletter", Field[]> = {
 };
 
 export function DemoForm({ locale, kind = "support" }: { locale: Locale; kind?: "support" | "warranty" | "newsletter" }) {
+  const submitting = useRef(false);
   const [state, setState] = useState<"idle" | "submitting" | "sent" | "error">("idle");
   const [submissionId, setSubmissionId] = useState<string | null>(null);
   const t = messages[locale];
@@ -36,18 +37,21 @@ export function DemoForm({ locale, kind = "support" }: { locale: Locale; kind?: 
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (submitting.current) return;
     const form = event.currentTarget;
     if (!form.checkValidity()) { form.reportValidity(); return; }
+    submitting.current = true;
     setState("submitting");
     const values = Object.fromEntries(new FormData(form).entries());
     try {
       const response = await fetch("/api/storefront/support", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind, pagePath: window.location.pathname, ...values }) });
       if (!response.ok) throw new Error("request_failed");
       const body = await response.json() as { submissionId?: string };
-      setSubmissionId(body.submissionId ?? null);
+      if (!body.submissionId) throw new Error("missing_reference");
+      setSubmissionId(body.submissionId);
       setState("sent");
       form.reset();
-    } catch { setState("error"); }
+    } catch { setState("error"); } finally { submitting.current = false; }
   }
 
   return <form className="grid gap-4" onSubmit={submit} noValidate>

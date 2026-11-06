@@ -53,7 +53,7 @@ Copy `.env.example` to `.env.local`. Never commit `.env.local`.
 | `NEWS_AUTOMATION_CONTENT_MODEL` | OpenAI or Vercel AI Gateway model identifier used by the News composer. |
 | `OPENAI_API_KEY` / `AI_GATEWAY_API_KEY` | Optional model credentials. Vercel deployments can instead use the automatically issued OIDC token. |
 | `INDEXNOW_KEY` | Optional server-only key for notifying Bing/IndexNow after a verified publication. |
-| `GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON` | Server-only service-account JSON for manual Search Console sitemap submission. Grant that account access to the Search Console property. |
+| `GOOGLE_SEARCH_CONSOLE_SERVICE_ACCOUNT_JSON` | Server-only sensitive service-account JSON for the weekly job and admin submission. Grant that account access to the Search Console property. |
 | `GOOGLE_SEARCH_CONSOLE_SITE_URL` | Search Console property, normally `sc-domain:cowinglasses.com`. |
 
 After a production deployment, an authorized maintainer may submit the canonical sitemap without exposing credentials in shell history:
@@ -174,3 +174,5 @@ Implement these adapters or API contracts without changing page-level commerce U
 - CMS policy/content API: legally approved privacy, terms, shipping, returns, warranty and FAQ content
 
 Server-side price verification, country-based shipping, order records, signed payment webhooks, secure member sessions and audit/event records are implemented. Before expanding checkout, add transactional email, password reset/email verification, formal privacy retention jobs, destination tax calculation, durable rate limiting and refund-provider automation.
+
+See [stock verification, quote handling, and release recovery](docs/verified-stock-operations.md) for the operational runbook.

@@ -220,7 +220,7 @@
 .mediaControls button:hover, .dialogHeader button:hover, .dialogNavigation button:hover { border-color: #455216; background: var(--lime); }
 .mediaControls button:focus-visible, .galleryRail button:focus-visible { outline-color: #35480c; outline-offset: 0; }
 .galleryRail { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: .45rem; }
-.galleryRail > * { position: relative; display: flex; align-items: center; justify-content: center; gap: .3rem; aspect-ratio: 1.65; min-height: 43px; border: 2px solid transparent; background: var(--plate); color: #141916; font-size: .82rem; font-weight: 800; }
+.galleryRail > * { position: relative; display: flex; align-items: center; justify-content: center; gap: .3rem; aspect-ratio: 1.65; min-width: 0; width: 100%; min-height: 43px; border: 2px solid transparent; background: var(--plate); color: #141916; font-size: .82rem; font-weight: 800; }
 .galleryRail img { padding: 2px; }
 .galleryRail button[aria-pressed="true"] { border-color: #97b62d; }
 .galleryRail a { background: var(--surface); color: var(--lime); border-color: var(--line); }
@@ -356,7 +356,7 @@
 .cartSummary h2, .checkoutSummary h2 { font-size: clamp(1.55rem, 2.7vw, 2.25rem); line-height: 1.1; }
 .accountIdentity { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .55rem; margin-block-end: .9rem; padding: .8rem; border: 1px solid var(--line); background: var(--surface); overflow-wrap: anywhere; }
 .accountForm form, .orderCard { min-width: 0; }
-.checkoutProgress { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .35rem; margin-block-end: .65rem; }
+.checkoutProgress { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .35rem; margin-block-end: .65rem; }
 .checkoutProgress button { display: flex; align-items: center; justify-content: flex-start; gap: .35rem; min-height: 50px; min-width: 0; padding: .4rem .48rem; border: 1px solid var(--line); color: var(--ink); background: var(--surface); font-size: .78rem; text-align: start; overflow-wrap: anywhere; }
 .checkoutProgress button span { flex: none; font-size: .7rem; font-weight: 800; color: var(--blue); }
 .checkoutProgress button[aria-current] { background: var(--lime); border-color: var(--lime); color: #101412; font-weight: 800; }
@@ -496,3 +496,7 @@
 .productGalleryPage button > span:last-child { display: flex; align-items: center; justify-content: space-between; padding: .5rem .65rem; color: var(--muted); font-size: .75rem; }
 .heroProductCaption { padding: .65rem .8rem; border: 1px solid var(--line); color: var(--muted); font-size: .76rem; line-height: 1.4; }
 .page :global(.eyebrow) { color: var(--lime); }
+
+@media (max-width: 767px) {
+  :global(body):has(.purchaseBar) .storeConsent { bottom: calc(76px + env(safe-area-inset-bottom)); }
+}

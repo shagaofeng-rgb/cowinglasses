@@ -32,12 +32,15 @@ let flushing = false;
 async function flushQueue() {
   if (flushing) return;
   if (!hasAnalyticsConsent()) return;
+  document.cookie = "cowin_analytics_consent=granted; Path=/; Max-Age=31536000; SameSite=Lax" +
+    (location.protocol === "https:" ? "; Secure" : "");
   const queue = readQueue();
   if (!queue.length) return;
   flushing = true;
   const delivered = new Set<string>();
   try {
   for (const item of queue) {
+    if (!hasAnalyticsConsent()) break;
     try {
       const response = await fetch("/api/storefront/events", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin", keepalive: true, body: JSON.stringify(item) });
       if (response.ok) delivered.add(item.eventId);
@@ -46,8 +49,18 @@ async function flushQueue() {
   saveQueue(readQueue().filter((item) => !delivered.has(item.eventId)));
   } finally { flushing = false; }
 }
+export function clearStorefrontAnalytics() {
+  document.cookie = "cowin_analytics_consent=; Path=/; Max-Age=0; SameSite=Lax" +
+    (location.protocol === "https:" ? "; Secure" : "");
+  try {
+    window.sessionStorage.removeItem(SESSION_KEY);
+    window.sessionStorage.removeItem(QUEUE_KEY);
+  } catch { /* Analytics storage can be disabled. */ }
+  void fetch("/api/storefront/events", { method: "DELETE", credentials: "same-origin", keepalive: true }).catch(() => {});
+}
+
 export function hasAnalyticsConsent() { try { return typeof window !== "undefined" && window.localStorage.getItem("cowin-analytics-consent") === "granted"; } catch { return false; } }
-export function getStorefrontSessionId() { try { return typeof window === "undefined" ? undefined : sessionId(); } catch { return undefined; } }
+export function getStorefrontSessionId() { try { return hasAnalyticsConsent() ? sessionId() : undefined; } catch { return undefined; } }
 export function trackStorefrontEvent(eventName: AnalyticsEventName, metadata: Record<string, unknown> = {}) {
   if (typeof window === "undefined" || !hasAnalyticsConsent()) return;
   const currentSessionId = getStorefrontSessionId();

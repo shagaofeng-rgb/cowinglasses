@@ -12,6 +12,7 @@ import type { ColorSku, Feature, Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
 import { modelCode, sportModelSlug } from "@/lib/product-model";
 import { messages } from "@/messages";
+import { quoteHref, salesCopy } from "@/messages/sales";
 import { storefrontFeatureName, storefrontLabels } from "@/messages/storefront";
 import { formatUsdPrice, Price } from "@/components/commerce/price";
 import { clampPage, Pagination } from "@/components/commerce/pagination";
@@ -53,10 +54,16 @@ export function ProductDetail({ product, locale, relatedProducts = [], section =
   const zoomOpen = zoom !== null;
   const sku = product.colors.find((color) => color.id === selectedSku) ?? product.colors[0];
   const skuId = sku?.skuId ?? sku?.id;
+  const unitPrice = sku?.usdPrice ?? product.usdPrice;
+  const compareAt = sku?.skuId ? sku.compareAtUsdPrice : product.compareAtUsdPrice;
+  const maxQuantity = Math.min(10, sku?.availableQuantity ?? 0);
+  const selectedQuantity = Math.min(quantity, Math.max(1, maxQuantity));
   const name = localize(product.name, locale);
   const model = modelCode(product.slug);
   const ui = storefrontLabels(locale);
   const t = messages[locale];
+  const sales = salesCopy[locale];
+  const quote = quoteHref(locale, product.slug, sku?.id);
   const path = `/${locale}/products/${product.slug}`;
   const photos = photosFor(product, sku);
   const photoIndex = photo % Math.max(photos.length, 1);
@@ -70,15 +77,15 @@ export function ProductDetail({ product, locale, relatedProducts = [], section =
   const related = relatedProducts.filter((candidate) => !candidate.demo && candidate.id !== product.id).slice(0, 3);
   const title = productSectionLabel(locale, section);
   const availableSections = productSectionsFor(product);
-  const checkout = sku ? `/${locale}/checkout?${new URLSearchParams({ product: product.slug, color: sku.id, ...(quantity > 1 ? { quantity: String(quantity) } : {}) })}` : null;
+  const checkout = sku ? `/${locale}/checkout?${new URLSearchParams({ product: product.slug, color: sku.id, ...(selectedQuantity > 1 ? { quantity: String(selectedQuantity) } : {}) })}` : null;
 
   useEffect(() => {
     if (!skuId) return;
     trackStorefrontEvent("product_view", { productId: product.id, slug: product.slug });
     trackMetaPixel("ViewContent", {
-      content_ids: [skuId], content_type: "product", value: product.usdPrice, currency: "USD",
+      content_ids: [skuId], content_type: "product", value: unitPrice, currency: "USD",
     }, `view-content:${product.id}:${skuId}`);
-  }, [product.id, product.slug, product.usdPrice, skuId]);
+  }, [product.id, product.slug, unitPrice, skuId]);
 
   useEffect(() => {
     if (zoomOpen && dialog.current && !dialog.current.open) dialog.current.showModal();
@@ -151,7 +158,8 @@ export function ProductDetail({ product, locale, relatedProducts = [], section =
                 {name.toUpperCase().startsWith(model) ? <><bdi>{model}</bdi><span>{name.slice(model.length).trim()}</span></> : name}
               </h1>
               <p className={styles.productTagline}>{localize(product.tagline, locale)}</p>
-              <div className={styles.productPrice}><Price usd={product.usdPrice} locale={locale} compareAt={product.compareAtUsdPrice} tag={product.compareAtUsdPrice ? ui.launch : undefined} /></div>
+              <div className={styles.productPrice}><Price usd={unitPrice} locale={locale} compareAt={compareAt} /></div>
+              <p aria-live="polite" className="mt-2 text-sm font-semibold text-[var(--muted)]">{sku?.available ? sales.inStock : sales.pending}</p>
               {facts.length > 0 && <dl className={styles.factRail}>
                 {facts.map(({ label, value, Icon }) => <div key={label}>
                   <dt><Icon size={13} aria-hidden="true" />{label}</dt><dd>{value}</dd>
@@ -160,24 +168,29 @@ export function ProductDetail({ product, locale, relatedProducts = [], section =
               {sku && <fieldset className={styles.colorChoices}>
                 <legend>{t.common.chooseColor} · {localize(sku.name, locale)}</legend>
                 <div>
-                  {product.colors.map((color) => <button key={color.id} type="button" disabled={!color.available} aria-pressed={color.id === sku.id} onClick={() => { setSelectedSku(color.id); setPhoto(0); }}>
+                  {product.colors.map((color) => <button key={color.id} type="button" aria-pressed={color.id === sku.id} onClick={() => { setSelectedSku(color.id); setPhoto(0); setQuantity(1); }}>
                     <span style={{ background: color.hex }} aria-hidden="true" />{localize(color.name, locale)}
                   </button>)}
                 </div>
               </fieldset>}
               {sku?.available && skuId && <div className={styles.purchaseActions}>
                 <div className={styles.quantity} role="group" aria-label={t.common.quantity}>
-                  <button type="button" disabled={quantity <= 1} onClick={() => setQuantity(quantity - 1)} aria-label={ui.decrease}><Minus size={14} /></button>
-                  <output aria-live="polite">{quantity}</output>
-                  <button type="button" disabled={quantity >= 10} onClick={() => setQuantity(quantity + 1)} aria-label={ui.increase}><Plus size={14} /></button>
+                  <button type="button" disabled={selectedQuantity <= 1} onClick={() => setQuantity(selectedQuantity - 1)} aria-label={ui.decrease}><Minus size={14} /></button>
+                  <output aria-live="polite">{selectedQuantity}</output>
+                  <button type="button" disabled={selectedQuantity >= maxQuantity} onClick={() => setQuantity(selectedQuantity + 1)} aria-label={ui.increase}><Plus size={14} /></button>
                 </div>
                 <div className={styles.purchaseBar}>
-                  <strong className={styles.mobilePrice} dir="ltr">{formatUsdPrice(product.usdPrice * quantity)}</strong>
-                  <AddToCart key={skuId} product={product} skuId={skuId} locale={locale} quantity={quantity} />
+                  <strong className={styles.mobilePrice} dir="ltr">{formatUsdPrice(unitPrice * selectedQuantity)}</strong>
+                  <AddToCart key={skuId} product={product} skuId={skuId} locale={locale} quantity={selectedQuantity} />
                 </div>
               </div>}
+              <div className="mt-4">
+                <Link href={quote} className={sku?.available ? "button-secondary" : "button-primary"}>
+                  {sku?.available ? sales.business : sales.quote}<ArrowUpRight size={16} className="rtl:-rotate-90" aria-hidden="true" />
+                </Link>
+              </div>
               <div className={styles.productNotices}>
-                <Link href={`/${locale}/support/shipping-delivery`}><Truck size={15} />{t.product.dispatch}</Link>
+                {sku?.available && <Link href={`/${locale}/support/shipping-delivery`}><Truck size={15} />{t.product.dispatch}</Link>}
                 <Link href={`/${locale}/support/returns-refunds`}><Undo2 size={15} />{t.common.returns}</Link>
                 <Link href={`/${locale}/support/warranty`}><ShieldCheck size={15} />{t.common.warranty}</Link>
                 {sku?.available && checkout && <Link className={styles.textLink} href={checkout}>{t.common.checkout}<ArrowUpRight size={14} className="rtl:-rotate-90" /></Link>}
@@ -200,7 +213,7 @@ export function ProductDetail({ product, locale, relatedProducts = [], section =
             <Link href={path} className={styles.compactPhoto} aria-label={name}><Image src={photos[0] ?? product.heroImage} alt="" fill sizes="96px" /></Link>
             <div><p className={styles.kicker}>{ui.model} / {model}</p><h1>{name}</h1></div>
             <strong className={styles.compactPrice} dir="ltr">{formatUsdPrice(product.usdPrice)}</strong>
-            {checkout && sku?.available && <Link className="button-primary" href={path}>{t.common.shopNow}<ArrowUpRight size={16} className="rtl:-rotate-90" /></Link>}
+            <Link className="button-primary" href={sku?.available ? path : quote}>{sku?.available ? t.common.shopNow : sales.quote}<ArrowUpRight size={16} className="rtl:-rotate-90" aria-hidden="true" /></Link>
           </header>
           {tabs}
           <section className={styles.productSectionPage}>

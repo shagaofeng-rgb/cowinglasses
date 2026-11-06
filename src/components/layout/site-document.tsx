@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Barlow_Condensed, Manrope } from "next/font/google";
-import "./globals.css";
+import "@/app/globals.css";
 import { siteConfig } from "@/config/site";
 
 const displayFont = Barlow_Condensed({
@@ -17,7 +16,7 @@ const bodyFont = Manrope({
   display: "swap",
 });
 
-const metaPixelCode = `(function(){function start(){try{if(localStorage.getItem('cowin-analytics-consent')!=='granted'||window.fbq)return;}catch(e){return;}
+export const metaPixelCode = `(function(){function start(){try{if(localStorage.getItem('cowin-analytics-consent')!=='granted'||window.fbq)return;}catch(e){return;}
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
 n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -29,22 +28,16 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 fbq('init', '955166104308526');
 fbq('track', 'PageView');}start();window.addEventListener('cowin-analytics-consent-change',start);})();`;
 
-export const metadata: Metadata = {
+export const siteDocumentMetadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: { default: siteConfig.name, template: `%s | ${siteConfig.name}` },
   description: siteConfig.description,
 };
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export function SiteDocument({ children, lang, dir = "ltr" }: Readonly<{
+  children: React.ReactNode; lang: string; dir?: "ltr" | "rtl";
+}>) {
   return (
-    <html lang="en" dir="ltr" data-scroll-behavior="smooth" suppressHydrationWarning>
-      <head>
-        <Script id="document-locale" strategy="beforeInteractive">
-          {`(function(){var l=location.pathname.split('/')[1];if(!/^(en|ar|es|pt|ja|ko)$/.test(l))l='en';document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';})();`}
-        </Script>
-        <script dangerouslySetInnerHTML={{ __html: metaPixelCode }} />
-      </head>
+    <html lang={lang} dir={dir} data-scroll-behavior="smooth">
       <body className={`${displayFont.variable} ${bodyFont.variable}`}>
         {children}
       </body>

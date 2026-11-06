@@ -10,7 +10,7 @@ const supportSchema = z.object({
   orderNumber: z.string().trim().max(96).optional(),
   productModel: z.string().trim().max(240).optional(),
   message: z.string().trim().max(5000).optional(),
-  mediaUrl: z.string().trim().url().max(2000).optional().or(z.literal("")),
+  mediaUrl: z.string().trim().max(2000).pipe(z.url({ protocol: /^https?$/ })).optional().or(z.literal("")),
   pagePath: z.string().trim().max(500).optional(),
   website: z.string().max(160).optional(),
 }).superRefine((value, context) => {
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, submissionId }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: error.issues[0]?.message ?? "提交内容无效。" }, { status: 400 });
-    console.error("support-form-submit", error);
+    console.error("support-form-submit", { cause: error instanceof Error ? error.name : "Unknown" });
     return NextResponse.json({ error: "暂时无法提交，请稍后再试。" }, { status: 500 });
   }
 }

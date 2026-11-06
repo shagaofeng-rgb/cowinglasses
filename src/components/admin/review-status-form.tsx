@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { initialReviewState, updateReviewAction } from "@/app/admin/(console)/reviews/actions";
+import { updateReviewAction } from "@/app/admin/(console)/reviews/actions";
+
+const initialReviewState = { success: false, message: "" };
 
 export function ReviewStatusForm({ id, status, reply }: { id: string; status: string; reply: string | null }) {
   const [state, action, pending] = useActionState(updateReviewAction, initialReviewState);
