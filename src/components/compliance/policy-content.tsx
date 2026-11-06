@@ -1,7 +1,13 @@
+"use client";
+
+import { useState } from "react";
+import { Truck } from "lucide-react";
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
+import { messages } from "@/messages";
+import { storefrontLabels } from "@/messages/storefront";
 import { businessDetails } from "@/config/business";
-import { getShippingDestinationCountryCode, quoteShipping, shippingDestinations } from "@/config/shipping";
+import { quoteShipping, shippingDestinations } from "@/config/shipping";
 import styles from "@/components/layout/storefront-design.module.css";
 
 export type PolicyType = "shipping" | "returns" | "warranty" | "privacy" | "terms" | "intellectual-property";
@@ -61,11 +67,55 @@ const copy: Record<Locale, Copy> = {
   } },
 };
 
-const special = new Set(["malaysia_west", "malaysia_east", "singapore", "thailand", "vietnam", "taiwan", "australia", "philippines", "indonesia", "united_states", "brazil"]);
-function identity(locale: Locale) { const t = copy[locale]; return <p><strong>{t.merchant}:</strong> {businessDetails.legalName}<br/><strong>{t.address}:</strong> {businessDetails.registeredAddress}<br/><strong>{t.contact}:</strong> <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a></p>; }
-function destination(id: string, fallback: string, locale: Locale) { const name = new Intl.DisplayNames([locale], { type: "region" }).of(getShippingDestinationCountryCode(id)) ?? fallback; return id === "malaysia_west" ? `${name} — West Malaysia` : id === "malaysia_east" ? `${name} — East Malaysia` : name; }
+function ShippingPicker({ locale, labels }: { locale: Locale; labels?: Record<string, string> }) {
+  const t = copy[locale];
+  const [destination, setDestination] = useState("");
+  const quote = destination ? quoteShipping(destination, 1) : null;
+  return <section id="shipping-estimate" className={`${styles.shippingPicker} ${styles.formSurface}`}>
+    <div className={styles.panelIcon}><Truck size={20} aria-hidden="true" /></div>
+    <h2>{storefrontLabels(locale).shippingEstimate}</h2>
+    <label className="grid gap-2 text-sm font-bold">
+      {t.destination}
+      <select value={destination} onChange={(event) => setDestination(event.target.value)}>
+        <option value="">—</option>
+        {shippingDestinations.map((item) => <option key={item.id} value={item.id}>{labels?.[item.id] ?? item.label}</option>)}
+      </select>
+    </label>
+    <p aria-live="polite">{quote && (quote.status === "unavailable" ? t.unavailable : <strong dir="ltr">USD {quote.totalUsd.toFixed(2)}</strong>)}</p>
+  </section>;
+}
 
-export function PolicyContent({ locale, type }: { locale: Locale; type: PolicyType }) {
-  const t = copy[locale]; const path = (value: string) => `/${locale}${value}`;
-  return <><p className={styles.notice}>{t.review}</p><p className="text-sm">{t.effective}: {businessDetails.effectiveDate}</p>{t.sections[type].map(([title, body]) => <section key={title}><h2>{title}</h2><p>{body}</p></section>)}{type === "shipping" && <div className="not-prose overflow-x-auto border-y border-black"><table className="w-full min-w-[540px] border-collapse text-start text-sm"><thead className="bg-[#101214] text-white"><tr><th className="px-3 py-4 pe-4">{t.destination}</th><th className="px-3 py-4">{t.estimate}</th></tr></thead><tbody>{shippingDestinations.filter((item) => special.has(item.id)).map((item) => { const rate = quoteShipping(item.id, 1); return <tr className="border-b border-[var(--line)]" key={item.id}><td className="px-3 py-3 pe-4 font-semibold">{destination(item.id, item.label, locale)}</td><td className="px-3 py-3">{rate.status === "unavailable" ? t.unavailable : `USD ${rate.totalUsd.toFixed(2)}`}</td></tr>; })}<tr><td className="px-3 py-3 pe-4 font-semibold">{t.other}</td><td className="px-3 py-3">USD 20.00</td></tr></tbody></table></div>}{type === "terms" && <p><Link href={path("/support/shipping-delivery")}>Shipping &amp; Delivery</Link> · <Link href={path("/support/returns-refunds")}>Returns &amp; Refunds</Link> · <Link href={path("/support/warranty")}>Warranty &amp; Support</Link></p>}{type === "intellectual-property" && <><object data="https://www.9-bill.com/index/legal" aria-label="Intellectual property rights notice" className="mt-4 block h-20 w-full rounded-lg border border-[var(--line)] bg-white"><p><a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">Open notice</a></p></object><p><a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">Open intellectual property notice</a></p></>}{identity(locale)}</>;
+export function PolicyContent({ locale, type, destinationLabels }: { locale: Locale; type: PolicyType; destinationLabels?: Record<string, string> }) {
+  const t = copy[locale];
+  const ui = storefrontLabels(locale);
+  const sections = t.sections[type];
+  const footer = messages[locale].footer;
+  return <div className={styles.policyLayout}>
+    <nav className={styles.policyNav} aria-label={ui.contents}>
+      <p className={styles.kicker}>{ui.contents}</p>
+      {sections.map(([title], index) => <a href={`#policy-${index + 1}`} key={title}>{title}</a>)}
+      {type === "shipping" && <a href="#shipping-estimate">{ui.shippingEstimate}</a>}
+      {type === "warranty" && <a href="#warranty-request">{footer.contact}</a>}
+    </nav>
+    <article className={styles.readerArticle}>
+      <div className={styles.notice}>{t.review}</div>
+      <p className="text-sm">{t.effective} · <time dateTime={businessDetails.effectiveDate}>{businessDetails.effectiveDate}</time></p>
+      {sections.map(([title, body], index) => <section key={title} id={`policy-${index + 1}`}>
+        <h2>{title}</h2><p>{body}</p>
+      </section>)}
+      {type === "shipping" && <ShippingPicker locale={locale} labels={destinationLabels} />}
+      {type === "terms" && <p>
+        <Link href={`/${locale}/support/shipping-delivery`}>{footer.shipping}</Link> ·{" "}
+        <Link href={`/${locale}/support/returns-refunds`}>{footer.returns}</Link> ·{" "}
+        <Link href={`/${locale}/support/warranty`}>{footer.warranty}</Link>
+      </p>}
+      {type === "intellectual-property" && <>
+        <object data="https://www.9-bill.com/index/legal" aria-label={footer.intellectualProperty} className="block h-20 w-full border border-[var(--line)] bg-white" />
+        <p><a href="https://www.9-bill.com/index/legal" target="_blank" rel="noreferrer">{footer.intellectualProperty}<span aria-hidden="true"> ↗</span></a></p>
+      </>}
+      <p><strong>{t.merchant}</strong> · {businessDetails.legalName}<br/>
+        <strong>{t.address}</strong> · {businessDetails.registeredAddress}<br/>
+        <strong>{t.contact}</strong> · <a href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a></p>
+    </article>
+  </div>;
 }

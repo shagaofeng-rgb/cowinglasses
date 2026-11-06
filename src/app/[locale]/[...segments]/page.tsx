@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { RoutePage } from "@/components/commerce/route-page";
+import { StorefrontLoading } from "@/components/layout/storefront-loading";
+import { shippingDestinationLabels } from "@/lib/shipping-destination-labels";
 import { isLocale } from "@/lib/i18n";
 import { siteConfig } from "@/config/site";
 import { getStoreProducts } from "@/data/repositories/products";
@@ -45,5 +47,7 @@ export default async function RoutedPage({ params }: { params: Promise<{ locale:
   // Display only. The order endpoint reads current SKU prices and inventory in its transaction.
   const products = usesCatalogue ? await getStoreProducts() : undefined;
 
-  return <Suspense fallback={null}><RoutePage locale={locale} segments={segments} products={products} /></Suspense>;
+  const destinationLabels = path === "checkout" || path === "support/shipping-delivery" ? shippingDestinationLabels(locale) : undefined;
+
+  return <Suspense fallback={<StorefrontLoading />}><RoutePage locale={locale} segments={segments} products={products} destinationLabels={destinationLabels} /></Suspense>;
 }

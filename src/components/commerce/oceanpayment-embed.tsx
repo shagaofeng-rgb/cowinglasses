@@ -103,7 +103,7 @@ export function OceanpaymentEmbed({ session, production }: { session: Oceanpayme
     }
   }
 
-  return <section className="mt-6 rounded-3xl border border-[#c7d887] bg-[#f7fbe9] p-5" aria-live="polite">
+  return <section className="mt-6 rounded-3xl border border-[#c7d887] bg-[#f7fbe9] p-5 text-[#1b2714]" aria-live="polite">
     <div className="flex gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-[#657800]" size={21}/><div><p className="font-black">Secure card payment</p><p className="mt-1 text-sm leading-6 text-[#455216]">Card details are entered in Oceanpayment&apos;s secure embedded component. CoWin does not store your full card number or CVV.</p></div></div>
     <div id="oceanpayment-element" className="mt-5 min-h-12" />
     {state === "loading" && <p className="mt-4 flex items-center gap-2 text-sm text-[#455216]"><LoaderCircle className="animate-spin" size={16}/> Loading secure card form…</p>}

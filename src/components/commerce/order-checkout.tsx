@@ -14,7 +14,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
 import {
-  getShippingDestinationCountryCode,
   quoteShipping,
   shippingCnyPerUsd,
   shippingDestinations,
@@ -37,6 +36,8 @@ import { checkoutCopy } from "./checkout-copy";
 import { localize } from "@/lib/i18n";
 import { messages } from "@/messages";
 import styles from "@/components/layout/storefront-design.module.css";
+import { InteriorHead } from "@/components/layout/storefront-ui";
+import { storefrontLabels } from "@/messages/storefront";
 
 type CheckoutItem = {
   product: Product;
@@ -60,9 +61,11 @@ const checkoutSteps: Record<Locale, { labels: string[]; continue: string; back: 
 export function OrderCheckout({
   locale,
   products,
+  destinationLabels,
 }: {
   locale: Locale;
   products: Product[];
+  destinationLabels?: Record<string, string>;
 }) {
   const t = checkoutCopy[locale];
   const searchParams = useSearchParams();
@@ -89,9 +92,11 @@ export function OrderCheckout({
     directProduct?.colors.find(
       (color) => color.id === searchParams.get("color"),
     ) ?? directProduct?.colors[0];
+  const requestedQuantity = Number(searchParams.get("quantity"));
+  const directQuantity = Number.isInteger(requestedQuantity) && requestedQuantity >= 1 && requestedQuantity <= 10 ? requestedQuantity : 1;
   const items = useMemo<CheckoutItem[]>(() => {
     if (directProduct && directSku)
-      return [{ product: directProduct, sku: directSku, quantity: 1 }];
+      return [{ product: directProduct, sku: directSku, quantity: directQuantity }];
     return lines.flatMap((line) => {
       const product = products.find((item) => item.id === line.productId);
       const sku = product?.colors.find(
@@ -99,7 +104,7 @@ export function OrderCheckout({
       );
       return product && sku ? [{ product, sku, quantity: line.quantity }] : [];
     });
-  }, [directProduct, directSku, lines, products]);
+  }, [directProduct, directSku, directQuantity, lines, products]);
   const subtotal = items.reduce(
     (total, item) => total + item.product.usdPrice * item.quantity,
     0,
@@ -244,10 +249,11 @@ export function OrderCheckout({
   function validateCurrentStep() {
     const stepRoots = Array.from(formRef.current?.querySelectorAll(`[data-checkout-step="${step}"]`) ?? []);
     const fields = stepRoots.flatMap((root) => Array.from(root.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("[required]")));
-    const hasMissingField = fields.some((field) => field instanceof HTMLInputElement && field.type === "checkbox" ? !field.checked : !field.value.trim());
+    const invalid = fields.find((field) => !field.checkValidity() || (field instanceof HTMLInputElement && field.type !== "checkbox" && !field.value.trim()));
     const data = new FormData(formRef.current ?? undefined);
-    if (hasMissingField || (step === 1 && data.get("accountPassword") !== data.get("confirmPassword"))) {
+    if (invalid || (step === 1 && data.get("accountPassword") !== data.get("confirmPassword"))) {
       setStepError(step === 1 && data.get("accountPassword") !== data.get("confirmPassword") ? t.passwordMismatch : stepCopy.required);
+      invalid?.focus();
       return false;
     }
     if (step === 2 && (!shippingQuote || shippingUnavailable)) {
@@ -261,13 +267,13 @@ export function OrderCheckout({
   function advance() {
     if (!validateCurrentStep()) return;
     setStep((current) => Math.min(4, current + 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
   }
 
   const returnedOrderNumber = searchParams.get("order");
   if (paymentReturn && returnedOrderNumber)
     return (
-      <div className={styles.checkoutPage}>
+      <div className={`${styles.page} ${styles.checkoutPage}`}>
         <section className={styles.statusPage}>
           <div>
             <CheckCircle2 className="mx-auto text-[#7c9400]" size={46} />
@@ -291,7 +297,7 @@ export function OrderCheckout({
 
   if (!items.length)
     return (
-      <div className={styles.checkoutPage}>
+      <div className={`${styles.page} ${styles.checkoutPage}`}>
         <section className={styles.statusPage}>
           <div>
             {paymentReturn ? (
@@ -322,7 +328,7 @@ export function OrderCheckout({
     );
   if (submitState.type === "success")
     return (
-      <div className={styles.checkoutPage}>
+      <div className={`${styles.page} ${styles.checkoutPage}`}>
         <section className={styles.statusPage}>
           <div>
             <CheckCircle2 className="mx-auto text-[#7c9400]" size={46} />
@@ -342,13 +348,11 @@ export function OrderCheckout({
     );
 
   return (
-    <div className={`${styles.checkoutPage} ${styles.formSurface}`}>
+    <div className={`${styles.page} ${styles.checkoutPage} ${styles.formSurface}`}>
+      <InteriorHead eyebrow={storefrontLabels(locale).orderDesk} title={t.title} intro={t.intro} />
       <form ref={formRef} action={submitOrder} noValidate onSubmit={(event) => { if (step < 4) { event.preventDefault(); advance(); } else if (!validateCurrentStep()) event.preventDefault(); }}>
         <section className={`shell ${styles.checkoutLayout}`}>
           <div className={styles.checkoutFlow}>
-            <h1 className={styles.checkoutTitle}>
-              {t.title}
-            </h1>
             {paymentReturn && (
               <p
                 role="status"
@@ -357,11 +361,8 @@ export function OrderCheckout({
                 {t.returnCopy}
               </p>
             )}
-            <p className="mt-4 max-w-2xl leading-7 text-[var(--muted)]">
-              {t.intro}
-            </p>
             <nav className={styles.checkoutProgress} aria-label="Checkout progress">
-              {stepCopy.labels.map((label, index) => <button key={label} type="button" aria-current={step === index + 1 ? "step" : undefined} disabled={index + 1 > step} onClick={() => { setStep(index + 1); setStepError(""); }}><span>0{index + 1}</span>{label}</button>)}
+              {stepCopy.labels.slice(0, 3).map((label, index) => <button key={label} type="button" aria-current={Math.min(step, 3) === index + 1 ? "step" : undefined} disabled={Boolean(paymentSession) || index + 1 > step} onClick={() => { setStep(index + 1); setStepError(""); }}><span>0{index + 1}</span>{label}</button>)}
             </nav>
             {stepError && <p role="alert" className={styles.checkoutStepError}>{stepError}</p>}
             <section className="mt-10" data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
@@ -394,15 +395,14 @@ export function OrderCheckout({
                 <Field label={t.password} name="accountPassword" type="password" required minLength={10} autoComplete="current-password" />
                 <Field label={t.confirmPassword} name="confirmPassword" type="password" required minLength={10} autoComplete="current-password" />
               </div>
-              <div className={styles.checkoutStepActions}><button type="button" className="button-primary" onClick={advance}>{stepCopy.continue}</button></div>
             </section>
-            <section className="mt-10" data-checkout-step="2" data-step-label="02" hidden={step !== 2}>
+            <section className="mt-10" data-checkout-step="1" data-step-label="01" hidden={step !== 1}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.delivery}
               </h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <DestinationSelect
-                  locale={locale}
+                  destinationLabels={destinationLabels}
                   label={t.country}
                   placeholder={t.chooseCountry}
                   value={destinationId}
@@ -413,12 +413,13 @@ export function OrderCheckout({
                 <Field label={t.province} name="province" />
                 <Field label={t.postal} name="postalCode" />
               </div>
-              <ShippingEstimate quote={shippingQuote} locale={locale} />
+              <div className={styles.checkoutStepActions}><button type="button" className="button-primary" onClick={advance}>{stepCopy.continue}</button></div>
             </section>
             <section className="mt-10" data-checkout-step="2" data-step-label="02" hidden={step !== 2}>
               <h2 className="text-2xl font-black tracking-[-.04em]">
                 {t.shippingMethod}
               </h2>
+              <ShippingEstimate quote={shippingQuote} locale={locale} />
               <div className="mt-4">
                 <Option
                   checked
@@ -550,12 +551,12 @@ export function OrderCheckout({
               >
                 {t.openNotice}
               </a>
-              <div className={styles.checkoutStepActions}><button type="button" className="button-secondary" onClick={() => setStep(3)}>{stepCopy.back}</button></div>
+              {!paymentSession && <div className={styles.checkoutStepActions}><button type="button" className="button-secondary" onClick={() => setStep(3)}>{stepCopy.back}</button></div>}
               {paymentSession && <OceanpaymentEmbed session={paymentSession} production={paymentEnvironment === "production"} />}
             </section>
           </div>
           <aside className={`${styles.checkoutSummary} h-fit p-6 lg:sticky lg:top-24`}>
-            <p className="text-xs font-bold uppercase tracking-wide text-[#6b7e0d]">
+            <p className={styles.kicker}>
               {t.summary}
             </p>
             <div className="mt-5 grid gap-4">
@@ -595,7 +596,7 @@ export function OrderCheckout({
             </div>
             <div className="flex justify-between py-5 text-lg font-black">
               <span>{t.estimatedTotal}</span>
-              <span>USD {formatUsd(orderTotal)}</span>
+              <span dir="ltr" className="text-[var(--lime)]">USD {formatUsd(orderTotal)}</span>
             </div>
             {submitState.type === "error" && (
               <p
@@ -627,7 +628,7 @@ export function OrderCheckout({
                     : t.submit}
             </button>
             <p className="mt-4 text-xs leading-5 text-[var(--muted)]">
-              {t.estimateNote}
+              {t.estimateNote} {messages[locale].common.finalUsd}
             </p>
             <div className="mt-6 grid gap-3 border-t border-[var(--line)] pt-5 text-sm">
               <p className="flex gap-2">
@@ -687,13 +688,13 @@ function Field({
 }
 
 function DestinationSelect({
-  locale,
+  destinationLabels,
   label,
   placeholder,
   value,
   onChange,
 }: {
-  locale: Locale;
+  destinationLabels?: Record<string, string>;
   label: string;
   placeholder: string;
   value: ShippingDestinationId | "";
@@ -720,21 +721,12 @@ function DestinationSelect({
             value={destination.id}
             disabled={destination.status === "unavailable"}
           >
-            {localizedDestinationLabel(destination.id, destination.label, locale)}
+            {destination.status === "unavailable" ? destination.label : destinationLabels?.[destination.id] ?? destination.label}
           </option>
         ))}
       </select>
     </label>
   );
-}
-
-function localizedDestinationLabel(id: string, fallback: string, locale: Locale) {
-  const countryCode = getShippingDestinationCountryCode(id);
-  const country = new Intl.DisplayNames([locale], { type: "region" }).of(countryCode) ?? fallback;
-  if (id === "malaysia_west") return `${country} — West Malaysia`;
-  if (id === "malaysia_east") return `${country} — East Malaysia`;
-  if (id === "brazil") return `${country} — unavailable`;
-  return country;
 }
 
 function ShippingEstimate({ quote, locale }: { quote: ShippingQuote | null; locale: Locale }) {
@@ -760,7 +752,7 @@ function ShippingEstimate({ quote, locale }: { quote: ShippingQuote | null; loca
     !quote.volumetricDivisor;
   return (
     <aside
-      className="mt-4 rounded-2xl border border-[#c7d887] bg-[#f7fbe9] p-5"
+      className="mt-4 rounded-2xl border border-[#c7d887] bg-[#f7fbe9] p-5 text-[#1b2714]"
       aria-live="polite"
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">

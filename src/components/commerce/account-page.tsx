@@ -5,6 +5,8 @@ import { usePathname, useSearchParams } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
 import { clampPage, Pagination } from "./pagination";
 import styles from "@/components/layout/storefront-design.module.css";
+import { InteriorHead } from "@/components/layout/storefront-ui";
+import { PackageCheck } from "lucide-react";
 
 type AccountOrder = {
   orderNumber: string;
@@ -232,35 +234,13 @@ export function AccountPage({ locale }: { locale: Locale }) {
     return value ? `${pathname}?${value}` : pathname;
   };
   return (
-    <div className={styles.accountPage}>
-      <section className={styles.accountHeader}>
-        <div className="shell py-16 md:py-24">
-          <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <h1 className={styles.accountTitle}>
-              {t.title}
-            </h1>
-            <p className="mt-6 max-w-2xl leading-7 text-[#c2cbce]">
-              {t.intro}
-            </p>
-            <p className="mt-7 text-xs font-bold uppercase tracking-[.14em] text-[var(--lime)]">{t.eyebrow}</p>
-          </div>
-          {data && (
-            <button
-              type="button"
-              onClick={logout}
-              className="button-secondary w-fit"
-            >
-              {t.signOut}
-            </button>
-          )}
-          </div>
-        </div>
-      </section>
+    <div className={`${styles.page} ${styles.accountPage}`}>
+      <InteriorHead eyebrow={t.eyebrow} title={t.title} intro={t.intro}
+        aside={data && <button type="button" onClick={logout} className="button-secondary">{t.signOut}</button>} />
       <section className={`shell min-h-[38dvh] ${styles.section} ${styles.formSurface}`}>
         {loading ? (
           <div
-            className="h-40 animate-pulse rounded-2xl bg-white"
+            className="h-40 animate-pulse bg-[var(--surface)]"
             aria-label="Loading"
           />
         ) : data ? (
@@ -301,10 +281,10 @@ export function AccountPage({ locale }: { locale: Locale }) {
                       </strong>
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold">
-                      <span className="rounded-full bg-[#eff4e8] px-3 py-1.5">
+                      <span className="border border-[var(--line)] px-3 py-1.5 text-[var(--muted)]">
                         {t.payment}: {order.paymentStatus}
                       </span>
-                      <span className="rounded-full bg-[#eff4e8] px-3 py-1.5">
+                      <span className="border border-[var(--line)] px-3 py-1.5 text-[var(--muted)]">
                         {t.fulfillment}: {order.fulfillmentStatus}
                       </span>
                     </div>
@@ -334,7 +314,7 @@ export function AccountPage({ locale }: { locale: Locale }) {
                 <Pagination locale={locale} currentPage={orderPagination.currentPage} totalPages={orderPagination.totalPages} hrefForPage={hrefForOrderPage} label={t.orders} />
               </>
             ) : (
-              <p className="mt-4 rounded-2xl bg-white p-6 text-[var(--muted)]">
+              <p className="mt-4 bg-[var(--surface)] p-6 text-[var(--muted)]">
                 {t.empty}
               </p>
             )}
@@ -343,6 +323,8 @@ export function AccountPage({ locale }: { locale: Locale }) {
             </p>
           </section>
         ) : (
+          <div className={styles.accountLayout}>
+            <aside className={styles.infoBlock}><PackageCheck size={28} aria-hidden="true" /><h2>{t.orders}</h2><p>{t.intro}</p></aside>
           <form
             action={login}
             className={styles.accountForm}
@@ -384,6 +366,7 @@ export function AccountPage({ locale }: { locale: Locale }) {
               {submitting ? t.signingIn : t.signIn}
             </button>
           </form>
+          </div>
         )}
       </section>
     </div>

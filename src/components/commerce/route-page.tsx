@@ -1,381 +1,232 @@
 "use client";
+
+import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  ArrowRight,
-  Check,
-  Download,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
-import type { Locale } from "@/lib/i18n";
+import { useState } from "react";
+import { Apple, ArrowUpRight, Bluetooth, ChevronDown, CircleHelp, Glasses, Mail, Plus, Ruler, Search, ShieldCheck, Smartphone, Truck, Undo2 } from "lucide-react";
+import { collectionPaths } from "@/config/navigation";
+import { businessDetails } from "@/config/business";
+import { localize, type Locale } from "@/lib/i18n";
+import { modelCode, sportModelSlug } from "@/lib/product-model";
 import { messages } from "@/messages";
 import { learning, collectionTitles } from "@/messages/learning";
-import { products as fixtureProducts } from "@/data/fixtures/products";
+import { storefrontFeatureName, storefrontLabels } from "@/messages/storefront";
+import type { CollectionSlug, Product } from "@/types/product";
 import { ProductCard } from "@/components/product/product-card";
+import { DemoForm } from "@/components/forms/demo-form";
+import { InteriorHead, PanelLink } from "@/components/layout/storefront-ui";
+import { PolicyContent, type PolicyType } from "@/components/compliance/policy-content";
 import { CartPage } from "./cart-page";
 import { OrderCheckout } from "./order-checkout";
 import { PaymentVerification } from "./payment-verification";
-import { DemoForm } from "@/components/forms/demo-form";
-import { localize } from "@/lib/i18n";
 import { Price } from "./price";
-import type { Product } from "@/types/product";
-import {
-  PolicyContent,
-  type PolicyType,
-} from "@/components/compliance/policy-content";
 import { AccountPage } from "./account-page";
 import { clampPage, Pagination } from "./pagination";
 import styles from "@/components/layout/storefront-design.module.css";
 
-type RoutePageProps = {
-  locale: Locale;
-  segments: string[];
-  products?: Product[];
+const policyPaths: Record<string, PolicyType> = {
+  "support/shipping-delivery": "shipping",
+  "support/returns-refunds": "returns",
+  "support/warranty": "warranty",
+  "policies/privacy": "privacy",
+  "policies/terms": "terms",
+  "policies/intellectual-property": "intellectual-property",
 };
-export function RoutePage({
-  locale,
-  segments,
-  products = fixtureProducts,
-}: RoutePageProps) {
+
+export function RoutePage({ locale, segments, products = [], destinationLabels }: {
+  locale: Locale; segments: string[]; products?: Product[]; destinationLabels?: Record<string, string>;
+}) {
   const path = segments.join("/");
-  if (path === "shop") return <Shop locale={locale} products={products} />;
-  if (path.startsWith("collections/"))
-    return (
-      <Collection locale={locale} slug={segments[1]} products={products} />
-    );
+  const collection = collectionPaths.find((slug) => path === `collections/${slug}`);
+  if (path === "shop" || path === "search" || collection) return <Catalogue locale={locale} products={products} collection={collection} search={path === "search"} />;
   if (path === "cart") return <CartPage locale={locale} products={products} />;
-  if (path === "checkout")
-    return <OrderCheckout locale={locale} products={products} />;
+  if (path === "checkout") return <OrderCheckout locale={locale} products={products} destinationLabels={destinationLabels} />;
   if (path === "payment-test") return <PaymentVerification locale={locale} />;
-  if (path === "compare")
-    return <Compare locale={locale} products={products} />;
-  if (path === "search")
-    return <SearchPage locale={locale} products={products} />;
-  if (path === "how-it-works") return <HowItWorks locale={locale} />;
-  if (path === "app") return <AppPage locale={locale} />;
-  if (path === "lens-guide") return <LensGuide locale={locale} />;
+  if (path === "compare") return <Compare locale={locale} products={products} />;
   if (path === "account") return <AccountPage locale={locale} />;
-  if (path === "support" || path === "support/faq")
-    return <Support locale={locale} faq={path.endsWith("faq")} />;
+  if (path === "app" || path === "how-it-works" || path === "lens-guide") return <Guide locale={locale} path={path} />;
+  if (path === "support" || path === "support/faq") return <Support locale={locale} faq={path.endsWith("faq")} />;
   if (path === "support/contact") return <SupportContact locale={locale} />;
-  if (path === "support/shipping-delivery") return <Policy locale={locale} type="shipping" />;
-  if (path === "support/returns-refunds") return <Policy locale={locale} type="returns" />;
-  if (path === "support/warranty") return <Policy locale={locale} type="warranty" />;
-  if (path === "policies/privacy")
-    return <Policy locale={locale} type="privacy" />;
-  if (path === "policies/terms") return <Policy locale={locale} type="terms" />;
-  if (path === "policies/intellectual-property")
-    return <Policy locale={locale} type="intellectual-property" />;
-  return <NotFound locale={locale} />;
+  if (Object.hasOwn(policyPaths, path)) return <Policy locale={locale} type={policyPaths[path]} destinationLabels={destinationLabels} />;
+  return null;
 }
 
-function PageHead({
-  eyebrow,
-  title,
-  intro,
-  variant = "default",
-}: {
-  eyebrow?: string;
-  title: string;
-  intro: string;
-  variant?: "default" | "learn";
-}) {
-  return (
-    <header className={`${styles.pageHero} ${variant === "learn" ? styles.pageHeroLearn : ""}`}>
-      <div className={`shell ${styles.pageHeroShell}`}>
-        <div className={styles.pageHeroCopy}>
-          <h1 className={styles.pageHeroTitle}>{title}</h1>
-          <p className={styles.pageHeroIntro}>{intro}</p>
-        </div>
-        <p className={styles.pageHeroIndex}>{eyebrow || "CoWin Glasses"}</p>
-      </div>
-    </header>
-  );
-}
-function Shop({ locale, products }: { locale: Locale; products: Product[] }) {
+const scene: Record<CollectionSlug, string> = {
+  create: "create-night",
+  explore: "movement-coast",
+  everyday: "everyday-architecture",
+  "music-movement": "movement-coast",
+  "photochromic-sun": "everyday-architecture",
+  "prescription-ready": "everyday-architecture",
+};
+
+const modelOrder = [sportModelSlug, "gl1", "v03-t5", "g06-l", "gl16-3", "v03-pro"];
+
+function Catalogue({ locale, products, collection, search }: { locale: Locale; products: Product[]; collection?: CollectionSlug; search: boolean }) {
   const t = messages[locale];
+  const ui = storefrontLabels(locale);
+  const params = useSearchParams();
+  const pathname = usePathname();
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const query = searchParams.get("q") ?? "";
-  const feature = searchParams.get("feature") ?? "all";
-  const sort = searchParams.get("sort") ?? "featured";
-  const update = (next: Record<string, string>) => {
-    const params = new URLSearchParams(searchParams.toString());
-    Object.entries(next).forEach(([key, value]) => {
-      if (!value || value === "all" || value === "featured") params.delete(key);
-      else params.set(key, value);
-    });
-    if (!("page" in next)) params.delete("page");
-    const value = params.toString();
-    router.replace(value ? `${pathname}?${value}` : pathname, { scroll: false });
-  };
-  const shown = useMemo(
-    () =>
-      products
-        .filter((product) => !product.demo)
-        .filter(
-          (product) =>
-            `${localize(product.name, locale)} ${localize(product.description, locale)}`
-              .toLowerCase()
-              .includes(query.toLowerCase()) &&
-            (feature === "all" || product.features.includes(feature as never)),
-        )
-        .sort((a, b) =>
-          sort === "low"
-            ? a.usdPrice - b.usdPrice
-            : sort === "high"
-              ? b.usdPrice - a.usdPrice
-              : 0,
-        ),
-    [products, query, feature, sort, locale],
-  );
-  const { currentPage, totalPages, start } = clampPage(searchParams.get("page"), shown.length, 6);
-  const visible = shown.slice(start, start + 6);
-  const hrefForPage = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (page === 1) params.delete("page"); else params.set("page", String(page));
-    const value = params.toString();
-    return value ? `${pathname}?${value}` : pathname;
-  };
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow={t.nav.shop}
-        title={t.shop.title}
-        intro={t.shop.intro}
-      />
-      <section className={`shell ${styles.sectionTight}`}>
-        <div className={styles.catalogControls}>
-          <label>
-            <Search size={17} />
-            <input
-              value={query}
-              onChange={(e) => update({ q: e.target.value })}
-              placeholder={t.common.searchPlaceholder}
-              className="w-full bg-transparent outline-none"
-            />
-          </label>
-          <select
-            aria-label={t.shop.feature}
-            value={feature}
-            onChange={(e) => update({ feature: e.target.value })}
-            className="min-h-11 px-3"
-          >
-            <option value="all">{t.shop.filters}</option>
-            <option value="translation">AI real-time translation</option>
-            <option value="open-ear-audio">Open-ear audio</option>
-            <option value="camera-photography">Camera photography</option>
-            <option value="prescription-ready">Prescription-ready</option>
-            <option value="sunglasses">Sunglasses</option>
-          </select>
-          <select
-            aria-label={t.shop.sort}
-            value={sort}
-            onChange={(e) => update({ sort: e.target.value })}
-            className="min-h-11 px-3"
-          >
-            <option value="featured">{t.shop.newest}</option>
-            <option value="low">{t.shop.lowHigh}</option>
-            <option value="high">{t.shop.highLow}</option>
-          </select>
-        </div>
-        {shown.length ? (
-          <>
-            <div className={styles.catalogGrid}>
-              {visible.map((product) => (
-                <ProductCard product={product} locale={locale} key={product.id} />
-              ))}
-            </div>
-            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={hrefForPage} label={t.nav.shop} />
-          </>
-        ) : (
-          <div className={styles.emptyState}>
-            <div>
-            <SlidersHorizontal className="mx-auto" />
-            <p className="mt-4 text-[var(--muted)]">{t.common.noResults}</p>
-            <button
-              className="button-secondary mt-4"
-              onClick={() => {
-                update({ q: "", feature: "all", sort: "featured" });
-              }}
-            >
-              {t.common.clear}
-            </button>
-            </div>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-function Collection({
-  locale,
-  slug,
-  products,
-}: {
-  locale: Locale;
-  slug?: string;
-  products: Product[];
-}) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const collection = slug || "explore";
-  const title = collectionTitles[locale][collection] || collectionTitles.en[collection];
-  const subset = products.filter((product) =>
-    !product.demo && product.collections.includes(collection as never),
-  );
-  const { currentPage, totalPages, start } = clampPage(searchParams.get("page"), subset.length, 6);
-  const visible = subset.slice(start, start + 6);
-  const hrefForPage = (page: number) => page === 1 ? pathname : `${pathname}?page=${page}`;
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow={messages[locale].nav.shop}
-        title={title}
-        intro={messages[locale].shop.intro}
-      />
-      <section className={`shell ${styles.section}`}>
-        {subset.length ? (
-          <>
-            <div className={styles.catalogGrid}>
-              {visible.map((product) => (
-                <ProductCard product={product} locale={locale} key={product.id} />
-              ))}
-            </div>
-            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={hrefForPage} label={title} />
-          </>
-        ) : (
-          <p className="text-[var(--muted)]">
-            No published products are currently assigned to this collection.
-          </p>
-        )}
-      </section>
-    </div>
-  );
-}
-function Compare({
-  locale,
-  products,
-}: {
-  locale: Locale;
-  products: Product[];
-}) {
-  const published = products.filter((product) => !product.demo);
-  const [ids, setIds] = useState(() => published.slice(0, 3).map((product) => product.id));
-  const selected = published.filter((product) => ids.includes(product.id));
-  const updateSlot = (index: number, id: string) => {
-    setIds((current) => current.map((value, slot) => slot === index ? id : value).filter((value, slot, all) => value && all.indexOf(value) === slot));
-  };
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow="Compare"
-        title="See the shape of your choice."
-        intro="Compare up to three currently published models."
-      />
-      <section className={`shell ${styles.section}`}>
-        <div className={styles.comparePicker}>
-          {[0, 1, 2].map((slot) => (
-            <label className={styles.compareOption} key={slot}>
-              <span className="sr-only">Comparison slot {slot + 1}</span>
-              <select value={ids[slot] ?? ""} onChange={(event) => updateSlot(slot, event.target.value)} className="w-full bg-transparent font-bold outline-none">
-                <option value="">Choose a model</option>
-                {published.map((product) => <option value={product.id} key={product.id}>{localize(product.name, locale)}</option>)}
-              </select>
-            </label>
-          ))}
-        </div>
-        <div className={styles.compareTable}>
-          <table className="text-start text-sm">
-            <thead>
-              <tr>
-                <th className="p-5">Model</th>
-                {selected.map((product) => (
-                  <th className="p-5" key={product.id}>
-                    {localize(product.name, locale)}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                [
-                  "Local price",
-                  (p: Product) => (
-                    <Price usd={p.usdPrice} locale={locale} compact />
-                  ),
-                ],
-                ["Features", (p: Product) => p.features.join(", ")],
-                ["Lens", (p: Product) => p.lensType],
-                [
-                  "Camera",
-                  (p: Product) =>
-                    p.camera ? "Configured fields" : "Not represented",
-                ],
-                [
-                  "Battery",
-                  (p: Product) => p.camera?.battery || "To be confirmed",
-                ],
-              ].map(([label, value]) => (
-                <tr
-                  className="border-t border-[var(--line)]"
-                  key={label as string}
-                >
-                  <th className="p-5 text-[var(--muted)]">{label as string}</th>
-                  {selected.map((product) => (
-                    <td className="p-5 align-top" key={product.id}>
-                      {(value as (p: Product) => React.ReactNode)(product)}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-  );
-}
-function HowItWorks({ locale }: { locale: Locale }) {
-  const copy = learning[locale].how;
+  const query = params.get("q") ?? "";
+  const selectedFeature = params.get("feature");
+  const feature = selectedFeature === "all" ? "" : selectedFeature ?? "";
+  const selectedSort = params.get("sort");
+  const sort = selectedSort === "low" || selectedSort === "high" ? selectedSort : "";
+  const available = products.filter((product) => !product.demo && (!collection || product.collections.includes(collection)));
+  const match = query.toLocaleLowerCase(locale);
+  const filtered = available.filter((product) => (
+    [product.slug, localize(product.name, locale), localize(product.description, locale), ...product.features, ...product.features.map((item) => storefrontFeatureName(locale, item))].join(" ").toLocaleLowerCase(locale).includes(match) &&
+    (!feature || product.features.some((value) => value === feature))
+  ));
+  const rank = (slug: string) => modelOrder.indexOf(slug) === -1 ? modelOrder.length : modelOrder.indexOf(slug);
+  filtered.sort((a, b) => sort === "low" ? a.usdPrice - b.usdPrice : sort === "high" ? b.usdPrice - a.usdPrice : rank(a.slug) - rank(b.slug));
+  const size = 6;
+  const { currentPage, totalPages, start } = clampPage(params.get("page"), filtered.length, size);
+  const title = collection ? collectionTitles[locale][collection] : search ? t.nav.search : t.shop.title;
+  const modelFeatures = [...new Set(available.flatMap((product) => product.features))].sort();
+
+  function href(values: Record<string, string>) {
+    const next = new URLSearchParams(params.toString());
+    for (const [key, value] of Object.entries(values)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    return `${pathname}${next.size ? `?${next}` : ""}`;
+  }
+
   return <div className={styles.page}>
-    <PageHead eyebrow={messages[locale].nav.howItWorks} title={copy.title} intro={copy.intro} variant="learn" />
-    <Steps locale={locale} steps={copy.steps} />
+    <InteriorHead eyebrow={ui.catalogue} title={title} intro={t.shop.intro}
+      image={collection ? { src: `/images/home/lensworld/${scene[collection]}.webp`, alt: "", kind: "scene" } : undefined}
+      aside={!collection && !search && <><strong className={styles.catalogCount} aria-hidden="true">{available.length}</strong><Link className="button-secondary" href={`/${locale}/compare`}>{t.common.compare}<ArrowUpRight size={17} className="rtl:-rotate-90" /></Link></>}
+    />
+    <section className={`shell ${styles.sectionTight}`}>
+      <nav className={styles.collectionNav} aria-label={t.shop.scenario}>
+        <Link href={`/${locale}/shop`} aria-current={!collection && !search ? "page" : undefined}>{ui.allModels}</Link>
+        {collectionPaths.map((slug) => <Link key={slug} href={`/${locale}/collections/${slug}`} aria-current={collection === slug ? "page" : undefined}>{collectionTitles[locale][slug]}</Link>)}
+      </nav>
+      <div className={styles.catalogControls}>
+        <form key={query} role="search" onSubmit={(event) => {
+          event.preventDefault();
+          const input = new FormData(event.currentTarget).get("q");
+          router.replace(href({ q: String(input ?? "").trim(), page: "" }), { scroll: false });
+        }}>
+          <label htmlFor="catalogue-search">{t.nav.search}</label>
+          <div className={styles.searchField}><input id="catalogue-search" name="q" type="search" defaultValue={query} placeholder={t.common.searchPlaceholder} /><button type="submit" aria-label={t.nav.search}><Search size={19} /></button></div>
+        </form>
+        <label>{t.shop.feature}<select value={feature} onChange={(event) => router.replace(href({ feature: event.target.value, page: "" }), { scroll: false })}>
+          <option value="">{ui.allFeatures}</option>
+          {feature && !modelFeatures.some((value) => value === feature) && <option value={feature}>{feature.replaceAll("-", " ")}</option>}
+          {modelFeatures.map((item) => <option value={item} key={item}>{storefrontFeatureName(locale, item)}</option>)}
+        </select></label>
+        <label>{t.shop.sort}<select value={sort} onChange={(event) => router.replace(href({ sort: event.target.value, page: "" }), { scroll: false })}>
+          <option value="">{t.shop.newest}</option><option value="low">{t.shop.lowHigh}</option><option value="high">{t.shop.highLow}</option>
+        </select></label>
+      </div>
+      <div className={styles.resultsLine} aria-live="polite"><span>{filtered.length} {ui.models}</span><span>{size} {ui.perPage}</span></div>
+      {filtered.length ? <>
+        <div className={styles.catalogGrid}>{filtered.slice(start, start + size).map((product) => <ProductCard product={product} locale={locale} key={product.id} />)}</div>
+        <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={(page) => href({ page: page === 1 ? "" : String(page) })} label={title} />
+      </> : <div className={styles.emptyState}>
+        <Glasses size={34} aria-hidden="true" /><p>{t.common.noResults}</p>
+        <Link className="button-secondary" href={query || feature ? pathname : `/${locale}/shop`}>{query || feature ? t.common.clear : ui.allModels}<ArrowUpRight size={17} className="rtl:-rotate-90" /></Link>
+      </div>}
+    </section>
   </div>;
 }
-function AppPage({ locale }: { locale: Locale }) {
-  const copy = learning[locale];
+
+function Compare({ locale, products }: { locale: Locale; products: Product[] }) {
+  const t = messages[locale];
+  const ui = storefrontLabels(locale);
+  const available = products.filter((product) => !product.demo);
+  const [ids, setIds] = useState(() => {
+    const priority = modelOrder.slice(0, 2).flatMap((slug) => available.filter((product) => product.slug === slug));
+    return [...new Set([...priority, ...available])].slice(0, 2).map((product) => product.id);
+  });
+  const selected = ids.flatMap((id) => available.filter((product) => product.id === id));
+  const additional = available.find((product) => !ids.includes(product.id));
+  const specs = [
+    [ui.bluetooth, /^Bluetooth version$/i], [ui.playback, /music playing time|audio duration|playback (time|duration)/i],
+    [ui.weight, /^weight$/i], [ui.charging, /^charging time$/i], [ui.dimensions, /dimension|frame (size|width|length)|^size$/i],
+    [ui.battery, /^battery capacity$/i], [t.product.camera, /^shooting duration$/i],
+  ] as const;
   return <div className={styles.page}>
-    <PageHead eyebrow={messages[locale].common.app} title={copy.app.title} intro={copy.app.intro} variant="learn" />
-    <section className={`shell ${styles.section} ${styles.splitFeature}`}>
-      <div className={styles.darkPlate}>
-        <h2 className={styles.plateTitle}>{copy.download}</h2>
-        <p className={styles.plateCopy}>{copy.app.intro}</p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a className="button-primary" href={process.env.NEXT_PUBLIC_IOS_APP_URL || "#app-link-pending"}><Download size={17} />{copy.ios}</a>
-          <a className="button-secondary" href={process.env.NEXT_PUBLIC_ANDROID_APP_URL || "#app-link-pending"}>{copy.android}</a>
+    <InteriorHead eyebrow={ui.catalogue} title={t.common.compare} intro={ui.compareIntro} aside={
+      selected.length === 3 ? <button type="button" className="button-secondary" onClick={() => setIds(ids.slice(0, 2))}>{ui.removeModel}</button> :
+      additional && selected.length === 2 ? <button type="button" className="button-secondary" onClick={() => setIds([...ids, additional.id])}><Plus size={16} />{ui.addModel}</button> : null
+    } />
+    <section className={`shell ${styles.section}`}>
+      {selected.length ? <>
+        <p className={`mb-3 ${styles.resultsLine}`} aria-live="polite"><span>{selected.length} {ui.modelsSelected}</span><span>{ui.scrollComparison}</span></p>
+        <div className={styles.compareTable} tabIndex={0} role="region" aria-label={t.common.compare}>
+        <table className={selected.length === 3 ? styles.compareThree : undefined}>
+          <thead><tr><th scope="col">{ui.model}</th>{selected.map((product, index) => <th key={product.id} scope="col">
+            <label className={styles.compareOption}>{ui.model} {index + 1}<select aria-label={`${ui.model} ${index + 1}`} value={product.id} onChange={(event) => setIds(ids.map((id, slot) => slot === index ? event.target.value : id))}>
+              {available.filter((item) => item.id === product.id || !ids.includes(item.id)).map((item) => <option value={item.id} key={item.id}>{modelCode(item.slug)}</option>)}
+            </select></label>
+            <Link className={styles.comparePhoto} href={`/${locale}/products/${product.slug}`} aria-label={localize(product.name, locale)}><Image src={product.heroImage} alt="" fill loading="eager" sizes="(max-width: 640px) 36vw, 32vw" /></Link>
+            <Link className={styles.textLink} href={`/${locale}/products/${product.slug}`}>{ui.view}<ArrowUpRight size={14} className="rtl:-rotate-90" /></Link>
+          </th>)}</tr></thead>
+          <tbody>
+            <tr><th scope="row">{t.shop.price} (USD)</th>{selected.map((product) => <td key={product.id}><Price usd={product.usdPrice} locale={locale} compact /></td>)}</tr>
+            <tr><th scope="row">{t.shop.lens}</th>{selected.map((product) => <td key={product.id}>{product.colors.map((color) => localize(color.name, locale)).join(" · ") || ui.notListed}</td>)}</tr>
+            <tr><th scope="row">{t.shop.feature}</th>{selected.map((product) => <td key={product.id}>{product.features.map((feature) => storefrontFeatureName(locale, feature)).join(" · ") || ui.notListed}</td>)}</tr>
+            {specs.map(([label, pattern]) => <tr key={label}><th scope="row">{label}</th>{selected.map((product) => {
+              const spec = product.specifications.find((entry) => pattern.test(entry.label.en));
+              return <td key={product.id}>{spec ? localize(spec.value, locale) : ui.notListed}</td>;
+            })}</tr>)}
+          </tbody>
+        </table>
         </div>
-      </div>
-      <div className={styles.lightPlate}>
-        <h2 className={styles.plateTitle}>{copy.permissions}</h2>
-        <ul className="mt-6 grid gap-4 text-sm leading-6 text-[var(--muted)]">
-          {copy.notices.map(notice => <li key={notice}><Check className="me-2 inline text-[var(--lime)]" size={17} />{notice}</li>)}
-        </ul>
+      </> : <div className={styles.emptyState}><p>{t.common.noResults}</p><Link className="button-secondary" href={`/${locale}/shop`}>{ui.allModels}</Link></div>}
+    </section>
+  </div>;
+}
+
+const movement = "/images/home/lensworld/movement-coast.webp";
+const frame = "/images/products/g200-sport-audio-glasses/blue-mirror-lens-02.webp";
+
+function Guide({ locale, path }: { locale: Locale; path: "app" | "how-it-works" | "lens-guide" }) {
+  const t = messages[locale];
+  const ui = storefrontLabels(locale);
+  const copy = learning[locale];
+  const app = path === "app";
+  const lens = path === "lens-guide";
+  const guide = app ? copy.app : lens ? copy.lens : copy.how;
+  const icons = lens ? [Glasses, Ruler, ShieldCheck] : [Glasses, Bluetooth, Smartphone];
+  const ios = process.env.NEXT_PUBLIC_IOS_APP_URL;
+  const android = process.env.NEXT_PUBLIC_ANDROID_APP_URL;
+  return <div className={styles.page}>
+    <InteriorHead eyebrow={ui.guide} title={guide.title} intro={guide.intro}
+      image={lens ? { src: frame, alt: "G200 Sport Audio Glasses", kind: "product", caption: `G200 · ${ui.dimensions}` } : !app ? { src: movement, alt: "", kind: "scene" } : undefined} />
+    <section className={`shell ${styles.section}`}>
+      {app && <div className={styles.splitFeature}>
+        <section className={styles.infoBlock}>
+          <h2>{ui.choosePlatform}</h2>
+          <div className={styles.appChoices}>
+            {ios ? <a className="button-secondary" href={ios}><Apple size={19} />{copy.ios}</a> : <Link className="button-secondary" href={`/${locale}/support/contact`}><Apple size={19} />iOS · {t.support.contact}</Link>}
+            {android ? <a className="button-secondary" href={android}><Smartphone size={19} />{copy.android}</a> : <Link className="button-secondary" href={`/${locale}/support/contact`}><Smartphone size={19} />Android · {t.support.contact}</Link>}
+          </div>
+        </section>
+        <section className={styles.infoBlock}><ShieldCheck size={24} /><h2>{copy.permissions}</h2><ul className="grid gap-2 text-sm">{copy.notices.map((notice) => <li key={notice}>{notice}</li>)}</ul></section>
+      </div>}
+      <div className={`${styles.stepGrid} ${app ? "mt-4" : ""}`}>{guide.steps.map(([title, body], index) => {
+        const Icon = icons[index];
+        return <section className={styles.stepCard} key={title}>
+          <span className={styles.stepNumber}>0{index + 1}</span>
+          {Icon && <Icon size={23} aria-hidden="true" />}
+          <h2>{title}</h2><p>{body}</p>
+        </section>;
+      })}</div>
+      <div className={styles.quickLinks}>
+        <PanelLink href={`/${locale}${lens ? "/collections/prescription-ready" : app ? "/how-it-works" : "/app"}`} title={lens ? collectionTitles[locale]["prescription-ready"] : app ? t.nav.howItWorks : t.common.app} icon={lens ? <Glasses size={23} /> : <Smartphone size={23} />} />
+        <PanelLink href={`/${locale}/support/contact`} title={t.support.contact} icon={<CircleHelp size={23} />} />
       </div>
     </section>
-    <Steps locale={locale} steps={copy.app.steps} />
   </div>;
 }
-function LensGuide({ locale }: { locale: Locale }) {
-  const copy = learning[locale].lens;
-  return <div className={styles.page}>
-    <PageHead eyebrow={messages[locale].nav.lensGuide} title={copy.title} intro={copy.intro} variant="learn" />
-    <Steps locale={locale} steps={copy.steps} />
-  </div>;
-}
+
 const faqCopy: Record<Locale, { intro: string; cards: [string, string, string]; faqs: [string, string][] }> = {
   en: { intro: "Answers about delivery, support, returns and connected features.", cards: ["Find answers about connection, delivery, returns and lens inserts.", "Reach the support team by email for help with orders and product questions.", "Start a warranty request with order and issue details."], faqs: [["When will my order dispatch?", "Orders are normally processed and dispatched within 3 business days after payment is confirmed."], ["Do translation glasses connect to the internet?", "No. Translation needs the CoWin app, Bluetooth and your phone's internet connection."], ["Do you ship to Brazil?", "No. We are unable to ship to Brazil at this time."], ["How long is the warranty?", "Eligible CoWin Glasses products include a 6-month limited warranty from delivery."]] },
   ar: { intro: "إجابات حول التوصيل والدعم والإرجاع والميزات المتصلة.", cards: ["إجابات حول الاتصال والتوصيل والإرجاع وملحق العدسات.", "تواصل مع الدعم عبر البريد للمساعدة في الطلبات والمنتجات.", "ابدأ طلب ضمان مع رقم الطلب وتفاصيل المشكلة."], faqs: [["متى يتم إرسال طلبي؟", "تتم معالجة الطلبات وإرسالها عادة خلال 3 أيام عمل بعد تأكيد الدفع."], ["هل تتصل نظارات الترجمة بالإنترنت؟", "لا. تحتاج الترجمة إلى تطبيق CoWin والبلوتوث واتصال هاتفك بالإنترنت."], ["هل تشحنون إلى البرازيل؟", "لا يمكننا الشحن إلى البرازيل حالياً."], ["ما مدة الضمان؟", "تشمل المنتجات المؤهلة ضماناً محدوداً لمدة 6 أشهر من تاريخ التسليم."]] },
@@ -385,524 +236,62 @@ const faqCopy: Record<Locale, { intro: string; cards: [string, string, string]; 
   ko: { intro: "배송, 지원, 반품, 연결 기능에 관한 답변입니다.", cards: ["연결, 배송, 반품, 렌즈 인서트에 관한 답을 확인하세요.", "주문 및 제품 문의는 이메일로 지원팀에 연락하세요.", "주문 번호와 문제 내용을 입력해 보증 요청을 시작하세요."], faqs: [["주문은 언제 발송되나요?", "결제 확인 후 일반적으로 영업일 기준 3일 이내 처리 및 발송됩니다."], ["번역 안경이 인터넷에 직접 연결되나요?", "아닙니다. 번역에는 CoWin 앱, Bluetooth, 휴대폰 인터넷 연결이 필요합니다."], ["브라질로 배송하나요?", "현재 브라질에는 배송할 수 없습니다."], ["보증 기간은 얼마인가요?", "대상 제품은 배송일로부터 6개월 제한 보증이 제공됩니다."]] },
 };
 
+
 function Support({ locale, faq }: { locale: Locale; faq: boolean }) {
   const t = messages[locale];
-  const localized = faqCopy[locale];
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow="Support"
-        title={faq ? t.support.faq : t.support.title}
-        intro={
-          faq
-            ? localized.intro
-            : t.support.intro
-        }
-        variant="learn"
-      />
-      <section className={`shell ${styles.section}`}>
-        {faq ? (
-          <div className={styles.readerArticle}>
-            {localized.faqs.map(([question, answer]) => (
-              <details
-                className="border-t border-[var(--line)] py-6 first:border-t-black"
-                key={question}
-              >
-                <summary className="cursor-pointer font-black">
-                  {question}
-                </summary>
-                <p className="mt-3 max-w-3xl leading-7 text-[var(--muted)]">
-                  {answer}
-                </p>
-              </details>
-            ))}
-          </div>
-        ) : (
-          <div className={styles.supportGrid}>
-            <SupportCard
-              title={t.support.faq}
-              text={localized.cards[0]}
-              href="/support/faq"
-              locale={locale}
-            />
-            <SupportCard
-              title={t.footer.contact}
-              text={localized.cards[1]}
-              href="/support/contact"
-              locale={locale}
-            />
-            <SupportCard
-              title={t.footer.warranty}
-              text={localized.cards[2]}
-              href="/support/warranty"
-              locale={locale}
-            />
-          </div>
-        )}
-      </section>
-    </div>
-  );
+  const ui = storefrontLabels(locale);
+  const copy = faqCopy[locale];
+  const [query, setQuery] = useState("");
+  const filtered = copy.faqs.filter((entry) => entry.join(" ").toLocaleLowerCase(locale).includes(query.trim().toLocaleLowerCase(locale)));
+  return <div className={styles.page}>
+    <InteriorHead eyebrow={ui.service} title={faq ? t.support.faq : t.support.title} intro={faq ? copy.intro : t.support.intro}
+      aside={<Link className="button-primary" href={`/${locale}/support/contact`}>{t.support.contact}<ArrowUpRight size={17} className="rtl:-rotate-90" /></Link>} />
+    <section className={`shell ${styles.section}`}>
+      {faq ? <div className={styles.splitFeature}>
+        <div className={styles.infoBlock}>
+          <label className={styles.searchField}><span className="sr-only">{t.nav.search}</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.nav.search} /><Search size={19} aria-hidden="true" /></label>
+          {filtered.length ? filtered.map(([question, answer], index) => <details key={question} className={styles.productFaq} open={index === 0 || undefined}>
+            <summary>{question}<ChevronDown size={18} /></summary><p>{answer}</p>
+          </details>) : <p role="status">{t.common.noResults}</p>}
+        </div>
+        <PanelLink href={`/${locale}/support/contact`} title={t.support.contact} description={copy.cards[1]} icon={<Mail size={23} />} />
+      </div> : <div className={styles.supportGrid}>
+        <PanelLink href={`/${locale}/support/faq`} title={t.support.faq} description={copy.cards[0]} icon={<CircleHelp size={23} />} />
+        <PanelLink href={`/${locale}/support/contact`} title={t.support.contact} description={copy.cards[1]} icon={<Mail size={23} />} />
+        <PanelLink href={`/${locale}/app`} title={t.common.app} icon={<Smartphone size={23} />} />
+        <PanelLink href={`/${locale}/support/shipping-delivery`} title={t.footer.shipping} icon={<Truck size={23} />} />
+        <PanelLink href={`/${locale}/support/returns-refunds`} title={t.footer.returns} icon={<Undo2 size={23} />} />
+        <PanelLink href={`/${locale}/support/warranty`} title={t.footer.warranty} description={copy.cards[2]} icon={<ShieldCheck size={23} />} />
+      </div>}
+    </section>
+  </div>;
 }
-function SupportCard({
-  title,
-  text,
-  href,
-  locale,
-}: {
-  title: string;
-  text: string;
-  href: string;
-  locale: Locale;
-}) {
-  return (
-    <Link
-      className={styles.supportLink}
-      href={`/${locale}${href}`}
-    >
-      <h2 className="text-xl font-black">{title}</h2>
-      <p className="mt-3 leading-7 text-[var(--muted)]">{text}</p>
-      <ArrowRight className="mt-10" />
-    </Link>
-  );
-}
+
 function SupportContact({ locale }: { locale: Locale }) {
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow="Support"
-        title="Contact Support"
-        intro="We’re here to help with your CoWin Glasses order, product setup, delivery, returns or warranty."
-        variant="learn"
-      />
-      <section className={`shell ${styles.section} ${styles.reader}`}>
-        <aside className={`${styles.darkPlate} h-fit`}>
-          <p className="text-xs font-bold uppercase tracking-[.14em] text-[#c9d4a5]">Email support</p>
-          <a
-            className="mt-4 block text-2xl font-black tracking-[-.04em] underline decoration-[var(--lime)] decoration-2 underline-offset-8"
-            href="mailto:info@cowinglasses.com"
-          >
-            info@cowinglasses.com
-          </a>
-          <p className="mt-8 text-sm leading-6 text-zinc-300">
-            Please do not return any product before receiving instructions from
-            our support team.
-          </p>
-        </aside>
-        <SupportArticle compact title="We’re here to help">
-          <p>To help us resolve your request faster, please include:</p>
-          <ul>
-            <li>Your order number</li>
-            <li>The email address used for your order</li>
-            <li>A clear description of your question or issue</li>
-            <li>
-              Photos or videos if your product is damaged or not working as
-              expected
-            </li>
-          </ul>
-          <p>
-            Email{" "}
-            <a href="mailto:info@cowinglasses.com">info@cowinglasses.com</a> and
-            our team will assist with the next steps.
-          </p>
-          <div className={`mt-8 border-t border-[var(--line)] pt-8 ${styles.formSurface}`}>
-            <DemoForm locale={locale} kind="support" />
-          </div>
-        </SupportArticle>
-      </section>
-    </div>
-  );
-}
-export function ShippingDelivery() {
-  return (
-    <>
-      <PageHead
-        eyebrow="Support"
-        title="Shipping & Delivery"
-        intro="International delivery information for CoWin Glasses orders."
-      />
-      <SupportArticle>
-        <SupportSection title="International Shipping">
-          <p>
-            CoWin Glasses offers international delivery. Available shipping
-            options and costs are shown at checkout based on your shipping
-            destination. We are unable to ship to Brazil at this time.
-          </p>
-        </SupportSection>
-        <SupportSection title="Order Processing">
-          <p>
-            Orders are normally processed and dispatched within{" "}
-            <strong>3 business days</strong> after payment is confirmed. Orders
-            placed on weekends or public holidays will be processed on the next
-            business day.
-          </p>
-        </SupportSection>
-        <SupportSection title="Delivery Times">
-          <p>
-            Delivery times vary by destination, shipping method, customs
-            clearance and local carrier conditions. Once your order has shipped,
-            you will receive a shipping confirmation email with tracking
-            information when available.
-          </p>
-        </SupportSection>
-        <SupportSection title="Customs, Duties, and Taxes">
-          <p>
-            International orders may be subject to import duties, taxes, customs
-            fees or other local charges. These charges are determined by your
-            local customs authority and are the responsibility of the recipient.
-          </p>
-        </SupportSection>
-        <SupportSection title="Delivery Issues">
-          <p>
-            If your tracking shows that your package has been delivered but you
-            cannot find it, please check with household members, neighbors, your
-            local carrier or your building reception first.
-          </p>
-          <p>
-            If you still need assistance, contact{" "}
-            <a href="mailto:info@cowinglasses.com">info@cowinglasses.com</a> and
-            include your order number.
-          </p>
-        </SupportSection>
-        <SupportSection title="Incorrect, Damaged, or Missing Items">
-          <p>
-            Please inspect your order upon delivery. If an item is incorrect,
-            damaged or missing, contact{" "}
-            <a href="mailto:info@cowinglasses.com">info@cowinglasses.com</a> as
-            soon as possible. Please include photos of the product, packaging
-            and shipping label.
-          </p>
-        </SupportSection>
-      </SupportArticle>
-    </>
-  );
-}
-export function ReturnsRefunds() {
-  return (
-    <>
-      <PageHead
-        eyebrow="Support"
-        title="Returns & Refunds"
-        intro="Clear steps for requesting a return and receiving a refund."
-      />
-      <SupportArticle>
-        <SupportSection title="30-Day Returns">
-          <p>
-            You may request a return within <strong>30 days of delivery</strong>
-            , provided that the item is unused, in its original condition and
-            returned with all original packaging, accessories and proof of
-            purchase.
-          </p>
-        </SupportSection>
-        <SupportSection title="How to Start a Return">
-          <ol>
-            <li>
-              Email{" "}
-              <a href="mailto:info@cowinglasses.com">info@cowinglasses.com</a>{" "}
-              with your order number and reason for return.
-            </li>
-            <li>
-              Wait for return approval and instructions from our support team.
-            </li>
-            <li>Pack the product securely with all original accessories.</li>
-            <li>
-              Use a trackable shipping service to send the approved return.
-            </li>
-          </ol>
-          <p>
-            Please do not send a return without contacting us first.
-            Unauthorised packages may not be accepted or processed.
-          </p>
-        </SupportSection>
-        <SupportSection title="Return Address">
-          <address className="not-italic">
-            Returns Department — CoWin Glasses
-            <br />
-            Qu Shidai Future Building
-            <br />
-            Kecheng District, Quzhou
-            <br />
-            Zhejiang, China
-          </address>
-        </SupportSection>
-        <SupportSection title="Return Shipping Costs">
-          <p>
-            Unless the item is faulty, damaged or sent incorrectly, return
-            shipping costs are the responsibility of the customer. Original
-            shipping charges, import duties, taxes and customs fees are
-            non-refundable where applicable.
-          </p>
-        </SupportSection>
-        <SupportSection title="Refunds">
-          <p>
-            Once your return has been received and inspected, we will notify you
-            by email. If approved, your refund will be issued to the original
-            payment method. Processing times may vary depending on your payment
-            provider.
-          </p>
-        </SupportSection>
-        <SupportSection title="Non-Returnable Items">
-          <p>
-            Products that show signs of use, damage caused after delivery,
-            missing accessories or packaging that prevents resale may not be
-            eligible for a refund.
-          </p>
-        </SupportSection>
-      </SupportArticle>
-    </>
-  );
-}
-export function WarrantySupport() {
-  return (
-    <>
-      <PageHead
-        eyebrow="Support"
-        title="Warranty & Support"
-        intro="Support for verified manufacturing defects during the applicable warranty period."
-      />
-      <SupportArticle>
-        <SupportSection title="Our Commitment">
-          <p>
-            CoWin Glasses is designed for music, moments and movement. We stand
-            behind the quality of our products and provide support for
-            manufacturing defects that arise during the applicable warranty
-            period.
-          </p>
-        </SupportSection>
-        <SupportSection title="What Is Covered">
-          <p>
-            The limited warranty covers defects in materials or workmanship
-            under normal and intended use, including verified manufacturing
-            defects or product components that fail during normal use.
-          </p>
-        </SupportSection>
-        <SupportSection title="What Is Not Covered">
-          <p>The warranty does not cover:</p>
-          <ul>
-            <li>Normal wear and tear</li>
-            <li>Scratches or cosmetic damage</li>
-            <li>Accidental damage, loss or theft</li>
-            <li>Unauthorised repairs, alterations or modifications</li>
-            <li>
-              Damage caused by misuse, improper storage, liquid exposure or
-              failure to follow product-care instructions
-            </li>
-            <li>Products purchased from unauthorised sellers</li>
-          </ul>
-        </SupportSection>
-        <SupportSection title="How to Make a Warranty Claim">
-          <p>
-            Email{" "}
-            <a href="mailto:info@cowinglasses.com">info@cowinglasses.com</a>{" "}
-            with the following information:
-          </p>
-          <ul>
-            <li>Your order number or proof of purchase</li>
-            <li>A clear description of the issue</li>
-            <li>Photos or a short video showing the problem</li>
-            <li>The product serial number, if available</li>
-          </ul>
-          <p>
-            Our support team will review your request and may provide
-            troubleshooting, repair, replacement or other appropriate support.
-            Please do not send your product to us until return instructions have
-            been confirmed.
-          </p>
-        </SupportSection>
-      </SupportArticle>
-    </>
-  );
-}
-function SupportArticle({
-  title,
-  children,
-  compact = false,
-}: {
-  title?: string;
-  children: React.ReactNode;
-  compact?: boolean;
-}) {
-  return (
-    <section className={compact ? "" : `shell ${styles.section}`}>
-      <article className={styles.readerArticle}>
-        {title && (
-          <h2 className="text-3xl font-black tracking-[-.05em] text-[var(--ink)]">
-            {title}
-          </h2>
-        )}
-        {children}
-      </article>
+  const t = messages[locale];
+  return <div className={styles.page}>
+    <InteriorHead eyebrow={storefrontLabels(locale).service} title={t.support.contact} intro={t.support.intro} />
+    <section className={`shell ${styles.section} ${styles.splitFeature}`}>
+      <div className={`${styles.infoBlock} ${styles.formSurface}`}><h2>{t.support.contact}</h2><DemoForm locale={locale} kind="support" /></div>
+      <aside className={styles.infoBlock}><Mail size={25} aria-hidden="true" /><h2>{t.footer.help}</h2><a className={styles.textLink} href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a><p>{t.support.intro}</p></aside>
     </section>
-  );
+  </div>;
 }
-function SupportSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section>
-      <h2>{title}</h2>
-      <div className="mt-4 grid gap-4">{children}</div>
-    </section>
-  );
-}
-function SearchPage({
-  locale,
-  products,
-}: {
-  locale: Locale;
-  products: Product[];
-}) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const query = searchParams.get("q") ?? "";
-  const result = products.filter((product) =>
-    !product.demo && `${localize(product.name, locale)} ${localize(product.description, locale)}`.toLowerCase().includes(query.toLowerCase()),
-  );
-  const { currentPage, totalPages, start } = clampPage(searchParams.get("page"), result.length, 6);
-  const visible = result.slice(start, start + 6);
-  const update = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value) params.set("q", value); else params.delete("q");
-    params.delete("page");
-    const next = params.toString();
-    router.replace(next ? `${pathname}?${next}` : pathname, { scroll: false });
+
+function Policy({ locale, type, destinationLabels }: { locale: Locale; type: PolicyType; destinationLabels?: Record<string, string> }) {
+  const t = messages[locale];
+  const ui = storefrontLabels(locale);
+  const titles: Record<PolicyType, string> = {
+    shipping: t.footer.shipping, returns: t.footer.returns, warranty: t.footer.warranty, privacy: t.footer.privacy,
+    terms: t.footer.terms, "intellectual-property": t.footer.intellectualProperty,
   };
-  const hrefForPage = (page: number) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (page === 1) params.delete("page"); else params.set("page", String(page));
-    const next = params.toString();
-    return next ? `${pathname}?${next}` : pathname;
-  };
-  return (
-    <div className={styles.page}>
-      <PageHead
-        eyebrow="Search"
-        title="Find your frame."
-        intro="Search the current CoWin catalogue by model name."
-      />
-      <section className={`shell ${styles.section}`}>
-        <label className={`${styles.searchField} flex max-w-2xl items-center gap-3 px-4`}>
-          <Search />
-          <input
-            autoFocus
-            value={query}
-            onChange={(e) => update(e.target.value)}
-            className="w-full bg-transparent outline-none"
-            placeholder="Search CoWin models"
-          />
-        </label>
-        {query && (
-          result.length ? <>
-            <div className={styles.catalogGrid}>
-              {visible.map((product) => (
-                <ProductCard product={product} locale={locale} key={product.id} />
-              ))}
-            </div>
-            <Pagination locale={locale} currentPage={currentPage} totalPages={totalPages} hrefForPage={hrefForPage} label="Search" />
-          </> : <p className="mt-10 text-[var(--muted)]">{messages[locale].common.noResults}</p>
-        )}
-      </section>
-    </div>
-  );
-}
-function Policy({ locale, type }: { locale: Locale; type: PolicyType }) {
-  const titles: Record<Locale, Record<PolicyType, string>> = {
-    en: {
-      shipping: "Shipping & Delivery",
-      returns: "Returns & Refunds",
-      warranty: "Warranty & Support",
-      privacy: "Privacy Policy",
-      terms: "Terms of Service",
-      "intellectual-property": "Intellectual Property Rights",
-    },
-    ar: {
-      shipping: "الشحن والتسليم",
-      returns: "الإرجاع والاسترداد",
-      warranty: "الضمان والدعم",
-      privacy: "سياسة الخصوصية",
-      terms: "شروط الخدمة",
-      "intellectual-property": "حقوق الملكية الفكرية",
-    },
-    es: {
-      shipping: "Envío y entrega",
-      returns: "Devoluciones y reembolsos",
-      warranty: "Garantía y soporte",
-      privacy: "Política de privacidad",
-      terms: "Términos de servicio",
-      "intellectual-property": "Derechos de propiedad intelectual",
-    },
-    pt: {
-      shipping: "Envio e entrega",
-      returns: "Devoluções e reembolsos",
-      warranty: "Garantia e suporte",
-      privacy: "Política de privacidade",
-      terms: "Termos de serviço",
-      "intellectual-property": "Direitos de propriedade intelectual",
-    },
-    ja: {
-      shipping: "配送とお届け",
-      returns: "返品と返金",
-      warranty: "保証とサポート",
-      privacy: "プライバシーポリシー",
-      terms: "利用規約",
-      "intellectual-property": "知的財産権",
-    },
-    ko: {
-      shipping: "배송 및 배송 안내",
-      returns: "반품 및 환불",
-      warranty: "보증 및 지원",
-      privacy: "개인정보 처리방침",
-      terms: "서비스 약관",
-      "intellectual-property": "지식재산권",
-    },
-  };
-  return (
-    <div className={styles.page}>
-      <PageHead title={titles[locale][type]} intro={messages[locale].common.draft} variant="learn" />
-      <section className={`shell ${styles.section} ${styles.reader}`}>
-        <div className={styles.readerOptic} aria-hidden="true" />
-        <div className={`${styles.readerArticle} ${styles.formSurface}`}>
-          <PolicyContent locale={locale} type={type} />
-          {type === "warranty" && (
-            <div className="mt-10 max-w-xl border-t border-black pt-8">
-              <h2>{messages[locale].support.contact}</h2>
-              <DemoForm locale={locale} kind="warranty" />
-            </div>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
-function Steps({ steps }: { locale: Locale; steps: [string, string][] }) {
-  return (
-    <section className={`shell ${styles.section} ${styles.stepGrid}`}>
-      {steps.map(([title, text], index) => (
-        <div className={styles.stepCard} key={title}>
-          <p className={styles.stepNumber}>0{index + 1}</p>
-          <h2>{title}</h2>
-          <p>{text}</p>
-        </div>
-      ))}
+  const legal = type === "privacy" || type === "terms" || type === "intellectual-property";
+  return <div className={styles.page}>
+    <InteriorHead eyebrow={legal ? ui.documents : ui.service} title={titles[type]}
+      aside={!legal && <Link className="button-secondary" href={type === "warranty" ? "#warranty-request" : `/${locale}/support/contact`}>{t.support.contact}<ArrowUpRight size={17} className="rtl:-rotate-90" /></Link>} />
+    <section className={`shell ${styles.section}`}>
+      <PolicyContent locale={locale} type={type} destinationLabels={destinationLabels} />
+      {type === "warranty" && <section id="warranty-request" className={`${styles.readerArticle} ${styles.infoBlock} ${styles.formSurface}`}><h2>{t.support.contact}</h2><DemoForm locale={locale} kind="warranty" /></section>}
     </section>
-  );
-}
-function NotFound({ locale }: { locale: Locale }) {
-  return (
-    <section className={styles.statusPage}>
-      <div>
-        <p className="eyebrow">404</p>
-        <h1 className="mt-3 text-4xl font-black tracking-[-.06em]">
-          This frame is not here.
-        </h1>
-        <Link className="button-primary mt-7" href={`/${locale}/shop`}>
-          Browse the shop
-        </Link>
-      </div>
-    </section>
-  );
+  </div>;
 }

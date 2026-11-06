@@ -3,38 +3,30 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { Product } from "@/types/product";
 import { localize, type Locale } from "@/lib/i18n";
+import { modelCode } from "@/lib/product-model";
 import { Price } from "@/components/commerce/price";
-import { messages } from "@/messages";
+import { storefrontLabels } from "@/messages/storefront";
 import styles from "@/components/layout/storefront-design.module.css";
 
 export function ProductCard({ product, locale }: { product: Product; locale: Locale }) {
-  const t = messages[locale].common;
   const name = localize(product.name, locale);
+  const ui = storefrontLabels(locale);
+  const href = `/${locale}/products/${product.slug}`;
 
   return (
     <article className={styles.productCard}>
-      <Link href={`/${locale}/products/${product.slug}`} className={styles.productCardMedia}>
-        <Image
-          src={product.heroImage}
-          alt={name}
-          width={1000}
-          height={800}
-          quality={85}
-          className={styles.productCardImage}
-          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, (max-width: 1536px) 33vw, 480px"
-        />
+      <Link href={href} className={styles.productCardMedia} aria-label={name}>
+        <Image src={product.heroImage} alt="" fill quality={85} sizes="(max-width: 360px) 92vw, (max-width: 767px) 46vw, (max-width: 1536px) 31vw, 440px" />
+        <span className={styles.mediaBadge}>{modelCode(product.slug)}</span>
+        <ArrowUpRight size={18} className="rtl:-rotate-90" aria-hidden="true" />
       </Link>
       <div className={styles.productCardBody}>
-        <div>
-          <p className={styles.productCardState}>{product.demo ? t.demo : "Available now"}</p>
-          <h2 className={styles.productCardTitle}>{name}</h2>
-          <p className={styles.productCardCopy}>{localize(product.tagline, locale)}</p>
-        </div>
-        <Link className={styles.productCardArrow} href={`/${locale}/products/${product.slug}`} aria-label={`View ${name}`}><ArrowUpRight size={17} /></Link>
+        <h2 className={styles.productCardTitle}><Link href={href}>{name}</Link></h2>
+        <p className={styles.productCardCopy}>{product.colors.length ? product.colors.slice(0, 2).map((sku) => localize(sku.name, locale)).join(" · ") : localize(product.tagline, locale)}</p>
         <div className={styles.productCardPrice}>
-          {product.demo ? <Price usd={product.usdPrice} locale={locale} compact /> : <p>USD {product.usdPrice.toFixed(2).replace(/\.00$/, "")} {product.compareAtUsdPrice && <span className="ms-2 text-sm text-[var(--muted)] line-through">USD {product.compareAtUsdPrice.toFixed(2).replace(/\.00$/, "")}</span>}</p>}
+          <Price usd={product.usdPrice} locale={locale} compact />
+          <Link href={href} className={styles.textLink} aria-label={`${ui.view} · ${name}`}>{ui.view}<ArrowUpRight size={14} className="rtl:-rotate-90" aria-hidden="true" /></Link>
         </div>
-        {!product.demo && <Link href={`/${locale}/checkout?product=${product.slug}`} className={`button-primary ${styles.productCardBuy}`}>Buy now</Link>}
       </div>
     </article>
   );

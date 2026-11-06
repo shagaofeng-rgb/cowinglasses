@@ -8,6 +8,7 @@ import { getProductCanonicalLocale, getProductLanguageAlternates, isProductLocal
 
 type ProductSectionPageProps = {
   params: Promise<{ locale: string; slug: string; section: string }>;
+  searchParams: Promise<{ page?: string }>;
 };
 
 export async function generateMetadata({ params }: ProductSectionPageProps): Promise<Metadata> {
@@ -28,10 +29,11 @@ export async function generateMetadata({ params }: ProductSectionPageProps): Pro
   };
 }
 
-export default async function ProductSectionPage({ params }: ProductSectionPageProps) {
+export default async function ProductSectionPage({ params, searchParams }: ProductSectionPageProps) {
   const { locale, slug, section } = await params;
   if (!isLocale(locale) || !isProductSection(section)) notFound();
   const product = await getStoreProduct(slug);
   if (!product || !productSectionsFor(product).includes(section)) notFound();
-  return <ProductDetail product={product} locale={locale} relatedProducts={[]} section={section} />;
+  const { page } = await searchParams;
+  return <ProductDetail product={product} locale={locale} section={section} galleryPage={page} />;
 }

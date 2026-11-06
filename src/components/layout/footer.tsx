@@ -4,12 +4,13 @@ import { type Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
 import { PaymentMethods } from "@/components/compliance/payment-methods";
 import { businessDetails } from "@/config/business";
+import styles from "./storefront-design.module.css";
 
 export function Footer({ locale }: { locale: Locale }) {
   const t = messages[locale];
   return (
-    <footer className="overflow-hidden border-t border-white/10 bg-[var(--dark)] text-white">
-      <div className="shell grid gap-10 py-14 md:grid-cols-[1.2fr_.8fr] md:items-end md:py-20">
+    <footer className={`overflow-hidden border-t border-white/10 bg-[var(--dark)] text-white ${styles.storeFooter}`}>
+      <div className={`shell grid gap-10 py-14 md:grid-cols-[1.2fr_.8fr] md:items-end md:py-20 ${styles.footerHomeLead}`}>
         <div>
           <p dir="ltr" className="font-[family-name:var(--display)] text-[clamp(5rem,14vw,12rem)] font-semibold leading-[.65] tracking-[-.03em]">
             COWIN<span className="text-[var(--lime)]">.</span>
@@ -25,6 +26,7 @@ export function Footer({ locale }: { locale: Locale }) {
       </div>
       <div className="shell grid gap-10 border-t border-white/15 py-12 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div className="max-w-sm text-xs leading-6 text-zinc-400">
+          <Link href={`/${locale}`} className={styles.footerMark} dir="ltr">COWIN<span>.</span></Link>
           <p className="font-bold text-white">{businessDetails.legalName}</p>
           <a className="mt-2 inline-flex items-start gap-1.5 underline underline-offset-4 hover:text-white" href={businessDetails.googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Open registered address in Google Maps"><MapPin size={14} className="mt-1 shrink-0" aria-hidden="true" /><address className="not-italic">{businessDetails.registeredAddress}</address></a>
           <a className="mt-2 inline-block underline underline-offset-4 hover:text-white" href={`mailto:${businessDetails.supportEmail}`}>{businessDetails.supportEmail}</a>

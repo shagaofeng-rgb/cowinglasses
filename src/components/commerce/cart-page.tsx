@@ -2,13 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { ArrowUpRight, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { messages } from "@/messages";
 import { useCart } from "@/providers/cart-provider";
 import { localize } from "@/lib/i18n";
-import { Price } from "./price";
-import { formatCurrency, convertFromUsd } from "@/lib/currency";
+import { formatUsdPrice, Price } from "./price";
+import { InteriorHead } from "@/components/layout/storefront-ui";
+import { storefrontLabels } from "@/messages/storefront";
+import { PaymentMethods } from "@/components/compliance/payment-methods";
 import type { Product } from "@/types/product";
 import styles from "@/components/layout/storefront-design.module.css";
 
@@ -19,7 +21,7 @@ export function CartPage({
   locale: Locale;
   products: Product[];
 }) {
-  const { lines, setQuantity, remove, currency } = useCart();
+  const { lines, setQuantity, remove } = useCart();
   const t = messages[locale];
   const items = lines.flatMap((line) => {
     const product = products.find((item) => item.id === line.productId);
@@ -33,29 +35,21 @@ export function CartPage({
     0,
   );
 
-  if (!items.length)
-    return (
-      <section className={styles.statusPage}>
-        <div>
-          <h1>{t.cart.title}</h1>
-          <p className="mx-auto mt-5 max-w-lg text-[#c2cbce]">{t.cart.empty}</p>
-          <Link className="button-primary mt-8" href={`/${locale}/shop`}>
-            {t.common.continueShopping}
-          </Link>
-        </div>
-      </section>
-    );
-
+  const ui = storefrontLabels(locale);
   return (
-    <section className={`${styles.cartPage} ${styles.section}`}>
-      <div className="shell">
-        <h1 className={styles.cartTitle}>{t.cart.title}</h1>
-        <div className={`${styles.cartLayout} mt-12`}>
+    <div className={`${styles.page} ${styles.cartPage}`}>
+      <InteriorHead eyebrow={ui.orderDesk} title={t.cart.title} intro={items.length ? t.cart.delivery : t.cart.empty}
+        aside={<Link className="button-secondary" href={`/${locale}/shop`}>{t.common.continueShopping}<ArrowUpRight size={16} className="rtl:-rotate-90" /></Link>} />
+      <section className={`shell ${styles.section}`}>
+        {!items.length ? <div className={styles.emptyState}>
+          <ShoppingBag size={34} aria-hidden="true" /><p>{t.cart.empty}</p>
+          <Link className="button-primary" href={`/${locale}/shop`}>{t.common.continueShopping}</Link>
+        </div> : <div className={styles.cartLayout}>
           <div>
             {items.map(({ line, product, sku }) => (
               <article className={styles.cartItem} key={`${line.productId}-${line.skuId}`}>
                 <Image
-                  src={sku.images[0]}
+                  src={sku.images[0] ?? product.heroImage}
                   alt={localize(product.name, locale)}
                   width={400}
                   height={400}
@@ -76,18 +70,18 @@ export function CartPage({
                       type="button"
                       onClick={() => remove(line)}
                       aria-label={t.common.remove}
-                      className="grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-white"
+                      className="grid h-10 w-10 shrink-0 place-items-center rounded-full hover:bg-white/10"
                     >
                       <Trash2 size={18} />
                     </button>
                   </div>
                   <div className="mt-auto flex flex-wrap items-end justify-between gap-4 pt-6">
-                    <div className="flex min-h-10 items-center rounded-full border border-[var(--line)] bg-white">
+                    <div className="flex min-h-10 items-center border border-[var(--line)]">
                       <button
                         type="button"
                         className="px-3"
                         onClick={() => setQuantity(line, line.quantity - 1)}
-                        aria-label="Decrease quantity"
+                        aria-label={ui.decrease}
                       >
                         <Minus size={15} />
                       </button>
@@ -96,7 +90,7 @@ export function CartPage({
                         type="button"
                         className="px-3"
                         onClick={() => setQuantity(line, line.quantity + 1)}
-                        aria-label="Increase quantity"
+                        aria-label={ui.increase}
                       >
                         <Plus size={15} />
                       </button>
@@ -111,7 +105,7 @@ export function CartPage({
             <h2 className="text-3xl">{t.cart.orderSummary}</h2>
             <div className="mt-8 flex justify-between border-b border-white/15 pb-5">
               <span>{t.cart.subtotal}</span>
-              <strong>{formatCurrency(convertFromUsd(total, currency), currency)}</strong>
+              <strong dir="ltr" className="text-[var(--lime)]">{formatUsdPrice(total)}</strong>
             </div>
             <p className="mt-5 text-sm leading-6">{t.cart.delivery}</p>
             <p className="mt-3 text-sm leading-6">{t.common.finalUsd}</p>
@@ -119,9 +113,10 @@ export function CartPage({
             <Link className="button-primary mt-7 w-full" href={`/${locale}/checkout`}>
               {t.common.checkout}
             </Link>
+            <div className="mt-5"><PaymentMethods compact /></div>
           </aside>
-        </div>
-      </div>
-    </section>
+        </div>}
+      </section>
+    </div>
   );
 }

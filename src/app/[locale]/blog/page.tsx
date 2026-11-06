@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { EditorialIndex } from "@/components/content/editorial-pages";
+import { EditorialIndex, editorialPageSize } from "@/components/content/editorial-pages";
 import { getPublishedArticles } from "@/data/repositories/articles";
 import { isLocale } from "@/lib/i18n";
 import { messages } from "@/messages";
@@ -20,6 +20,6 @@ export default async function BlogPage({ params, searchParams }: { params: Promi
   const { page } = await searchParams;
   if (!isLocale(locale)) notFound();
   const articles = await getPublishedArticles("blog", locale);
-  const pagination = clampPage(page, articles.length, 9);
-  return <EditorialIndex locale={locale} type="blog" articles={articles.slice(pagination.start, pagination.start + 9)} currentPage={pagination.currentPage} totalPages={pagination.totalPages} />;
+  const pagination = clampPage(page, articles.length, editorialPageSize);
+  return <EditorialIndex locale={locale} type="blog" articles={articles.slice(pagination.start, pagination.start + editorialPageSize)} currentPage={pagination.currentPage} totalPages={pagination.totalPages} />;
 }
